@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B-3: ガイド付きプレビュー型</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#f5f6f8;--surface:#fff;--border:#e2e5ea;--text:#1a1a2e;--sub:#6b7280;--accent:#0d9488;--accent-bg:#f0fdfa;--accent-dark:#0f766e;--success:#059669;--success-bg:#ecfdf5;--warn:#d97706;--warn-bg:#fffbeb;--red:#dc2626}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .banner{text-align:center;padding:8px;background:linear-gradient(90deg,#0d9488,#0891b2);color:#fff;font-size:11px;font-weight:700;letter-spacing:1px}
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .logo{font-size:16px;font-weight:800;color:var(--accent)}
+  .hdr-r{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--sub)}
+  .badge{padding:3px 10px;border-radius:16px;font-size:11px;font-weight:700}
+  .badge-teal{background:var(--accent-bg);color:var(--accent)}
+
+  .screens{position:relative;min-height:calc(100vh - 70px)}
+  .screen{display:none;min-height:calc(100vh - 70px)}
+  .screen.active{display:flex;flex-direction:column}
+
+  /* === Screen 1: お題選択 === */
+  .s1{max-width:900px;margin:0 auto;padding:32px 24px}
+  .s1 h1{font-size:22px;font-weight:800;margin-bottom:6px}
+  .s1 .sub{font-size:14px;color:var(--sub);margin-bottom:28px}
+  .ch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .ch{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s}
+  .ch:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 24px rgba(13,148,136,.1)}
+  .ch.lock{opacity:.4;pointer-events:none}
+  .ch-n{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px}
+  .ch-t{font-size:15px;font-weight:700;margin-bottom:8px}
+  .ch-d{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px}
+  .ch-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .ch-tag{font-size:10px;padding:3px 8px;background:var(--bg);border-radius:4px;color:var(--sub)}
+  .ch-done{color:var(--success);font-size:12px;font-weight:700}
+
+  /* === Screen 2: ガイド付き入力 + 3プレビュー === */
+  .ws2{display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0}
+  .pnl{display:flex;flex-direction:column;overflow-y:auto}
+  .pnl-l{background:var(--surface);border-right:1px solid var(--border)}
+  .pnl-hd{padding:12px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sub);border-bottom:1px solid var(--border)}
+  .brief{padding:14px 16px;border-bottom:1px solid var(--border)}
+  .brief h3{font-size:14px;font-weight:700;margin-bottom:6px}
+  .brief p{font-size:12px;color:var(--sub);line-height:1.6}
+  .consts{padding:10px 16px;background:#fafbfc;border-bottom:1px solid var(--border)}
+  .const-i{font-size:11px;color:var(--sub);padding:2px 0}
+
+  /* ガイドフォーム */
+  .guide-form{padding:16px;display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto}
+  .guide-q{display:flex;flex-direction:column;gap:6px}
+  .guide-q label{font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+  .guide-q label .q-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+  .guide-hint{font-size:11px;color:var(--sub);margin-top:2px}
+
+  /* 選択肢（チップ型） */
+  .chip-group{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:6px 12px;border:2px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;background:var(--surface);color:var(--sub);user-select:none}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+
+  /* スライダー */
+  .slider-row{display:flex;align-items:center;gap:10px}
+  .slider-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:2px}
+  input[type="range"]{flex:1;-webkit-appearance:none;height:6px;border-radius:3px;background:var(--border);outline:none}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 2px 6px rgba(13,148,136,.3)}
+
+  /* フリーテキスト（補足用、小さめ） */
+  .ta-small{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6;resize:none;font-family:inherit;color:var(--text);min-height:48px}
+  .ta-small:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+
+  .btn{padding:11px 20px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;width:100%}
+  .btn-teal{background:var(--accent);color:#fff}
+  .btn-teal:hover{background:var(--accent-dark)}
+  .btn-green{background:var(--success);color:#fff}
+
+  /* プレビューエリア */
+  .pnl-main{background:#fafbfc;display:flex;flex-direction:column;overflow-y:auto}
+  .preview-hd{padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between}
+  .preview-hd h3{font-size:14px;font-weight:700}
+  .preview-hd .hint{font-size:12px;color:var(--sub)}
+
+  .three-previews{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:24px;flex:1}
+  .preview-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .preview-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--sub)}
+  .letter{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
+  .letter-a{background:#0d9488}
+  .letter-b{background:#0891b2}
+  .letter-c{background:#6366f1}
+  .preview-desc{font-size:11px;color:var(--sub);text-align:center;line-height:1.5}
+
+  .mini-phone{width:240px;background:#fff;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:hidden;cursor:pointer;border:3px solid transparent;transition:all .2s}
+  .mini-phone:hover{border-color:var(--accent);box-shadow:0 8px 30px rgba(13,148,136,.12)}
+  .mini-phone.selected{border-color:var(--accent);box-shadow:0 0 0 4px rgba(13,148,136,.2)}
+  .mp-notch{width:70px;height:14px;background:#1a1a2e;border-radius:0 0 8px 8px;margin:0 auto}
+  .mp-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+  .mp-bar{height:24px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:9px;color:#aaa}
+  .mp-tabs{display:flex;gap:2px;padding:2px;background:#f3f4f6;border-radius:6px}
+  .mp-tab{flex:1;text-align:center;padding:4px;font-size:9px;border-radius:4px;color:var(--sub)}
+  .mp-tab.on{background:#fff;font-weight:700;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .mp-card{border:1px solid #eee;border-radius:6px;overflow:hidden}
+  .mp-img{height:52px}
+  .mp-img.g1{background:linear-gradient(135deg,#667eea,#764ba2)}
+  .mp-img.g2{background:linear-gradient(135deg,#f093fb,#f5576c)}
+  .mp-img.g3{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+  .mp-bd{padding:6px 8px}
+  .mp-t{font-size:10px;font-weight:700;margin-bottom:2px}
+  .mp-m{font-size:8px;color:var(--sub)}
+  .mp-map{height:90px;background:#e8eef4;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .mp-map::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#dde4ec 25%,transparent 25%),linear-gradient(-45deg,#dde4ec 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dde4ec 75%),linear-gradient(-45deg,transparent 75%,#dde4ec 75%);background-size:16px 16px;opacity:.3}
+  .mp-pin{width:10px;height:10px;background:#e74c3c;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:relative;z-index:1}
+  .mp-list-i{display:flex;align-items:center;gap:6px;background:#f9fafb;border-radius:6px;padding:6px 8px}
+  .mp-rank{font-size:12px;font-weight:800;color:var(--accent);width:16px;text-align:center}
+  .mp-thumb{width:24px;height:24px;border-radius:4px}
+  .mp-lines{flex:1;display:flex;flex-direction:column;gap:3px}
+  .mp-line{height:4px;background:#ddd;border-radius:2px}
+  .mp-line.s{width:55%}
+
+  .select-btn{padding:8px 16px;border:2px solid var(--accent);border-radius:8px;background:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--accent);transition:all .15s}
+  .select-btn:hover,.select-btn.on{background:var(--accent);color:#fff}
+
+  .bottom-bar{padding:12px 24px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .bottom-bar .hint{font-size:12px;color:var(--sub)}
+
+  /* ガイド回答サマリー（プレビュー上に表示） */
+  .answer-summary{padding:12px 24px;background:var(--accent-bg);border-bottom:1px solid rgba(13,148,136,.15);display:flex;gap:16px;flex-wrap:wrap}
+  .ans-tag{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--accent);font-weight:600}
+  .ans-tag .ans-icon{font-size:13px}
+
+  /* === Screen 3: レビュー + 改善 === */
+  .ws3{display:grid;grid-template-columns:1fr 360px;flex:1}
+  .review-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:#fafbfc}
+  .chosen-phone{width:320px;background:#fff;border-radius:22px;box-shadow:0 6px 30px rgba(0,0,0,.07);overflow:hidden}
+  .cp-notch{width:90px;height:18px;background:#1a1a2e;border-radius:0 0 12px 12px;margin:0 auto}
+  .cp-body{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+  .chosen-label{text-align:center;margin-top:16px;font-size:13px;color:var(--sub)}
+
+  .review-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .score-box{text-align:center;padding:16px;border-bottom:1px solid var(--border)}
+  .score-v{font-size:40px;font-weight:800;color:var(--accent)}
+  .score-l{font-size:11px;color:var(--sub)}
+  .score-bar{display:flex;gap:3px;margin-top:8px}
+  .sb{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .sb.f{background:var(--accent)}
+  .rev-sec{padding:14px 16px;border-bottom:1px solid var(--border)}
+  .rev-sec h4{font-size:12px;font-weight:700;margin-bottom:10px}
+  .rev-i{display:flex;gap:8px;padding:5px 0;font-size:12px;line-height:1.6;color:var(--sub)}
+  .rev-b{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:2px}
+  .rev-b.g{background:var(--success-bg);color:var(--success)}
+  .rev-b.d{background:var(--warn-bg);color:var(--warn)}
+  .match-sec{padding:14px 16px;border-bottom:1px solid var(--border);background:#fafbfc}
+  .match-sec h4{font-size:12px;font-weight:700;margin-bottom:8px}
+  .match-i{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0}
+  .match-i .ml{color:var(--sub)}
+  .match-v{font-weight:700;color:var(--accent)}
+  .match-bar{width:60px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+  .match-fill{height:100%;background:var(--accent);border-radius:2px}
+
+  /* === Screen 4: 結果 === */
+  .s4{max-width:720px;margin:0 auto;padding:40px 24px;text-align:center}
+  .ri{font-size:56px;margin-bottom:16px}
+  .rt{font-size:24px;font-weight:800;margin-bottom:8px}
+  .rs{font-size:14px;color:var(--sub);margin-bottom:32px}
+  .rc{background:var(--surface);border-radius:16px;padding:24px;text-align:left;margin-bottom:20px;border:1px solid var(--border)}
+  .rc h3{font-size:15px;font-weight:700;margin-bottom:14px}
+  .gb{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .gl{font-size:13px;width:80px;color:var(--sub)}
+  .gt{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+  .gf{height:100%;border-radius:4px}
+  .gv{font-size:13px;font-weight:700;width:36px;text-align:right}
+  .tw{background:var(--accent-bg);border-radius:12px;padding:20px;margin-bottom:24px;text-align:left}
+  .tw h4{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px}
+  .tw li{font-size:13px;line-height:1.8;margin-left:16px}
+  .nbt{display:flex;gap:12px;justify-content:center}
+  .bo{padding:12px 28px;border:2px solid var(--border);border-radius:10px;background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text)}
+  .bp{padding:12px 28px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+
+  /* 空のプレビュー状態 */
+  .empty-preview{display:flex;align-items:center;justify-content:center;flex:1;text-align:center;color:var(--sub);padding:60px}
+  .empty-icon{font-size:48px;opacity:.3;margin-bottom:16px}
+  .empty-text{font-size:14px;line-height:1.8}
+
+  /* プログレスインジケーター */
+  .guide-progress{padding:10px 16px;background:var(--accent-bg);border-bottom:1px solid rgba(13,148,136,.1);display:flex;align-items:center;gap:8px}
+  .gp-dots{display:flex;gap:4px}
+  .gp-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .3s}
+  .gp-dot.done{background:var(--accent)}
+  .gp-dot.current{background:var(--accent);box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+  .gp-text{font-size:11px;color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="banner">B-3: ガイド付きプレビュー型 — 構造化入力→3パターン生成→選んで磨く</div>
+<header class="hdr">
+  <div class="logo">DesignSprint</div>
+  <div class="hdr-r">
+    <span class="badge badge-teal" id="badgeText">お題選択</span>
+    <span>Level 1</span>
+    <span>🔥 3日連続</span>
+  </div>
+</header>
+
+<div class="screens">
+  <!-- ===== Screen 1: お題選択 ===== -->
+  <div class="screen active" id="sc1">
+    <div class="s1">
+      <h1>📋 Level 1 のお題</h1>
+      <div class="sub">デザイン4原則を意識した単一画面の設計に挑戦しましょう</div>
+      <div class="ch-grid">
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 01</div><div class="ch-t">ログインページ</div><div class="ch-d">シンプルなログイン画面を設計。</div><div class="ch-done">✅ 完了 — 85点</div></div>
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 02</div><div class="ch-t">天気予報ウィジェット</div><div class="ch-d">限られたスペースに情報を整理。</div><div class="ch-done">✅ 完了 — 72点</div></div>
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 03</div><div class="ch-t">ユーザープロフィール</div><div class="ch-d">個人情報の見せ方とアクション導線。</div><div class="ch-done">✅ 完了 — 78点</div></div>
+        <div class="ch" onclick="go(2)"><div class="ch-n" style="color:var(--red)">Challenge 04 — NEW</div><div class="ch-t">ランチ探しアプリ</div><div class="ch-d">引っ越したばかりの会社員が、近所のランチを素早く見つけられる画面を設計。</div><div class="ch-tags"><span class="ch-tag">📱 モバイル</span><span class="ch-tag">🎯 探索</span><span class="ch-tag">⏱ 短時間決定</span></div></div>
+        <div class="ch lock"><div class="ch-n">Challenge 05</div><div class="ch-t">🔒 音楽プレイヤー</div><div class="ch-d">解放条件: Ch.04クリア</div></div>
+        <div class="ch lock"><div class="ch-n">Challenge 06</div><div class="ch-t">🔒 ??????</div><div class="ch-d">解放条件: Ch.05クリア</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Screen 2: ガイド付き入力 + 3プレビュー ===== -->
+  <div class="screen" id="sc2">
+    <div class="ws2" style="flex:1">
+      <!-- 左パネル: ブリーフ + ガイドフォーム -->
+      <div class="pnl pnl-l">
+        <div class="pnl-hd">📋 ブリーフ</div>
+        <div class="brief">
+          <h3>🎯 ランチ探しアプリ</h3>
+          <p>田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを探したいが土地勘がない。</p>
+        </div>
+        <div class="consts">
+          <div class="const-i">📱 モバイルファースト</div>
+          <div class="const-i">👆 3タップ以内</div>
+          <div class="const-i">⏱ 30秒で選べる</div>
+        </div>
+
+        <div class="guide-progress">
+          <div class="gp-dots">
+            <div class="gp-dot done"></div>
+            <div class="gp-dot done"></div>
+            <div class="gp-dot done"></div>
+            <div class="gp-dot done"></div>
+            <div class="gp-dot done"></div>
+          </div>
+          <div class="gp-text">5/5 回答済み ✓</div>
+        </div>
+
+        <div class="guide-form">
+          <!-- Q1: 情報の見せ方 -->
+          <div class="guide-q">
+            <label><span class="q-num">1</span>メインの情報表示は？</label>
+            <div class="chip-group">
+              <div class="chip on" onclick="toggleChip(this)">📋 カードリスト</div>
+              <div class="chip" onclick="toggleChip(this)">🗺 マップ中心</div>
+              <div class="chip" onclick="toggleChip(this)">🏆 ランキング</div>
+            </div>
+          </div>
+
+          <!-- Q2: 最も目立たせたい要素 -->
+          <div class="guide-q">
+            <label><span class="q-num">2</span>一番目立たせたい要素は？</label>
+            <div class="chip-group">
+              <div class="chip on" onclick="toggleChip(this)">📸 料理写真</div>
+              <div class="chip" onclick="toggleChip(this)">⭐ 評価・レビュー</div>
+              <div class="chip" onclick="toggleChip(this)">📍 距離・所要時間</div>
+              <div class="chip" onclick="toggleChip(this)">💰 価格帯</div>
+            </div>
+          </div>
+
+          <!-- Q3: 絞り込み方法 -->
+          <div class="guide-q">
+            <label><span class="q-num">3</span>店を絞り込む方法は？</label>
+            <div class="chip-group">
+              <div class="chip on" onclick="toggleChip(this)">🍽 ジャンルタブ</div>
+              <div class="chip" onclick="toggleChip(this)">🔍 検索バー</div>
+              <div class="chip on" onclick="toggleChip(this)">📍 距離フィルター</div>
+            </div>
+            <div class="guide-hint">※ 複数選択OK</div>
+          </div>
+
+          <!-- Q4: 意思決定の後押し -->
+          <div class="guide-q">
+            <label><span class="q-num">4</span>ユーザーの「決め手」になるのは？</label>
+            <div class="slider-row">
+              <span style="font-size:11px;color:var(--sub)">自分で探す</span>
+              <input type="range" min="0" max="100" value="65">
+              <span style="font-size:11px;color:var(--sub)">おすすめ提示</span>
+            </div>
+            <div class="guide-hint">スライダーで自由探索⇔AIおすすめのバランスを調整</div>
+          </div>
+
+          <!-- Q5: こだわりポイント（自由記述・補足） -->
+          <div class="guide-q">
+            <label><span class="q-num">5</span>その他こだわりたいポイント</label>
+            <textarea class="ta-small" placeholder="（任意）例：初めての人でも迷わないようにしたい">「近い順」をデフォルトにしたい。写真が大きく見えると嬉しい。</textarea>
+          </div>
+
+          <button class="btn btn-teal" onclick="go(3)">🚀 回答をもとに 3パターン生成</button>
+        </div>
+      </div>
+
+      <!-- 右エリア: 空の状態（生成前） -->
+      <div class="pnl-main">
+        <div class="preview-hd">
+          <h3>👁 プレビュー</h3>
+          <div class="hint">ガイドに沿って回答すると3パターン生成されます</div>
+        </div>
+        <div class="empty-preview">
+          <div>
+            <div class="empty-icon">🎨</div>
+            <div class="empty-text">左のガイドに回答して<br>「3パターン生成」を押してください<br><br><span style="font-size:12px;color:#aaa">選択した内容に基づいて<br>異なるアプローチの3パターンが表示されます</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Screen 3: 3パターン比較（生成後） ===== -->
+  <div class="screen" id="sc3">
+    <div class="ws2" style="flex:1">
+      <!-- 左パネル: ガイド回答サマリー -->
+      <div class="pnl pnl-l">
+        <div class="pnl-hd">📋 ブリーフ</div>
+        <div class="brief">
+          <h3>🎯 ランチ探しアプリ</h3>
+          <p>田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを探したいが土地勘がない。</p>
+        </div>
+        <div class="consts">
+          <div class="const-i">📱 モバイルファースト</div>
+          <div class="const-i">👆 3タップ以内</div>
+          <div class="const-i">⏱ 30秒で選べる</div>
+        </div>
+
+        <div class="pnl-hd" style="background:var(--accent-bg);color:var(--accent)">📝 あなたの回答</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:12px">
+          <div><span style="font-weight:700">Q1 表示方法:</span> <span style="color:var(--accent);font-weight:600">📋 カードリスト</span></div>
+          <div><span style="font-weight:700">Q2 目立つ要素:</span> <span style="color:var(--accent);font-weight:600">📸 料理写真</span></div>
+          <div><span style="font-weight:700">Q3 絞り込み:</span> <span style="color:var(--accent);font-weight:600">🍽 ジャンルタブ + 📍 距離</span></div>
+          <div><span style="font-weight:700">Q4 決め手:</span> <span style="color:var(--accent);font-weight:600">やや おすすめ寄り</span></div>
+          <div><span style="font-weight:700">Q5 補足:</span> <span style="color:var(--sub)">近い順デフォルト、写真大きく</span></div>
+        </div>
+        <div style="padding:8px 16px;border-top:1px solid var(--border)">
+          <button class="btn" style="background:var(--bg);border:1px solid var(--border);font-size:12px" onclick="go(2)">← 回答を修正する</button>
+        </div>
+      </div>
+
+      <!-- 右エリア: 3パターン -->
+      <div class="pnl-main">
+        <div class="preview-hd">
+          <h3>👁 3つのアプローチ — あなたの回答をもとに生成</h3>
+          <div class="hint">それぞれ異なる解釈で画面を構成しています</div>
+        </div>
+        <div class="answer-summary">
+          <div class="ans-tag"><span class="ans-icon">📋</span>カードリスト</div>
+          <div class="ans-tag"><span class="ans-icon">📸</span>写真重視</div>
+          <div class="ans-tag"><span class="ans-icon">🍽</span>ジャンルタブ</div>
+          <div class="ans-tag"><span class="ans-icon">📍</span>距離フィルター</div>
+          <div class="ans-tag"><span class="ans-icon">🤖</span>おすすめ寄り</div>
+        </div>
+
+        <div class="three-previews">
+          <!-- パターン A: 写真大カード+ジャンルタブ -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-a">A</span>写真大カード型</div>
+            <div class="preview-desc">写真を大きく表示し、<br>視覚で選ぶスタイル</div>
+            <div class="mini-phone" onclick="selectP(this,'A')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div class="mp-tabs"><div class="mp-tab on">全て</div><div class="mp-tab">和食</div><div class="mp-tab">洋食</div><div class="mp-tab">中華</div></div>
+                <div class="mp-card"><div class="mp-img g1" style="height:64px"></div><div class="mp-bd"><div class="mp-t">イタリアンキッチン SOLE</div><div class="mp-m">🍝 イタリアン ⭐4.2 📍3分</div></div></div>
+                <div class="mp-card"><div class="mp-img g2" style="height:64px"></div><div class="mp-bd"><div class="mp-t">麺屋 はなび</div><div class="mp-m">🍜 ラーメン ⭐4.5 📍5分</div></div></div>
+              </div>
+            </div>
+            <button class="select-btn" id="sbA" onclick="selectP(this.previousElementSibling,'A')">Aを選ぶ</button>
+          </div>
+
+          <!-- パターン B: おすすめ1件+写真リスト -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-b">B</span>おすすめ+リスト型</div>
+            <div class="preview-desc">AIおすすめ1件を提示し、<br>迷いを減らすスタイル</div>
+            <div class="mini-phone" onclick="selectP(this,'B')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div style="background:linear-gradient(135deg,#0d9488,#0891b2);border-radius:8px;padding:10px;color:#fff">
+                  <div style="font-size:9px;opacity:.8">🏆 あなたへのおすすめ</div>
+                  <div style="font-size:11px;font-weight:700;margin-top:3px">イタリアンキッチン SOLE</div>
+                  <div style="font-size:9px;opacity:.8;margin-top:2px">📸 料理写真4枚 ⭐4.2 📍3分</div>
+                </div>
+                <div class="mp-tabs"><div class="mp-tab on">近い順</div><div class="mp-tab">評価順</div></div>
+                <div style="display:flex;gap:4px;align-items:center;background:#f9fafb;border-radius:6px;padding:6px 8px">
+                  <div style="width:36px;height:36px;border-radius:6px;background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+                  <div><div class="mp-t">麺屋 はなび</div><div class="mp-m">🍜 ⭐4.5 📍5分</div></div>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center;background:#f9fafb;border-radius:6px;padding:6px 8px">
+                  <div style="width:36px;height:36px;border-radius:6px;background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+                  <div><div class="mp-t">カフェ Bloom</div><div class="mp-m">☕ ⭐4.0 📍7分</div></div>
+                </div>
+              </div>
+            </div>
+            <button class="select-btn" id="sbB" onclick="selectP(this.previousElementSibling,'B')">Bを選ぶ</button>
+          </div>
+
+          <!-- パターン C: マップ+カード切り替え -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-c">C</span>マップ併用型</div>
+            <div class="preview-desc">距離感を地図で確認しつつ、<br>カードも見られるスタイル</div>
+            <div class="mini-phone" onclick="selectP(this,'C')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div class="mp-map" style="height:70px"><div class="mp-pin"></div></div>
+                <div class="mp-tabs"><div class="mp-tab on">リスト</div><div class="mp-tab">マップ</div></div>
+                <div class="mp-card"><div class="mp-img g1" style="height:44px"></div><div class="mp-bd"><div class="mp-t">SOLE — 📍3分</div><div class="mp-m">🍝 イタリアン ⭐4.2</div></div></div>
+                <div class="mp-card"><div class="mp-img g2" style="height:44px"></div><div class="mp-bd"><div class="mp-t">はなび — 📍5分</div><div class="mp-m">🍜 ラーメン ⭐4.5</div></div></div>
+              </div>
+            </div>
+            <button class="select-btn" id="sbC" onclick="selectP(this.previousElementSibling,'C')">Cを選ぶ</button>
+          </div>
+        </div>
+
+        <div class="bottom-bar">
+          <div class="hint">💡 1つ選んでレビュー・改善に進みます</div>
+          <button class="btn btn-teal" style="width:auto;padding:10px 24px" onclick="go(4)" id="goReview" disabled>選んだパターンでレビューへ →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Screen 4: レビュー + 改善 ===== -->
+  <div class="screen" id="sc4">
+    <div class="ws3" style="flex:1">
+      <div class="review-main">
+        <div class="chosen-phone">
+          <div class="cp-notch"></div>
+          <div class="cp-body">
+            <div class="mp-bar" style="font-size:10px">🔍 渋谷区神宮前</div>
+            <div style="background:linear-gradient(135deg,#0d9488,#0891b2);border-radius:10px;padding:14px;color:#fff">
+              <div style="font-size:10px;opacity:.8;margin-bottom:4px">🏆 あなたへのおすすめ</div>
+              <div style="font-size:14px;font-weight:700">イタリアンキッチン SOLE</div>
+              <div style="font-size:10px;opacity:.8;margin-top:3px">📸 4枚 ⭐4.2 📍 徒歩3分</div>
+            </div>
+            <div class="mp-tabs"><div class="mp-tab on">近い順</div><div class="mp-tab">評価順</div></div>
+            <div style="display:flex;gap:6px;align-items:center;background:#f9fafb;border-radius:8px;padding:8px 10px">
+              <div style="width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+              <div><div style="font-size:11px;font-weight:700">麺屋 はなび</div><div style="font-size:9px;color:var(--sub)">🍜 ⭐4.5 📍5分</div></div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;background:#f9fafb;border-radius:8px;padding:8px 10px">
+              <div style="width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+              <div><div style="font-size:11px;font-weight:700">カフェ Bloom</div><div style="font-size:9px;color:var(--sub)">☕ ⭐4.0 📍7分</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chosen-label">パターンB: おすすめ+リスト型 を選択</div>
+      </div>
+
+      <div class="review-panel">
+        <div class="pnl-hd">📊 レビュー — Round 1</div>
+        <div class="score-box">
+          <div class="score-v">78</div>
+          <div class="score-l">/ 100 points</div>
+          <div class="score-bar"><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb"></div><div class="sb"></div></div>
+        </div>
+
+        <!-- 回答との一致度 -->
+        <div class="match-sec">
+          <h4>🎯 あなたの回答との一致度</h4>
+          <div class="match-i"><span class="ml">📸 写真重視</span><div class="match-bar"><div class="match-fill" style="width:70%"></div></div><span class="match-v">70%</span></div>
+          <div class="match-i"><span class="ml">🍽 ジャンルタブ</span><div class="match-bar"><div class="match-fill" style="width:40%"></div></div><span class="match-v" style="color:var(--warn)">40%</span></div>
+          <div class="match-i"><span class="ml">📍 距離フィルター</span><div class="match-bar"><div class="match-fill" style="width:90%"></div></div><span class="match-v">90%</span></div>
+          <div class="match-i"><span class="ml">🤖 おすすめ提示</span><div class="match-bar"><div class="match-fill" style="width:95%"></div></div><span class="match-v">95%</span></div>
+        </div>
+
+        <div class="rev-sec">
+          <h4>✅ Good Points</h4>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>おすすめ1件が「30秒で決められる」制約をよく満たしている</span></div>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>距離情報が目立ち、土地勘のないユーザーに親切</span></div>
+        </div>
+        <div class="rev-sec">
+          <h4>🔧 Development Points</h4>
+          <div class="rev-i"><div class="rev-b d">!</div><span>「ジャンルタブ」を選んだが、現在はソートタブのみ — ジャンル切替がない</span></div>
+          <div class="rev-i"><div class="rev-b d">!</div><span>リスト内の写真が小さく「写真重視」の意図と乖離</span></div>
+        </div>
+        <div style="padding:14px 16px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:8px">💡 改善方針</label>
+          <textarea class="ta-small" style="min-height:64px" placeholder="例）ジャンルタブを追加し、リストの写真をもっと大きく..."></textarea>
+          <button class="btn btn-green" onclick="go(5)" style="margin-top:8px">改善して Round 2 →</button>
+          <button class="btn" style="margin-top:6px;background:var(--bg);border:1px solid var(--border);font-size:12px" onclick="go(5)">このまま提出する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Screen 5: 結果 ===== -->
+  <div class="screen" id="sc5">
+    <div class="s4">
+      <div class="ri">🎉</div>
+      <div class="rt">Challenge 04 クリア！</div>
+      <div class="rs">ランチ探しアプリの画面設計をクリアしました</div>
+      <div class="rc">
+        <h3>📈 スコア推移</h3>
+        <div class="gb"><div class="gl">Round 1</div><div class="gt"><div class="gf" style="width:78%;background:var(--accent)"></div></div><div class="gv">78</div></div>
+        <div class="gb"><div class="gl">Round 2</div><div class="gt"><div class="gf" style="width:86%;background:var(--accent)"></div></div><div class="gv">86</div></div>
+        <div class="gb"><div class="gl">最終</div><div class="gt"><div class="gf" style="width:92%;background:var(--success)"></div></div><div class="gv" style="color:var(--success)">92</div></div>
+      </div>
+
+      <div class="rc">
+        <h3>🎯 回答精度の成長</h3>
+        <p style="font-size:12px;color:var(--sub);margin-bottom:12px">ガイドの回答と最終デザインの一致度</p>
+        <div class="gb"><div class="gl">Round 1</div><div class="gt"><div class="gf" style="width:74%;background:var(--warn)"></div></div><div class="gv" style="color:var(--warn)">74%</div></div>
+        <div class="gb"><div class="gl">Round 2</div><div class="gt"><div class="gf" style="width:88%;background:var(--accent)"></div></div><div class="gv">88%</div></div>
+        <div class="gb"><div class="gl">最終</div><div class="gt"><div class="gf" style="width:95%;background:var(--success)"></div></div><div class="gv" style="color:var(--success)">95%</div></div>
+      </div>
+
+      <div class="tw">
+        <h4>💡 今回の学び</h4>
+        <ul>
+          <li>「写真重視」を選んでも、配置とサイズまで考えないと意図が反映されない</li>
+          <li>ジャンルタブ＋ソートは情報設計の異なるレイヤー — 混同しない</li>
+          <li>おすすめ提示は意思決定時間を大幅に短縮する有効なパターン</li>
+        </ul>
+      </div>
+
+      <div class="nbt">
+        <button class="bo" onclick="go(1)">お題一覧に戻る</button>
+        <button class="bp">次のChallenge →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 画面遷移 */
+function go(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc'+n).classList.add('active');
+  const labels={1:'お題選択',2:'ガイド入力',3:'3パターン比較',4:'レビュー Round 1',5:'結果'};
+  document.getElementById('badgeText').textContent=labels[n]||'';
+}
+
+/* チップ選択（同グループ内でトグル）*/
+function toggleChip(el){
+  const group=el.parentElement;
+  /* Q3（複数選択OK）以外は単一選択 */
+  const isMulti=group.nextElementSibling && group.nextElementSibling.textContent.includes('複数');
+  if(!isMulti){
+    group.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  }
+  el.classList.toggle('on');
+}
+
+/* パターン選択 */
+let selectedP=null;
+function selectP(phoneEl,label){
+  document.querySelectorAll('.mini-phone').forEach(p=>p.classList.remove('selected'));
+  document.querySelectorAll('.select-btn').forEach(b=>b.classList.remove('on'));
+  phoneEl.classList.add('selected');
+  document.getElementById('sb'+label).classList.add('on');
+  selectedP=label;
+  document.getElementById('goReview').disabled=false;
+}
+</script>
+</body>
+</html>

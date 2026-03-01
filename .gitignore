@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build
+.next/
+out/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude Code (個人設定)
+CLAUDE.local.md
+
+# Misc
+*.log
+npm-debug.log*

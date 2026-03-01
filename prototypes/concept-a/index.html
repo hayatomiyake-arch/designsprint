@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept A: Design Eye — 審美眼育成型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --surface-hover: #24243a;
+    --border: #2a2a3e;
+    --text: #e8e8f0;
+    --text-sub: #8888a0;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --success: #00b894;
+    --warning: #fdcb6e;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .logo span { color: var(--accent-light); }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .level-badge {
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Progress */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+  }
+  .progress-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* Main Layout */
+  .main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+
+  /* Brief Card */
+  .brief {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+  .brief-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-light);
+    margin-bottom: 12px;
+  }
+  .brief h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .brief p {
+    color: var(--text-sub);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .brief-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .brief-tag {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+
+  /* Step indicator */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .step-dot.active {
+    background: var(--accent);
+    color: white;
+  }
+  .step-dot.done {
+    background: var(--success);
+    color: white;
+  }
+  .step-dot.upcoming {
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+  }
+  .step-line {
+    width: 32px;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* 3 Pattern Cards */
+  .patterns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .pattern-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+  .pattern-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(108, 92, 231, 0.15);
+  }
+  .pattern-card.selected {
+    border-color: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.3);
+  }
+  .pattern-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--accent);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .pattern-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+  .pattern-preview {
+    height: 280px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Mock UI elements inside pattern previews */
+  .mock-map {
+    flex: 1;
+    background: #2a2a4a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-map::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(45deg, #1a1a3a 25%, transparent 25%),
+      linear-gradient(-45deg, #1a1a3a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1a1a3a 75%),
+      linear-gradient(-45deg, transparent 75%, #1a1a3a 75%);
+    background-size: 20px 20px;
+    opacity: 0.3;
+  }
+  .mock-pin {
+    width: 16px;
+    height: 16px;
+    background: #e74c3c;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    position: relative;
+    z-index: 1;
+  }
+  .mock-searchbar {
+    height: 36px;
+    background: #2a2a4a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .mock-searchbar .icon {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #666;
+    border-radius: 50%;
+  }
+  .mock-searchbar .text {
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
+    flex: 1;
+  }
+
+  .mock-photo-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .mock-photo {
+    background: linear-gradient(135deg, #2d1b69, #11998e);
+    border-radius: 6px;
+  }
+  .mock-photo:nth-child(2) { background: linear-gradient(135deg, #c94b4b, #4b134f); }
+  .mock-photo:nth-child(3) { background: linear-gradient(135deg, #1a2a6c, #b21f1f); }
+  .mock-photo:nth-child(4) { background: linear-gradient(135deg, #0f2027, #2c5364); }
+
+  .mock-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .mock-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2a2a4a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    flex: 1;
+  }
+  .mock-rank {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent-light);
+    width: 24px;
+    text-align: center;
+  }
+  .mock-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+  }
+  .mock-list-item:nth-child(1) .mock-thumb { background: linear-gradient(135deg, #2d1b69, #11998e); }
+  .mock-list-item:nth-child(2) .mock-thumb { background: linear-gradient(135deg, #c94b4b, #4b134f); }
+  .mock-list-item:nth-child(3) .mock-thumb { background: linear-gradient(135deg, #1a2a6c, #b21f1f); }
+  .mock-list-item:nth-child(4) .mock-thumb { background: linear-gradient(135deg, #0f2027, #2c5364); }
+  .mock-text-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mock-text-line {
+    height: 6px;
+    background: #444;
+    border-radius: 3px;
+  }
+  .mock-text-line.short { width: 60%; }
+  .mock-stars {
+    color: var(--warning);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .pattern-info {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .pattern-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .pattern-desc {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+
+  /* Reason input */
+  .reason-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .reason-section.visible { display: block; }
+  .reason-section label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .reason-textarea {
+    width: 100%;
+    height: 100px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+  }
+  .reason-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .reason-textarea::placeholder { color: #555; }
+  .submit-btn {
+    margin-top: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover { background: #5a4bd1; }
+
+  /* Concept label */
+  .concept-banner {
+    text-align: center;
+    padding: 12px;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="concept-banner">CONCEPT A — DESIGN EYE（審美眼育成型）</div>
+
+<header class="header">
+  <div class="logo">Design<span>Eye</span></div>
+  <div class="header-meta">
+    <span class="level-badge">Level 1</span>
+    <span>Challenge 4 / 30</span>
+    <span>🔥 3日連続</span>
+  </div>
+</header>
+
+<div class="progress-bar"><div class="progress-fill"></div></div>
+
+<main class="main">
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="step-dot done">1</div>
+    <div class="step-line"></div>
+    <div class="step-dot active">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot upcoming">3</div>
+    <div class="step-line"></div>
+    <div class="step-dot upcoming">4</div>
+    <div class="step-line"></div>
+    <div class="step-dot upcoming">5</div>
+  </div>
+
+  <!-- Brief -->
+  <div class="brief">
+    <div class="brief-label">📋 Today's Challenge</div>
+    <h2>近所のランチ探しアプリのトップ画面</h2>
+    <p>
+      田中さん（32歳・会社員）は3日前に引っ越してきたばかり。
+      お昼休みに近所で美味しいランチを食べたいが、土地勘がなく、どこに何があるか全くわからない。
+      時間は限られているので、素早く良さそうな店を見つけて、迷わず行きたい。
+    </p>
+    <div class="brief-tags">
+      <span class="brief-tag">📱 モバイル</span>
+      <span class="brief-tag">🎯 情報探索</span>
+      <span class="brief-tag">⏱ 短時間での意思決定</span>
+    </div>
+  </div>
+
+  <!-- Section: Choose -->
+  <div class="section-title">👁 3つのアプローチ — どれが最適？</div>
+
+  <div class="patterns">
+    <!-- Pattern A: Map-centric -->
+    <div class="pattern-card" onclick="selectPattern(this, 'A')">
+      <span class="pattern-label">A</span>
+      <div class="pattern-preview" style="background: #12121e;">
+        <div class="mock-searchbar">
+          <div class="icon"></div>
+          <div class="text"></div>
+        </div>
+        <div class="mock-map">
+          <div class="mock-pin"></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;height:48px;background:#2a2a4a;border-radius:8px;"></div>
+          <div style="flex:1;height:48px;background:#2a2a4a;border-radius:8px;"></div>
+        </div>
+      </div>
+      <div class="pattern-info">
+        <div class="pattern-name">マップ中心型</div>
+        <div class="pattern-desc">地図をメインに据え、現在地周辺の店舗をピンで表示。距離感が直感的にわかる。</div>
+      </div>
+    </div>
+
+    <!-- Pattern B: Photo feed -->
+    <div class="pattern-card" onclick="selectPattern(this, 'B')">
+      <span class="pattern-label">B</span>
+      <div class="pattern-preview" style="background: #12121e;">
+        <div class="mock-searchbar">
+          <div class="icon"></div>
+          <div class="text"></div>
+        </div>
+        <div class="mock-photo-grid">
+          <div class="mock-photo"></div>
+          <div class="mock-photo"></div>
+          <div class="mock-photo"></div>
+          <div class="mock-photo"></div>
+        </div>
+      </div>
+      <div class="pattern-info">
+        <div class="pattern-name">フォトフィード型</div>
+        <div class="pattern-desc">料理の写真を大きく表示。ビジュアルで食欲を刺激し、直感的に選べる。</div>
+      </div>
+    </div>
+
+    <!-- Pattern C: Ranking list -->
+    <div class="pattern-card" onclick="selectPattern(this, 'C')">
+      <span class="pattern-label">C</span>
+      <div class="pattern-preview" style="background: #12121e;">
+        <div class="mock-searchbar">
+          <div class="icon"></div>
+          <div class="text"></div>
+        </div>
+        <div class="mock-list">
+          <div class="mock-list-item">
+            <div class="mock-rank">1</div>
+            <div class="mock-thumb"></div>
+            <div class="mock-text-lines">
+              <div class="mock-text-line"></div>
+              <div class="mock-text-line short"></div>
+            </div>
+            <div class="mock-stars">★★★★☆</div>
+          </div>
+          <div class="mock-list-item">
+            <div class="mock-rank">2</div>
+            <div class="mock-thumb"></div>
+            <div class="mock-text-lines">
+              <div class="mock-text-line"></div>
+              <div class="mock-text-line short"></div>
+            </div>
+            <div class="mock-stars">★★★★☆</div>
+          </div>
+          <div class="mock-list-item">
+            <div class="mock-rank">3</div>
+            <div class="mock-thumb"></div>
+            <div class="mock-text-lines">
+              <div class="mock-text-line"></div>
+              <div class="mock-text-line short"></div>
+            </div>
+            <div class="mock-stars">★★★☆☆</div>
+          </div>
+          <div class="mock-list-item">
+            <div class="mock-rank">4</div>
+            <div class="mock-thumb"></div>
+            <div class="mock-text-lines">
+              <div class="mock-text-line"></div>
+              <div class="mock-text-line short"></div>
+            </div>
+            <div class="mock-stars">★★★☆☆</div>
+          </div>
+        </div>
+      </div>
+      <div class="pattern-info">
+        <div class="pattern-name">ランキングリスト型</div>
+        <div class="pattern-desc">評価順のリスト表示。レビュー情報が一覧でき、比較検討しやすい。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reason Input (appears after selection) -->
+  <div class="reason-section" id="reasonSection">
+    <label>💭 なぜこのパターンが田中さんに最適だと思いますか？</label>
+    <textarea class="reason-textarea" placeholder="例）土地勘がない田中さんにとって、地図で現在地からの距離が見えることが最も重要。お昼休みの限られた時間で店を選ぶには、まず「近さ」という軸で絞り込めるUIが適切だと考えた。"></textarea>
+    <button class="submit-btn" onclick="submitAnswer()">回答を提出する →</button>
+  </div>
+</main>
+
+<script>
+let selectedPattern = null;
+
+function selectPattern(el, pattern) {
+  document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPattern = pattern;
+  document.getElementById('reasonSection').classList.add('visible');
+}
+
+function submitAnswer() {
+  if (!selectedPattern) return;
+  alert('【プロトタイプ】回答を提出しました。\n\n選択: パターン ' + selectedPattern + '\n\n次のステップ: 解説フィードバック画面へ遷移します。');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B-2: マルチプレビュー型</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#f5f6f8;--surface:#fff;--border:#e2e5ea;--text:#1a1a2e;--sub:#6b7280;--accent:#2563eb;--accent-bg:#eff6ff;--success:#059669;--success-bg:#ecfdf5;--warn:#d97706;--warn-bg:#fffbeb;--red:#dc2626;--purple:#7c3aed;--purple-bg:#f5f3ff}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .banner{text-align:center;padding:8px;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;font-size:11px;font-weight:700;letter-spacing:1px}
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .logo{font-size:16px;font-weight:800;color:var(--purple)}
+  .hdr-r{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--sub)}
+  .badge{padding:3px 10px;border-radius:16px;font-size:11px;font-weight:700}
+  .badge-purple{background:var(--purple-bg);color:var(--purple)}
+
+  .screens{position:relative;min-height:calc(100vh - 70px)}
+  .screen{display:none;min-height:calc(100vh - 70px)}
+  .screen.active{display:flex;flex-direction:column}
+
+  /* Screen 1: Challenge Select */
+  .s1{max-width:900px;margin:0 auto;padding:32px 24px}
+  .s1 h1{font-size:22px;font-weight:800;margin-bottom:6px}
+  .s1 .sub{font-size:14px;color:var(--sub);margin-bottom:28px}
+  .ch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .ch{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s}
+  .ch:hover{border-color:var(--purple);transform:translateY(-3px);box-shadow:0 8px 24px rgba(124,58,237,.1)}
+  .ch.lock{opacity:.4;pointer-events:none}
+  .ch-n{font-size:11px;font-weight:700;color:var(--purple);margin-bottom:8px}
+  .ch-t{font-size:15px;font-weight:700;margin-bottom:8px}
+  .ch-d{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px}
+  .ch-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .ch-tag{font-size:10px;padding:3px 8px;background:var(--bg);border-radius:4px;color:var(--sub)}
+  .ch-done{color:var(--success);font-size:12px;font-weight:700}
+
+  /* Screen 2: Workspace (Multi-Preview) */
+  .ws2{display:grid;grid-template-columns:300px 1fr;flex:1;min-height:0}
+  .pnl{display:flex;flex-direction:column;overflow-y:auto}
+  .pnl-l{background:var(--surface);border-right:1px solid var(--border)}
+  .pnl-hd{padding:12px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sub);border-bottom:1px solid var(--border)}
+  .brief{padding:16px}
+  .brief h3{font-size:14px;font-weight:700;margin-bottom:8px}
+  .brief p{font-size:13px;color:var(--sub);line-height:1.7}
+  .consts{padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--border)}
+  .const-i{font-size:12px;color:var(--sub);padding:3px 0}
+  .inp-sec{padding:16px;flex:1;display:flex;flex-direction:column}
+  .inp-sec label{font-size:13px;font-weight:600;margin-bottom:8px;display:block}
+  .ta{flex:1;min-height:100px;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;line-height:1.7;resize:none;font-family:inherit;color:var(--text)}
+  .ta:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+  .btn{padding:11px 20px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+  .btn-purple{background:var(--purple);color:#fff}
+  .btn-green{background:var(--success);color:#fff}
+
+  /* Main area with 3 previews */
+  .pnl-main{background:#fafbfc;display:flex;flex-direction:column;overflow-y:auto}
+  .preview-header{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between}
+  .preview-header h3{font-size:14px;font-weight:700}
+  .preview-header .hint{font-size:12px;color:var(--sub)}
+
+  .three-previews{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:24px;flex:1}
+
+  .preview-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .preview-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--sub)}
+  .preview-label .letter{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
+  .letter-a{background:#6366f1}
+  .letter-b{background:#ec4899}
+  .letter-c{background:#f59e0b}
+
+  .mini-phone{width:240px;background:#fff;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.06);overflow:hidden;cursor:pointer;border:3px solid transparent;transition:all .2s}
+  .mini-phone:hover{border-color:var(--purple);box-shadow:0 8px 30px rgba(124,58,237,.12)}
+  .mini-phone.selected{border-color:var(--purple);box-shadow:0 0 0 4px rgba(124,58,237,.2)}
+  .mp-notch{width:70px;height:14px;background:#1a1a2e;border-radius:0 0 8px 8px;margin:0 auto}
+  .mp-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+  .mp-bar{height:24px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:9px;color:#aaa}
+  .mp-tabs{display:flex;gap:2px;padding:2px;background:#f3f4f6;border-radius:6px}
+  .mp-tab{flex:1;text-align:center;padding:4px;font-size:9px;border-radius:4px;color:var(--sub)}
+  .mp-tab.on{background:#fff;font-weight:700;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .mp-card{border:1px solid #eee;border-radius:6px;overflow:hidden}
+  .mp-img{height:52px}
+  .mp-img.g1{background:linear-gradient(135deg,#667eea,#764ba2)}
+  .mp-img.g2{background:linear-gradient(135deg,#f093fb,#f5576c)}
+  .mp-img.g3{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+  .mp-img.g4{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+  .mp-img.g5{background:linear-gradient(135deg,#fa709a,#fee140)}
+  .mp-img.g6{background:linear-gradient(135deg,#a18cd1,#fbc2eb)}
+  .mp-bd{padding:6px 8px}
+  .mp-t{font-size:10px;font-weight:700;margin-bottom:2px}
+  .mp-m{font-size:8px;color:var(--sub)}
+  .mp-map{height:100px;background:#e8eef4;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--sub);position:relative;overflow:hidden}
+  .mp-map::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#dde4ec 25%,transparent 25%),linear-gradient(-45deg,#dde4ec 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dde4ec 75%),linear-gradient(-45deg,transparent 75%,#dde4ec 75%);background-size:16px 16px;opacity:.3}
+  .mp-pin{width:10px;height:10px;background:#e74c3c;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:relative;z-index:1}
+  .mp-list-i{display:flex;align-items:center;gap:6px;background:#f9fafb;border-radius:6px;padding:6px 8px}
+  .mp-rank{font-size:12px;font-weight:800;color:var(--purple);width:16px;text-align:center}
+  .mp-thumb{width:24px;height:24px;border-radius:4px}
+  .mp-lines{flex:1;display:flex;flex-direction:column;gap:3px}
+  .mp-line{height:4px;background:#ddd;border-radius:2px}
+  .mp-line.s{width:55%}
+
+  .select-btn-row{margin-top:4px}
+  .select-btn{padding:8px 16px;border:2px solid var(--purple);border-radius:8px;background:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--purple);transition:all .15s}
+  .select-btn:hover,.select-btn.on{background:var(--purple);color:#fff}
+
+  /* Bottom bar */
+  .bottom-bar{padding:12px 24px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .bottom-bar .hint{font-size:12px;color:var(--sub)}
+
+  /* Screen 3: Review + Refine */
+  .ws3{display:grid;grid-template-columns:1fr 360px;flex:1}
+  .review-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:#fafbfc}
+  .chosen-phone{width:320px;background:#fff;border-radius:22px;box-shadow:0 6px 30px rgba(0,0,0,.07);overflow:hidden}
+  .cp-notch{width:90px;height:18px;background:#1a1a2e;border-radius:0 0 12px 12px;margin:0 auto}
+  .cp-body{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+  .chosen-label{text-align:center;margin-top:16px;font-size:13px;color:var(--sub)}
+
+  .review-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .score-box{text-align:center;padding:16px;border-bottom:1px solid var(--border)}
+  .score-v{font-size:40px;font-weight:800;color:var(--purple)}
+  .score-l{font-size:11px;color:var(--sub)}
+  .score-bar{display:flex;gap:3px;margin-top:8px}
+  .sb{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .sb.f{background:var(--purple)}
+  .rev-sec{padding:14px 16px;border-bottom:1px solid var(--border)}
+  .rev-sec h4{font-size:12px;font-weight:700;margin-bottom:10px}
+  .rev-i{display:flex;gap:8px;padding:5px 0;font-size:12px;line-height:1.6;color:var(--sub)}
+  .rev-b{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:2px}
+  .rev-b.g{background:var(--success-bg);color:var(--success)}
+  .rev-b.d{background:var(--warn-bg);color:var(--warn)}
+
+  /* Screen 4: Result */
+  .s4{max-width:720px;margin:0 auto;padding:40px 24px;text-align:center}
+  .ri{font-size:56px;margin-bottom:16px}
+  .rt{font-size:24px;font-weight:800;margin-bottom:8px}
+  .rs{font-size:14px;color:var(--sub);margin-bottom:32px}
+  .rc{background:var(--surface);border-radius:16px;padding:24px;text-align:left;margin-bottom:20px;border:1px solid var(--border)}
+  .rc h3{font-size:15px;font-weight:700;margin-bottom:14px}
+  .gb{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .gl{font-size:13px;width:80px;color:var(--sub)}
+  .gt{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+  .gf{height:100%;border-radius:4px}
+  .gv{font-size:13px;font-weight:700;width:36px;text-align:right}
+  .tw{background:var(--purple-bg);border-radius:12px;padding:20px;margin-bottom:24px;text-align:left}
+  .tw h4{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:10px}
+  .tw li{font-size:13px;line-height:1.8;margin-left:16px}
+  .nbt{display:flex;gap:12px;justify-content:center}
+  .bo{padding:12px 28px;border:2px solid var(--border);border-radius:10px;background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text)}
+  .bp{padding:12px 28px;border:none;border-radius:10px;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="banner">B-2: マルチプレビュー型 — 指示→3パターン自動生成→選んで磨く</div>
+<header class="hdr">
+  <div class="logo">DesignSprint</div>
+  <div class="hdr-r">
+    <span class="badge badge-purple" id="badge2">お題選択</span>
+    <span>Level 1</span>
+    <span>🔥 3日連続</span>
+  </div>
+</header>
+
+<div class="screens">
+  <!-- S1: Challenge Select -->
+  <div class="screen active" id="s1">
+    <div class="s1">
+      <h1>📋 Level 1 のお題</h1>
+      <div class="sub">デザイン4原則を意識した単一画面の設計に挑戦しましょう</div>
+      <div class="ch-grid">
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 01</div><div class="ch-t">ログインページ</div><div class="ch-d">シンプルなログイン画面を設計。</div><div class="ch-done">✅ 完了 — 85点</div></div>
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 02</div><div class="ch-t">天気予報ウィジェット</div><div class="ch-d">限られたスペースに情報を整理。</div><div class="ch-done">✅ 完了 — 72点</div></div>
+        <div class="ch" style="border-color:var(--success);opacity:.7"><div class="ch-n">Challenge 03</div><div class="ch-t">ユーザープロフィール</div><div class="ch-d">個人情報の見せ方とアクション導線。</div><div class="ch-done">✅ 完了 — 78点</div></div>
+        <div class="ch" onclick="go(2)"><div class="ch-n" style="color:var(--red)">Challenge 04 — NEW</div><div class="ch-t">ランチ探しアプリ</div><div class="ch-d">引っ越したばかりの会社員が、近所のランチを素早く見つけられる画面を設計。</div><div class="ch-tags"><span class="ch-tag">📱 モバイル</span><span class="ch-tag">🎯 探索</span><span class="ch-tag">⏱ 短時間決定</span></div></div>
+        <div class="ch lock"><div class="ch-n">Challenge 05</div><div class="ch-t">🔒 音楽プレイヤー</div><div class="ch-d">解放条件: Ch.04クリア</div></div>
+        <div class="ch lock"><div class="ch-n">Challenge 06</div><div class="ch-t">🔒 ??????</div><div class="ch-d">解放条件: Ch.05クリア</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S2: Workspace - 3 Previews -->
+  <div class="screen" id="s2">
+    <div class="ws2" style="flex:1">
+      <div class="pnl pnl-l">
+        <div class="pnl-hd">📋 ブリーフ</div>
+        <div class="brief"><h3>🎯 ランチ探しアプリ</h3><p>田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを探したいが土地勘がない。</p></div>
+        <div class="consts">
+          <div class="const-i">📱 モバイルファースト</div>
+          <div class="const-i">👆 3タップ以内</div>
+          <div class="const-i">⏱ 30秒で選べる</div>
+        </div>
+        <div class="inp-sec">
+          <label>✏️ 設計指示</label>
+          <textarea class="ta">近くの店を写真付きで見せたい。距離が近い順で、ジャンルで絞れるようにしたい。店の評価もわかるようにしたい。</textarea>
+          <button class="btn btn-purple" onclick="showPreviews()">🚀 3パターン生成</button>
+        </div>
+      </div>
+
+      <div class="pnl-main">
+        <div class="preview-header">
+          <h3>👁 3つのアプローチ — ベースを選んでください</h3>
+          <div class="hint">指示から3つの異なるUIパターンを生成しました</div>
+        </div>
+        <div class="three-previews" id="previewArea">
+          <!-- A: Card List -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-a">A</span>カードリスト型</div>
+            <div class="mini-phone" onclick="selectPreview(this,'A')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div class="mp-tabs"><div class="mp-tab on">近い順</div><div class="mp-tab">評価順</div><div class="mp-tab">人気</div></div>
+                <div class="mp-card"><div class="mp-img g1"></div><div class="mp-bd"><div class="mp-t">イタリアンキッチン SOLE</div><div class="mp-m">🍝 イタリアン ⭐4.2 📍3分</div></div></div>
+                <div class="mp-card"><div class="mp-img g2"></div><div class="mp-bd"><div class="mp-t">麺屋 はなび</div><div class="mp-m">🍜 ラーメン ⭐4.5 📍5分</div></div></div>
+              </div>
+            </div>
+            <div class="select-btn-row"><button class="select-btn" id="btnA" onclick="selectPreview(this.parentElement.previousElementSibling,'A')">Aを選ぶ</button></div>
+          </div>
+
+          <!-- B: Map + Bottom Sheet -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-b">B</span>マップ+ボトムシート型</div>
+            <div class="mini-phone" onclick="selectPreview(this,'B')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 近くのランチ</div>
+                <div class="mp-map"><div class="mp-pin"></div></div>
+                <div style="background:#fff;border-radius:10px 10px 0 0;padding:8px 10px;box-shadow:0 -2px 8px rgba(0,0,0,.06)">
+                  <div style="width:32px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 8px"></div>
+                  <div style="display:flex;gap:6px">
+                    <div style="width:44px;height:44px;border-radius:6px;background:linear-gradient(135deg,#667eea,#764ba2)"></div>
+                    <div><div class="mp-t">SOLE</div><div class="mp-m">⭐4.2 📍3分</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="select-btn-row"><button class="select-btn" id="btnB" onclick="selectPreview(this.parentElement.previousElementSibling,'B')">Bを選ぶ</button></div>
+          </div>
+
+          <!-- C: Ranking + Photo -->
+          <div class="preview-col">
+            <div class="preview-label"><span class="letter letter-c">C</span>おすすめ1件+リスト型</div>
+            <div class="mini-phone" onclick="selectPreview(this,'C')">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:12px;color:#fff">
+                  <div style="font-size:9px;opacity:.8;margin-bottom:4px">🏆 AIおすすめ</div>
+                  <div style="font-size:12px;font-weight:700">イタリアンキッチン SOLE</div>
+                  <div style="font-size:9px;opacity:.8;margin-top:2px">⭐4.2 📍 徒歩3分 — あなたの好みに近い</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div class="mp-list-i"><div class="mp-rank">1</div><div class="mp-thumb" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+                  <div class="mp-list-i"><div class="mp-rank">2</div><div class="mp-thumb" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+                  <div class="mp-list-i"><div class="mp-rank">3</div><div class="mp-thumb" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="select-btn-row"><button class="select-btn" id="btnC" onclick="selectPreview(this.parentElement.previousElementSibling,'C')">Cを選ぶ</button></div>
+          </div>
+        </div>
+
+        <div class="bottom-bar">
+          <div class="hint">💡 1つ選んでレビュー・改善に進みます</div>
+          <button class="btn btn-purple" style="width:auto;padding:10px 24px" onclick="go(3)" id="goReview" disabled>選んだパターンでレビューへ →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3: Review + Refine (chosen pattern) -->
+  <div class="screen" id="s3">
+    <div class="ws3" style="flex:1">
+      <div class="review-main">
+        <div class="chosen-phone">
+          <div class="cp-notch"></div>
+          <div class="cp-body">
+            <div class="mp-bar">🔍 渋谷区神宮前</div>
+            <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:14px;color:#fff">
+              <div style="font-size:10px;opacity:.8;margin-bottom:4px">🏆 AIおすすめ</div>
+              <div style="font-size:14px;font-weight:700">イタリアンキッチン SOLE</div>
+              <div style="font-size:10px;opacity:.8;margin-top:3px">⭐4.2 📍 徒歩3分</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="mp-list-i"><div class="mp-rank">1</div><div class="mp-thumb" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+              <div class="mp-list-i"><div class="mp-rank">2</div><div class="mp-thumb" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+              <div class="mp-list-i"><div class="mp-rank">3</div><div class="mp-thumb" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chosen-label">パターンC: おすすめ1件+リスト型 を選択</div>
+      </div>
+
+      <div class="review-panel">
+        <div class="pnl-hd">📊 レビュー — Round 1</div>
+        <div class="score-box">
+          <div class="score-v">76</div>
+          <div class="score-l">/ 100 points</div>
+          <div class="score-bar"><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb"></div><div class="sb"></div></div>
+        </div>
+        <div class="rev-sec">
+          <h4>✅ Good Points</h4>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>「AIおすすめ1件」が迷いを減らし、30秒決定に有効</span></div>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>リスト型で比較検討もでき、選択肢も確保</span></div>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>距離情報が目立つ位置にあり、土地勘のないユーザーに親切</span></div>
+        </div>
+        <div class="rev-sec">
+          <h4>🔧 Development Points</h4>
+          <div class="rev-i"><div class="rev-b d">!</div><span>料理の写真がないため、視覚的な意思決定材料が不足</span></div>
+        </div>
+        <div style="padding:14px 16px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:8px">💡 改善方針</label>
+          <textarea class="ta" style="min-height:70px" placeholder="例）おすすめカードに料理写真を追加する..."></textarea>
+          <button class="btn btn-green" onclick="go(4)" style="margin-top:8px">改善して Round 2 →</button>
+          <button class="btn" style="margin-top:6px;background:var(--bg);border:1px solid var(--border);text-align:center;font-size:12px" onclick="go(4)">このまま提出する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S4: Result -->
+  <div class="screen" id="s4">
+    <div class="s4">
+      <div class="ri">🎉</div>
+      <div class="rt">Challenge 04 クリア！</div>
+      <div class="rs">ランチ探しアプリの画面設計をクリアしました</div>
+      <div class="rc">
+        <h3>📈 スコア推移</h3>
+        <div class="gb"><div class="gl">Round 1</div><div class="gt"><div class="gf" style="width:76%;background:var(--purple)"></div></div><div class="gv">76</div></div>
+        <div class="gb"><div class="gl">Round 2</div><div class="gt"><div class="gf" style="width:84%;background:var(--purple)"></div></div><div class="gv">84</div></div>
+        <div class="gb"><div class="gl">最終</div><div class="gt"><div class="gf" style="width:91%;background:var(--success)"></div></div><div class="gv" style="color:var(--success)">91</div></div>
+      </div>
+      <div class="tw">
+        <h4>💡 今回の学び</h4>
+        <ul>
+          <li>「おすすめ1件」の提示は意思決定時間を大幅に短縮する</li>
+          <li>写真は食の意思決定において最も強い視覚的訴求材料</li>
+          <li>3パターンを比較することで、各UIパターンのトレードオフを体感できた</li>
+        </ul>
+      </div>
+      <div class="nbt">
+        <button class="bo" onclick="go(1)">お題一覧に戻る</button>
+        <button class="bp">次のChallenge →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selected=null;
+function go(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  const l={1:'お題選択',2:'3パターン比較',3:'レビュー Round 1',4:'結果'};
+  document.getElementById('badge2').textContent=l[n]||'';
+}
+function selectPreview(el,label){
+  document.querySelectorAll('.mini-phone').forEach(p=>p.classList.remove('selected'));
+  document.querySelectorAll('.select-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('selected');
+  document.getElementById('btn'+label).classList.add('on');
+  selected=label;
+  document.getElementById('goReview').disabled=false;
+}
+function showPreviews(){
+  // already shown in the prototype
+}
+</script>
+</body>
+</html>

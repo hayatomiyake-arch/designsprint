@@ -1,0 +1,2178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesignSprint - Level 2: LP コミュニケーション設計</title>
+<style>
+/* ========================================
+   デザインシステム - CSS変数定義
+   ======================================== */
+:root {
+  --bg: #f5f6f8;
+  --surface: #fff;
+  --border: #e2e5ea;
+  --text: #1a1a2e;
+  --sub: #6b7280;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --orange: #ea580c;
+  --orange-bg: #fff7ed;
+}
+
+/* ========================================
+   リセット・ベーススタイル
+   ======================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ========================================
+   ヘッダー
+   ======================================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo span {
+  color: var(--text);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-level {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.badge-streak {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+/* ========================================
+   スクリーン共通
+   ======================================== */
+.screen {
+  display: none;
+  padding-top: 56px;
+  height: 100vh;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   スクリーン1: お題選択
+   ======================================== */
+.screen-select {
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.select-container {
+  max-width: 960px;
+  width: 100%;
+  padding: 48px 24px;
+}
+
+.select-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.select-subtitle {
+  color: var(--sub);
+  font-size: 14px;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+/* お題カードグリッド */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.card:hover:not(.card-locked) {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.card-locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.card-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* 完了バッジ */
+.card-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--success);
+  background: var(--success-bg);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* NEWバッジ */
+.card-new {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* お題カードのタグ */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.card-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--sub);
+}
+
+/* クリック可能カード */
+.card-clickable {
+  cursor: pointer;
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.card-clickable:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
+
+.card-locked-icon {
+  font-size: 28px;
+  text-align: center;
+  margin: 16px 0;
+  color: var(--sub);
+}
+
+/* ========================================
+   スクリーン2&3: ワークスペース 3カラムレイアウト
+   ======================================== */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 左パネル: ブリーフ+入力 */
+.panel-left {
+  width: 360px;
+  min-width: 360px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.panel-left-inner {
+  padding: 20px;
+  flex: 1;
+}
+
+/* 中央パネル: プレビュー */
+.panel-center {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg);
+}
+
+/* 右パネル: レビュー */
+.panel-right {
+  width: 340px;
+  min-width: 340px;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.panel-right-inner {
+  padding: 20px;
+}
+
+/* ========================================
+   ブリーフセクション（左パネル）
+   ======================================== */
+.brief-header {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brief-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brief-section {
+  margin-bottom: 14px;
+}
+
+.brief-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brief-text {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.brief-list {
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--text);
+  padding-left: 4px;
+  list-style: none;
+}
+
+.brief-list li {
+  margin-bottom: 2px;
+}
+
+.brief-list li::before {
+  content: "• ";
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.brief-flow {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.brief-flow-item {
+  margin-bottom: 2px;
+  padding-left: 4px;
+}
+
+.brief-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* テキストエリア入力 */
+.input-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-area {
+  width: 100%;
+  min-height: 160px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.input-area:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-generate {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background 0.2s;
+}
+
+.btn-generate:hover {
+  background: #1d4ed8;
+}
+
+/* ========================================
+   中央パネル: 空の状態
+   ======================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--sub);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 右パネル: 空の状態 */
+.review-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--sub);
+  text-align: center;
+  padding: 24px;
+}
+
+.review-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.review-empty-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   ブラウザモックアップ（LP プレビュー）
+   ======================================== */
+.browser-frame {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--border);
+}
+
+.browser-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #eab308; }
+.dot-green { background: #22c55e; }
+
+.browser-url {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+/* ========================================
+   LP セクション スタイル
+   ======================================== */
+
+/* LP ナビゲーションバー */
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(255,255,255,0.95);
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-nav-logo {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.lp-nav-link {
+  font-size: 12px;
+  color: var(--sub);
+  cursor: default;
+}
+
+.lp-nav-cta {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: default;
+}
+
+/* セクションラベル（レビュー用） */
+.lp-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sub);
+  text-align: left;
+  padding: 6px 24px;
+  background: rgba(0,0,0,0.02);
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.5px;
+}
+
+/* セクション1: ヒーロー */
+.lp-hero {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  padding: 48px 32px 40px;
+  text-align: center;
+}
+
+.lp-hero h1 {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+  white-space: pre-line;
+}
+
+.lp-hero-sub {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* 動画サムネイルプレースホルダ */
+.lp-video-thumb {
+  width: 80%;
+  max-width: 400px;
+  aspect-ratio: 16/9;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.lp-play-btn {
+  width: 48px;
+  height: 48px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+/* CTA ボタン */
+.lp-cta {
+  display: inline-block;
+  background: #059669;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 36px;
+  border-radius: 10px;
+  cursor: default;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+  margin-bottom: 8px;
+}
+
+.lp-cta-note {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-top: 6px;
+}
+
+/* セクション共通タイトル */
+.lp-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+/* セクション2: 数字の実績 */
+.lp-numbers {
+  padding: 40px 32px;
+  text-align: center;
+  background: #fff;
+}
+
+.lp-numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.lp-number-item {
+  padding: 16px 8px;
+  background: var(--accent-bg);
+  border-radius: 10px;
+}
+
+.lp-number-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -1px;
+}
+
+.lp-number-value span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lp-number-label {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+/* セクション3: 特徴カード */
+.lp-features {
+  padding: 40px 32px;
+  text-align: center;
+  background: var(--bg);
+}
+
+.lp-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.lp-feature-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px 12px;
+  border: 1px solid var(--border);
+}
+
+.lp-feature-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.lp-feature-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.lp-feature-desc {
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.5;
+}
+
+/* セクション4: 体験者の声 */
+.lp-testimonial {
+  padding: 40px 32px;
+  background: #fff;
+  text-align: center;
+}
+
+.lp-testimonial-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.lp-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.lp-testimonial-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lp-testimonial-stars {
+  font-size: 14px;
+  color: #eab308;
+  margin-bottom: 12px;
+}
+
+.lp-testimonial-quote {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  font-style: italic;
+}
+
+/* セクション5: 料金 */
+.lp-pricing {
+  padding: 40px 32px;
+  background: var(--bg);
+  text-align: center;
+}
+
+.lp-price-card {
+  max-width: 360px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 24px;
+  border: 2px solid var(--accent);
+  position: relative;
+}
+
+.lp-price-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 14px;
+  border-radius: 12px;
+}
+
+.lp-price-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent);
+  margin: 12px 0 4px;
+}
+
+.lp-price-value span {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lp-price-period {
+  font-size: 13px;
+  color: var(--sub);
+  margin-bottom: 16px;
+}
+
+.lp-price-features {
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.lp-price-feature {
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--bg);
+  color: var(--text);
+}
+
+.lp-price-feature::before {
+  content: "\2713  ";
+  color: var(--success);
+  font-weight: 700;
+}
+
+.lp-price-note {
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.lp-price-cta {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 8px;
+  margin-top: 16px;
+  cursor: default;
+}
+
+/* セクション6: 最終CTA */
+.lp-final-cta {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.lp-final-cta h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.lp-final-cta-sub {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 24px;
+}
+
+.lp-final-cta-btn {
+  display: inline-block;
+  background: #059669;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px 40px;
+  border-radius: 10px;
+  cursor: default;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+  margin-bottom: 10px;
+}
+
+.lp-final-cta-reassure {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* ========================================
+   右パネル: コミュニケーション設計レビュー
+   ======================================== */
+.review-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* スコア表示 */
+.score-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 22px;
+  margin: 0 auto 16px;
+}
+
+.score-75 {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 3px solid var(--warn);
+}
+
+.score-label {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* レビューセクション */
+.review-section {
+  margin-bottom: 18px;
+}
+
+.review-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.review-item {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.review-good { color: var(--success); }
+.review-warn { color: var(--warn); }
+.review-improve { color: var(--orange); }
+
+/* セクション別スコアテーブル */
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+.score-table th {
+  background: var(--bg);
+  padding: 6px 5px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--sub);
+}
+
+.score-table td {
+  padding: 5px 5px;
+  border-bottom: 1px solid var(--bg);
+  font-size: 11px;
+}
+
+.score-table td:last-child {
+  font-weight: 700;
+  text-align: center;
+}
+
+.score-high { color: var(--success); }
+.score-mid { color: var(--accent); }
+.score-low { color: var(--warn); }
+
+/* 改善入力エリア */
+.improve-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.improve-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.improve-area {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.improve-area:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-improve {
+  flex: 1;
+  padding: 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-improve:hover { background: #1d4ed8; }
+
+.btn-finish {
+  flex: 1;
+  padding: 10px;
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-finish:hover { background: #047857; }
+
+/* ========================================
+   スクリーン4: 結果・別解
+   ======================================== */
+.screen-result {
+  overflow-y: auto;
+  align-items: center;
+}
+
+.result-container {
+  max-width: 1060px;
+  width: 100%;
+  padding: 36px 24px 60px;
+  margin: 0 auto;
+}
+
+.result-title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* スコア推移 */
+.score-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.score-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-step-value {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  border: 3px solid;
+}
+
+.score-step-label {
+  font-size: 10px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+.score-arrow {
+  font-size: 18px;
+  color: var(--sub);
+}
+
+/* 学びセクション */
+.takeaways {
+  background: var(--accent-bg);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+}
+
+.takeaways-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.takeaway-item {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  padding-left: 24px;
+  position: relative;
+  color: var(--text);
+}
+
+.takeaway-item::before {
+  content: attr(data-icon);
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* 別解カードグリッド */
+.alternatives-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.alt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.alt-card {
+  border-radius: 12px;
+  border: 2px solid;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.alt-card-blue { border-color: var(--accent); }
+.alt-card-purple { border-color: var(--purple); }
+.alt-card-orange { border-color: var(--orange); }
+
+.alt-card-header {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.alt-card-blue .alt-card-header { background: var(--accent); }
+.alt-card-purple .alt-card-header { background: var(--purple); }
+.alt-card-orange .alt-card-header { background: var(--orange); }
+
+.alt-card-body {
+  padding: 14px 16px;
+}
+
+.alt-card-subtitle {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* ミニブラウザモックアップ */
+.mini-browser {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.mini-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.mini-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.mini-browser-content {
+  padding: 0;
+  font-size: 9px;
+  line-height: 1.4;
+  background: #fff;
+}
+
+.mini-section {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--bg);
+}
+
+.mini-section:last-child {
+  border-bottom: none;
+}
+
+.mini-section-hero {
+  text-align: center;
+  padding: 10px;
+  color: #fff;
+}
+
+.mini-section-hero-blue { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+.mini-section-hero-purple { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+.mini-section-hero-orange { background: linear-gradient(135deg, #ea580c, #eab308); }
+
+.mini-section-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.mini-cta {
+  display: inline-block;
+  background: #059669;
+  color: #fff;
+  font-size: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 3px;
+}
+
+.mini-numbers {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.mini-number-box {
+  background: var(--accent-bg);
+  border-radius: 4px;
+  padding: 3px 6px;
+  text-align: center;
+  flex: 1;
+}
+
+.mini-number-val {
+  font-weight: 800;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.mini-number-label {
+  font-size: 8px;
+  color: var(--sub);
+}
+
+.mini-features {
+  display: flex;
+  gap: 4px;
+}
+
+.mini-feature-box {
+  flex: 1;
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 4px;
+  text-align: center;
+  font-size: 9px;
+}
+
+.mini-testimonial {
+  text-align: center;
+}
+
+.mini-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 auto 3px;
+}
+
+.mini-avatar-blue { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+.mini-avatar-purple { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+.mini-avatar-orange { background: linear-gradient(135deg, #ea580c, #eab308); }
+
+.mini-pricing { text-align: center; }
+
+.mini-price-box {
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 4px;
+  display: inline-block;
+}
+
+/* 別解カードの Pros/Cons */
+.alt-pros-cons { margin-top: 10px; }
+
+.alt-label {
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.alt-label-pro { color: var(--success); }
+.alt-label-con { color: var(--warn); }
+
+.alt-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+
+/* 比較テーブル */
+.compare-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.compare-table th {
+  background: var(--bg);
+  padding: 10px 12px;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.compare-table th:first-child { text-align: left; }
+
+.compare-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--bg);
+  font-size: 12px;
+}
+
+.compare-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.th-blue { color: var(--accent); }
+.th-purple { color: var(--purple); }
+.th-orange { color: var(--orange); }
+
+/* ナビゲーションボタン */
+.nav-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-nav {
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.2s;
+}
+
+.btn-nav:hover { background: var(--bg); }
+
+.btn-nav-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+.btn-nav-primary:hover { background: #1d4ed8; }
+
+/* ========================================
+   スクロールバーのカスタマイズ
+   ======================================== */
+.panel-left::-webkit-scrollbar,
+.panel-right::-webkit-scrollbar,
+.panel-center::-webkit-scrollbar,
+.screen-result::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-left::-webkit-scrollbar-thumb,
+.panel-right::-webkit-scrollbar-thumb,
+.panel-center::-webkit-scrollbar-thumb,
+.screen-result::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- ========================================
+     ヘッダー
+     ======================================== -->
+<header class="header">
+  <div class="logo">Design<span>Sprint</span></div>
+  <div class="header-right">
+    <span class="badge badge-level">Level 2</span>
+    <span class="badge badge-streak">🔥 3日連続</span>
+  </div>
+</header>
+
+<!-- ========================================
+     スクリーン1: お題選択
+     ======================================== -->
+<div id="screen1" class="screen screen-select active">
+  <div class="select-container">
+    <div class="select-title">📋 Level 2 のお題</div>
+    <div class="select-subtitle">コミュニケーション設計とLP（ランディングページ）デザインに挑戦しましょう</div>
+
+    <div class="card-grid">
+      <!-- お題01: 完了 -->
+      <div class="card">
+        <div class="card-num">CHALLENGE 01</div>
+        <div class="card-title">SaaSプロダクト紹介LP</div>
+        <div class="card-done">✅ 完了 — 80点</div>
+      </div>
+      <!-- お題02: 完了 -->
+      <div class="card">
+        <div class="card-num">CHALLENGE 02</div>
+        <div class="card-title">イベント集客LP</div>
+        <div class="card-done">✅ 完了 — 75点</div>
+      </div>
+      <!-- お題03: 完了 -->
+      <div class="card">
+        <div class="card-num">CHALLENGE 03</div>
+        <div class="card-title">D2Cブランド LP</div>
+        <div class="card-done">✅ 完了 — 82点</div>
+      </div>
+      <!-- お題04: NEW → クリックでスクリーン2へ遷移 -->
+      <div class="card card-clickable" onclick="goScreen(2)">
+        <div class="card-new">NEW</div>
+        <div class="card-num">CHALLENGE 04</div>
+        <div class="card-title">オンラインフィットネス<br>会員獲得LP</div>
+        <div class="card-tags">
+          <span class="card-tag">💻 デスクトップ</span>
+          <span class="card-tag">🎯 会員登録CVR</span>
+          <span class="card-tag">📝 コピーライティング</span>
+        </div>
+      </div>
+      <!-- お題05: ロック -->
+      <div class="card card-locked">
+        <div class="card-num">CHALLENGE 05</div>
+        <div class="card-locked-icon">🔒</div>
+        <div class="card-title" style="color:var(--sub);">未解放</div>
+      </div>
+      <!-- お題06: ロック -->
+      <div class="card card-locked">
+        <div class="card-num">CHALLENGE 06</div>
+        <div class="card-locked-icon">🔒</div>
+        <div class="card-title" style="color:var(--sub);">未解放</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     スクリーン2: ワークスペース（空の状態）
+     ======================================== -->
+<div id="screen2" class="screen">
+  <div class="workspace">
+    <!-- 左パネル: 詳細ブリーフ＋入力 -->
+    <div class="panel-left">
+      <div class="panel-left-inner">
+        <div class="brief-header">📋 ブリーフ</div>
+        <div class="brief-title">🎯 オンラインフィットネス会員獲得LP</div>
+
+        <!-- ペルソナ -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ ペルソナ ━━</div>
+          <div class="brief-text"><strong>佐藤美咲（35歳・女性）</strong>
+IT企業のプロジェクトマネージャー。在宅勤務が増え、運動不足を実感。ジムに通う時間はないが、体型の変化が気になり始めている。過去にYouTubeの運動動画を試したが続かなかった。「プロに指導してもらいたいが、時間と場所の制約がある」のが悩み。</div>
+        </div>
+
+        <!-- サービス情報 -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ サービス情報 ━━</div>
+          <ul class="brief-list">
+            <li>サービス名: FitLife（フィットライフ）</li>
+            <li>月額: 1,980円（税込）</li>
+            <li>レッスン: 200本以上、15分〜60分</li>
+            <li>特徴: ライブ&アーカイブ / AI姿勢チェック / 管理栄養士の食事アドバイス付き</li>
+            <li>実績: 会員5万人超 / 継続率96% / 満足度4.8</li>
+          </ul>
+        </div>
+
+        <!-- CVゴール -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ CVゴール ━━</div>
+          <div class="brief-text"><strong>「7日間無料体験」への申し込み</strong>
+（クレジットカード登録不要）</div>
+        </div>
+
+        <!-- 訪問者の心理 -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ 想定される訪問者の心理 ━━</div>
+          <div class="brief-flow">
+            <div class="brief-flow-item">1. 「運動不足は分かってるけど、時間がない」</div>
+            <div class="brief-flow-item">2. 「ジムは高いし、続くか不安」</div>
+            <div class="brief-flow-item">3. 「自宅でできるなら試してみたいかも」</div>
+            <div class="brief-flow-item">4. 「でも、ちゃんと効果あるの？」</div>
+            <div class="brief-flow-item">5. 「無料なら試してみようかな」</div>
+          </div>
+        </div>
+
+        <!-- LP伝達メッセージの想定フロー -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ LP伝達メッセージの想定フロー ━━</div>
+          <div class="brief-text" style="font-size:12px;">各セクションで、訪問者の心理変化に合わせたメッセージとコンテンツを設計してください：</div>
+          <div class="brief-flow" style="margin-top:6px;">
+            <div class="brief-flow-item">• 共感 → 「わかる、忙しいよね」</div>
+            <div class="brief-flow-item">• 解決策の提示 → 「こんなサービスがある」</div>
+            <div class="brief-flow-item">• 信頼の構築 → 「これだけの人が使ってる」</div>
+            <div class="brief-flow-item">• 具体的なメリット → 「あなたにどう役立つか」</div>
+            <div class="brief-flow-item">• 不安の解消 → 「よくある心配にお答え」</div>
+            <div class="brief-flow-item">• 行動の後押し → 「今始めるメリット」</div>
+          </div>
+        </div>
+
+        <div class="brief-divider"></div>
+
+        <!-- テキストエリア入力 -->
+        <div class="input-label">✏️ LPの構成とメッセージを指示してください</div>
+        <textarea id="input2" class="input-area" placeholder="各セクションの「伝えたいメッセージ」と「見せるコンテンツ」を書いてください
+
+例:
+・セクション1: 共感＋解決策の提示
+  メッセージ: 「忙しくても、15分でカラダは変わる」
+  コンテンツ: ヒーロー画像＋CTA
+・セクション2: 信頼の構築
+  メッセージ: 「5万人が選んだ理由」
+  コンテンツ: 数字の実績"></textarea>
+        <button class="btn-generate" onclick="goScreen(3)">🚀 生成する</button>
+      </div>
+    </div>
+
+    <!-- 中央パネル: 空の状態 -->
+    <div class="panel-center">
+      <div class="empty-state">
+        <div class="empty-icon">🖥️</div>
+        <div class="empty-text">左パネルでLPの構成を入力し<br>「生成する」を押してください</div>
+      </div>
+    </div>
+
+    <!-- 右パネル: 空の状態 -->
+    <div class="panel-right">
+      <div class="review-empty">
+        <div class="review-empty-icon">📝</div>
+        <div class="review-empty-text">LPが生成されると<br>コミュニケーション設計の<br>レビューが表示されます</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     スクリーン3: ワークスペース（生成後+レビュー）
+     ======================================== -->
+<div id="screen3" class="screen">
+  <div class="workspace">
+    <!-- 左パネル: ブリーフ+入力（入力済み） -->
+    <div class="panel-left">
+      <div class="panel-left-inner">
+        <div class="brief-header">📋 ブリーフ</div>
+        <div class="brief-title">🎯 オンラインフィットネス会員獲得LP</div>
+
+        <!-- ペルソナ（スクリーン2と同一） -->
+        <div class="brief-section">
+          <div class="brief-section-label">━━ ペルソナ ━━</div>
+          <div class="brief-text"><strong>佐藤美咲（35歳・女性）</strong>
+IT企業のプロジェクトマネージャー。在宅勤務が増え、運動不足を実感。ジムに通う時間はないが、体型の変化が気になり始めている。過去にYouTubeの運動動画を試したが続かなかった。「プロに指導してもらいたいが、時間と場所の制約がある」のが悩み。</div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">━━ サービス情報 ━━</div>
+          <ul class="brief-list">
+            <li>サービス名: FitLife（フィットライフ）</li>
+            <li>月額: 1,980円（税込）</li>
+            <li>レッスン: 200本以上、15分〜60分</li>
+            <li>特徴: ライブ&アーカイブ / AI姿勢チェック / 管理栄養士の食事アドバイス付き</li>
+            <li>実績: 会員5万人超 / 継続率96% / 満足度4.8</li>
+          </ul>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">━━ CVゴール ━━</div>
+          <div class="brief-text"><strong>「7日間無料体験」への申し込み</strong>
+（クレジットカード登録不要）</div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">━━ 想定される訪問者の心理 ━━</div>
+          <div class="brief-flow">
+            <div class="brief-flow-item">1. 「運動不足は分かってるけど、時間がない」</div>
+            <div class="brief-flow-item">2. 「ジムは高いし、続くか不安」</div>
+            <div class="brief-flow-item">3. 「自宅でできるなら試してみたいかも」</div>
+            <div class="brief-flow-item">4. 「でも、ちゃんと効果あるの？」</div>
+            <div class="brief-flow-item">5. 「無料なら試してみようかな」</div>
+          </div>
+        </div>
+
+        <div class="brief-section">
+          <div class="brief-section-label">━━ LP伝達メッセージの想定フロー ━━</div>
+          <div class="brief-text" style="font-size:12px;">各セクションで、訪問者の心理変化に合わせたメッセージとコンテンツを設計してください：</div>
+          <div class="brief-flow" style="margin-top:6px;">
+            <div class="brief-flow-item">• 共感 → 「わかる、忙しいよね」</div>
+            <div class="brief-flow-item">• 解決策の提示 → 「こんなサービスがある」</div>
+            <div class="brief-flow-item">• 信頼の構築 → 「これだけの人が使ってる」</div>
+            <div class="brief-flow-item">• 具体的なメリット → 「あなたにどう役立つか」</div>
+            <div class="brief-flow-item">• 不安の解消 → 「よくある心配にお答え」</div>
+            <div class="brief-flow-item">• 行動の後押し → 「今始めるメリット」</div>
+          </div>
+        </div>
+
+        <div class="brief-divider"></div>
+
+        <!-- テキストエリア（入力済み） -->
+        <div class="input-label">✏️ LPの構成とメッセージを指示してください</div>
+        <textarea id="input3" class="input-area" style="min-height:200px;">セクション1[共感→解決策]: 「忙しくても、15分でカラダは変わる」/ ヒーロー画像+動画サムネイル+CTA
+セクション2[社会的証明]: 「5万人が選んだフィットネス」/ 会員数・レッスン数・満足度の数字
+セクション3[メリット提示]: 「選ばれる3つの理由」/ 3カラムの特徴カード
+セクション4[共感ストーリー]: 「体験者の声」/ 写真付きお客様の声
+セクション5[不安解消]: 「料金プラン」/ 価格比較テーブル+FAQ
+セクション6[行動の後押し]: 「今なら7日間無料」/ 最終CTA+カード不要の安心材料</textarea>
+        <button class="btn-generate" style="opacity:0.5;cursor:default;background:#94a3b8;">生成済み</button>
+      </div>
+    </div>
+
+    <!-- 中央パネル: リアルなLP プレビュー（ブラウザモックアップ） -->
+    <div class="panel-center">
+      <div class="browser-frame">
+        <!-- ブラウザバー -->
+        <div class="browser-bar">
+          <div class="browser-dots">
+            <div class="browser-dot dot-red"></div>
+            <div class="browser-dot dot-yellow"></div>
+            <div class="browser-dot dot-green"></div>
+          </div>
+          <div class="browser-url">fitlife.jp</div>
+        </div>
+        <div class="browser-content">
+          <!-- LP ナビゲーション -->
+          <div class="lp-nav">
+            <div class="lp-nav-logo">FitLife</div>
+            <div class="lp-nav-links">
+              <span class="lp-nav-link">特徴</span>
+              <span class="lp-nav-link">料金</span>
+              <span class="lp-nav-link">体験談</span>
+              <span class="lp-nav-cta">無料体験</span>
+            </div>
+          </div>
+
+          <!-- セクション1: ヒーロー -->
+          <div class="lp-section-label">SECTION 1 — 共感 + 解決策の提示</div>
+          <div class="lp-hero">
+            <h1>忙しくても、15分で
+カラダは変わる。</h1>
+            <div class="lp-hero-sub">プロのレッスンを、いつでもどこでも。5万人が実感。</div>
+            <div class="lp-video-thumb">
+              <div class="lp-play-btn">▶</div>
+            </div>
+            <div>
+              <span class="lp-cta">🎯 7日間 無料で体験する</span>
+            </div>
+            <div class="lp-cta-note">※ クレジットカード登録不要</div>
+          </div>
+
+          <!-- セクション2: 数字の実績 -->
+          <div class="lp-section-label">SECTION 2 — 社会的証明</div>
+          <div class="lp-numbers">
+            <div class="lp-section-title">5万人が選んだフィットネス</div>
+            <div class="lp-numbers-grid">
+              <div class="lp-number-item">
+                <div class="lp-number-value">50,000<span>人+</span></div>
+                <div class="lp-number-label">累計会員数</div>
+              </div>
+              <div class="lp-number-item">
+                <div class="lp-number-value">200<span>本+</span></div>
+                <div class="lp-number-label">レッスン動画</div>
+              </div>
+              <div class="lp-number-item">
+                <div class="lp-number-value">96<span>%</span></div>
+                <div class="lp-number-label">継続率</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- セクション3: 特徴カード -->
+          <div class="lp-section-label">SECTION 3 — メリット提示</div>
+          <div class="lp-features">
+            <div class="lp-section-title">選ばれる3つの理由</div>
+            <div class="lp-features-grid">
+              <div class="lp-feature-card">
+                <div class="lp-feature-icon">🏠</div>
+                <div class="lp-feature-title">自宅で完結</div>
+                <div class="lp-feature-desc">通勤前、昼休み、寝る前。あなたの好きな時間に</div>
+              </div>
+              <div class="lp-feature-card">
+                <div class="lp-feature-icon">⏱</div>
+                <div class="lp-feature-title">15分から</div>
+                <div class="lp-feature-desc">忙しい日でも。短時間×高効率メニュー</div>
+              </div>
+              <div class="lp-feature-card">
+                <div class="lp-feature-icon">👩‍🏫</div>
+                <div class="lp-feature-title">プロが指導</div>
+                <div class="lp-feature-desc">AI姿勢チェック+管理栄養士の食事サポート</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- セクション4: 体験者の声 -->
+          <div class="lp-section-label">SECTION 4 — 共感ストーリー</div>
+          <div class="lp-testimonial">
+            <div class="lp-section-title">体験者の声</div>
+            <div class="lp-testimonial-card">
+              <div class="lp-avatar">S</div>
+              <div class="lp-testimonial-name">佐々木 恵さん（38歳・会社員）</div>
+              <div class="lp-testimonial-stars">★★★★★</div>
+              <div class="lp-testimonial-quote">「在宅勤務で5kg増えてしまい…でもFitLifeを始めて3ヶ月で体型が戻りました。15分のレッスンなら毎日続けられます」</div>
+            </div>
+          </div>
+
+          <!-- セクション5: 料金 -->
+          <div class="lp-section-label">SECTION 5 — 不安解消（料金）</div>
+          <div class="lp-pricing">
+            <div class="lp-section-title">シンプルな料金プラン</div>
+            <div class="lp-price-card">
+              <div class="lp-price-badge">人気No.1</div>
+              <div class="lp-price-value">¥1,980<span>/月</span></div>
+              <div class="lp-price-period">（税込）</div>
+              <div class="lp-price-features">
+                <div class="lp-price-feature">200本以上のレッスン見放題</div>
+                <div class="lp-price-feature">ライブ&アーカイブ対応</div>
+                <div class="lp-price-feature">AI姿勢チェック機能</div>
+                <div class="lp-price-feature">管理栄養士の食事アドバイス</div>
+                <div class="lp-price-feature">いつでも解約OK</div>
+              </div>
+              <div class="lp-price-note">他社ジム比較で約1/5の価格</div>
+              <div>
+                <span class="lp-price-cta">まずは無料で試す →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- セクション6: 最終CTA -->
+          <div class="lp-section-label">SECTION 6 — 行動の後押し</div>
+          <div class="lp-final-cta">
+            <h2>今なら7日間、完全無料。</h2>
+            <div class="lp-final-cta-sub">まずは体験してみませんか？</div>
+            <div>
+              <span class="lp-final-cta-btn">🎯 7日間 無料で体験する</span>
+            </div>
+            <div class="lp-final-cta-reassure">いつでも解約OK・カード登録不要</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右パネル: コミュニケーション設計レビュー -->
+    <div class="panel-right">
+      <div class="panel-right-inner">
+        <!-- スコア表示 -->
+        <div style="text-align:center;margin-bottom:16px;">
+          <div class="score-circle score-75">
+            75
+            <span class="score-label">/ 100</span>
+          </div>
+        </div>
+
+        <div class="review-title" style="margin-bottom:20px;">📝 コミュニケーション設計レビュー</div>
+
+        <!-- メッセージフローの評価 -->
+        <div class="review-section">
+          <div class="review-section-title">✅ メッセージフローの評価</div>
+          <div class="review-item review-good">✓ 共感→解決策→証明の流れがセールストークとして自然</div>
+          <div class="review-item review-good">✓ 「忙しくても15分で」はペルソナの時間不足の悩みに直接応答</div>
+          <div class="review-item review-good">✓ CTAの「無料」「カード不要」で行動のハードルを下げている</div>
+        </div>
+
+        <!-- メッセージ×コンテンツの整合性 -->
+        <div class="review-section">
+          <div class="review-section-title">🔍 メッセージ×コンテンツの整合性</div>
+          <div class="review-item review-good">✓ セクション2: 「5万人が選んだ」→ 数字の提示 ✅ 整合</div>
+          <div class="review-item review-warn">⚠ セクション3: 「AI姿勢チェック」の説明があるがビジュアルがない → 画面キャプチャやアニメGIFがあると説得力UP</div>
+          <div class="review-item review-warn">⚠ セクション4: 体験者の声が1名のみ → 複数の声+ビフォーアフター写真で信頼度が増す</div>
+        </div>
+
+        <!-- コミュニケーション改善ポイント -->
+        <div class="review-section">
+          <div class="review-section-title">🔧 コミュニケーション改善ポイント</div>
+          <div class="review-item review-improve">! ヒーローの動画サムネイルが静止画のみ → 実際のレッスン風景を見せると「自分もできそう」感が増す</div>
+          <div class="review-item review-improve">! 「なぜ今始めるべきか」のセクションがない → 限定オファーや季節の変わり目訴求で緊急性を出す</div>
+          <div class="review-item review-improve">! FAQ/不安解消がない → 「解約は簡単？」「本当に効果ある？」への回答が必要</div>
+        </div>
+
+        <!-- セクション別スコアテーブル -->
+        <div class="review-section">
+          <div class="review-section-title">📊 セクション別スコア</div>
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th>セクション</th>
+                <th>メッセージ</th>
+                <th>コンテンツ対応</th>
+                <th>得点</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>共感+解決策</td>
+                <td>◎</td>
+                <td>○</td>
+                <td class="score-high">85</td>
+              </tr>
+              <tr>
+                <td>社会的証明</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td class="score-high">90</td>
+              </tr>
+              <tr>
+                <td>メリット提示</td>
+                <td>○</td>
+                <td>△</td>
+                <td class="score-mid">70</td>
+              </tr>
+              <tr>
+                <td>体験者の声</td>
+                <td>○</td>
+                <td>△</td>
+                <td class="score-low">65</td>
+              </tr>
+              <tr>
+                <td>料金</td>
+                <td>○</td>
+                <td>○</td>
+                <td class="score-mid">78</td>
+              </tr>
+              <tr>
+                <td>最終CTA</td>
+                <td>◎</td>
+                <td>○</td>
+                <td class="score-high">80</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 改善入力エリア -->
+        <div class="improve-section">
+          <div class="improve-label">💬 改善したい点を入力</div>
+          <textarea class="improve-area" placeholder="例: 体験者の声を3名に増やし、ビフォーアフター写真を追加。FAQセクションを追加する。"></textarea>
+          <div class="btn-row">
+            <button class="btn-improve" onclick="goScreen(3)">🔄 改善する</button>
+            <button class="btn-finish" onclick="goScreen(4)">✅ 提出する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     スクリーン4: 結果 + 別解
+     ======================================== -->
+<div id="screen4" class="screen screen-result">
+  <div class="result-container">
+    <div class="result-title">🎉 お題04 完了！</div>
+
+    <!-- スコア推移 -->
+    <div class="score-progress">
+      <div class="score-step">
+        <div class="score-step-value" style="border-color:var(--warn);color:var(--warn);background:var(--warn-bg);">75</div>
+        <div class="score-step-label">初回</div>
+      </div>
+      <div class="score-arrow">→</div>
+      <div class="score-step">
+        <div class="score-step-value" style="border-color:var(--accent);color:var(--accent);background:var(--accent-bg);">83</div>
+        <div class="score-step-label">改善1</div>
+      </div>
+      <div class="score-arrow">→</div>
+      <div class="score-step">
+        <div class="score-step-value" style="border-color:var(--success);color:var(--success);background:var(--success-bg);">89</div>
+        <div class="score-step-label">最終</div>
+      </div>
+    </div>
+
+    <!-- 学びセクション -->
+    <div class="takeaways">
+      <div class="takeaways-title">📚 今回の学び — コミュニケーション設計</div>
+      <div class="takeaway-item" data-icon="💡">「共感→提案→証明→後押し」の流れはLP設計の基本骨格</div>
+      <div class="takeaway-item" data-icon="💡">各メッセージに対応するビジュアルが「言葉の信頼性」を決める</div>
+      <div class="takeaway-item" data-icon="💡">不安解消パートの欠如は離脱率に直結する</div>
+      <div class="takeaway-item" data-icon="💡">CTAのコピーは「行動＋安心材料」の組み合わせが最も効果的</div>
+    </div>
+
+    <!-- 別解セクション -->
+    <div class="alternatives-title">🔄 3つのLP設計アプローチを比較</div>
+
+    <div class="alt-grid">
+      <!-- あなたの提出（青） -->
+      <div class="alt-card alt-card-blue">
+        <div class="alt-card-header">あなたの提出</div>
+        <div class="alt-card-body">
+          <div class="alt-card-subtitle">情報整理型LP</div>
+          <div class="mini-browser">
+            <div class="mini-browser-bar">
+              <div class="mini-dot dot-red"></div>
+              <div class="mini-dot dot-yellow"></div>
+              <div class="mini-dot dot-green"></div>
+            </div>
+            <div class="mini-browser-content">
+              <div class="mini-section mini-section-hero mini-section-hero-blue">
+                <div class="mini-section-title">忙しくても、15分で変わる</div>
+                <div style="font-size:8px;opacity:0.8;">プロのレッスンを、いつでも</div>
+                <div class="mini-cta">無料体験</div>
+              </div>
+              <div class="mini-section">
+                <div class="mini-numbers">
+                  <div class="mini-number-box"><div class="mini-number-val">5万</div><div class="mini-number-label">会員</div></div>
+                  <div class="mini-number-box"><div class="mini-number-val">200</div><div class="mini-number-label">レッスン</div></div>
+                  <div class="mini-number-box"><div class="mini-number-val">96%</div><div class="mini-number-label">継続率</div></div>
+                </div>
+              </div>
+              <div class="mini-section">
+                <div class="mini-features">
+                  <div class="mini-feature-box">🏠 自宅</div>
+                  <div class="mini-feature-box">⏱ 15分</div>
+                  <div class="mini-feature-box">👩‍🏫 プロ</div>
+                </div>
+              </div>
+              <div class="mini-section mini-testimonial">
+                <div class="mini-avatar mini-avatar-blue"></div>
+                <div style="font-size:9px;">★★★★★ 体験者の声</div>
+              </div>
+              <div class="mini-section mini-pricing">
+                <div class="mini-price-box" style="font-size:10px;font-weight:700;color:var(--accent);">¥1,980/月</div>
+              </div>
+              <div class="mini-section" style="text-align:center;background:linear-gradient(135deg,#2563eb,#7c3aed);padding:8px;">
+                <div class="mini-cta" style="font-size:9px;padding:3px 10px;">7日間無料</div>
+              </div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="alt-label alt-label-pro">Pros</div>
+            <div class="alt-text">論理的で情報取得しやすい、各セクションの役割が明確</div>
+            <div class="alt-label alt-label-con">Cons</div>
+            <div class="alt-text">感情的訴求が弱い、ストーリー性に欠ける</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 別解A（紫）: ストーリー共感型 -->
+      <div class="alt-card alt-card-purple">
+        <div class="alt-card-header">別解A</div>
+        <div class="alt-card-body">
+          <div class="alt-card-subtitle">ストーリー共感型LP</div>
+          <div class="mini-browser">
+            <div class="mini-browser-bar">
+              <div class="mini-dot dot-red"></div>
+              <div class="mini-dot dot-yellow"></div>
+              <div class="mini-dot dot-green"></div>
+            </div>
+            <div class="mini-browser-content">
+              <!-- Before/After ヒーロー -->
+              <div class="mini-section mini-section-hero mini-section-hero-purple">
+                <div style="display:flex;gap:4px;justify-content:center;align-items:center;margin-bottom:4px;">
+                  <div style="background:rgba(0,0,0,0.3);border-radius:4px;padding:6px 10px;font-size:8px;">Before</div>
+                  <div style="font-size:10px;">→</div>
+                  <div style="background:rgba(255,255,255,0.2);border-radius:4px;padding:6px 10px;font-size:8px;">After</div>
+                </div>
+                <div class="mini-section-title">私も変われた。</div>
+              </div>
+              <!-- パーソナルナラティブ -->
+              <div class="mini-section">
+                <div style="font-size:9px;font-weight:600;margin-bottom:2px;">「私もそうでした」</div>
+                <div style="font-size:8px;color:var(--sub);line-height:1.4;">在宅勤務が始まり、運動不足に...<br>そんな私が変われた理由</div>
+              </div>
+              <!-- 変化のステップ -->
+              <div class="mini-section">
+                <div style="font-size:9px;font-weight:600;margin-bottom:3px;">変化の3ステップ</div>
+                <div style="display:flex;gap:3px;">
+                  <div style="flex:1;background:var(--purple-bg);border-radius:3px;padding:3px;text-align:center;font-size:8px;">1週目</div>
+                  <div style="flex:1;background:var(--purple-bg);border-radius:3px;padding:3px;text-align:center;font-size:8px;">1ヶ月</div>
+                  <div style="flex:1;background:var(--purple-bg);border-radius:3px;padding:3px;text-align:center;font-size:8px;">3ヶ月</div>
+                </div>
+              </div>
+              <!-- コミュニティギャラリー -->
+              <div class="mini-section">
+                <div style="display:flex;gap:2px;justify-content:center;">
+                  <div class="mini-avatar mini-avatar-purple" style="width:16px;height:16px;"></div>
+                  <div class="mini-avatar mini-avatar-blue" style="width:16px;height:16px;"></div>
+                  <div class="mini-avatar mini-avatar-orange" style="width:16px;height:16px;"></div>
+                  <div class="mini-avatar" style="width:16px;height:16px;background:var(--success-bg);"></div>
+                </div>
+                <div style="font-size:8px;color:var(--sub);text-align:center;margin-top:2px;">仲間がいるから続く</div>
+              </div>
+              <!-- CTA -->
+              <div class="mini-section" style="text-align:center;background:linear-gradient(135deg,#7c3aed,#ec4899);padding:8px;">
+                <div class="mini-cta" style="font-size:9px;padding:3px 10px;">私も始める</div>
+              </div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="alt-label alt-label-pro">Pros</div>
+            <div class="alt-text">感情移入しやすい、「自分も変われる」と思わせる力が強い</div>
+            <div class="alt-label alt-label-con">Cons</div>
+            <div class="alt-text">情報取得に時間がかかる、比較検討しづらい</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 別解B（オレンジ）: 問題解決ステップ型 -->
+      <div class="alt-card alt-card-orange">
+        <div class="alt-card-header">別解B</div>
+        <div class="alt-card-body">
+          <div class="alt-card-subtitle">問題解決ステップ型LP</div>
+          <div class="mini-browser">
+            <div class="mini-browser-bar">
+              <div class="mini-dot dot-red"></div>
+              <div class="mini-dot dot-yellow"></div>
+              <div class="mini-dot dot-green"></div>
+            </div>
+            <div class="mini-browser-content">
+              <!-- 問題提起ヒーロー -->
+              <div class="mini-section mini-section-hero mini-section-hero-orange">
+                <div class="mini-section-title">こんな悩み、ありませんか？</div>
+                <div style="font-size:8px;opacity:0.9;">✓ 時間がない ✓ 続かない ✓ 高い</div>
+              </div>
+              <!-- 解決ステップ -->
+              <div class="mini-section">
+                <div style="font-size:9px;font-weight:600;margin-bottom:3px;">解決の3ステップ</div>
+                <div style="font-size:8px;color:var(--sub);line-height:1.5;">
+                  <div>❶ アプリを開く（15秒）</div>
+                  <div>❷ レッスンを選ぶ（30秒）</div>
+                  <div>❸ 15分で完了!</div>
+                </div>
+              </div>
+              <!-- ステップ詳細カード -->
+              <div class="mini-section">
+                <div class="mini-features">
+                  <div class="mini-feature-box" style="font-size:8px;">Step1<br>詳細</div>
+                  <div class="mini-feature-box" style="font-size:8px;">Step2<br>詳細</div>
+                  <div class="mini-feature-box" style="font-size:8px;">Step3<br>詳細</div>
+                </div>
+              </div>
+              <!-- 他社比較テーブル -->
+              <div class="mini-section">
+                <div style="font-size:9px;font-weight:600;margin-bottom:3px;">他社比較</div>
+                <div style="display:flex;gap:2px;font-size:8px;">
+                  <div style="flex:1;text-align:center;background:var(--orange-bg);border-radius:3px;padding:3px;">FitLife<br><strong>¥1,980</strong></div>
+                  <div style="flex:1;text-align:center;background:var(--bg);border-radius:3px;padding:3px;">ジムA<br>¥9,800</div>
+                  <div style="flex:1;text-align:center;background:var(--bg);border-radius:3px;padding:3px;">ジムB<br>¥7,500</div>
+                </div>
+              </div>
+              <!-- 緊急性CTA -->
+              <div class="mini-section" style="text-align:center;background:linear-gradient(135deg,#ea580c,#eab308);padding:8px;">
+                <div style="font-size:8px;color:#fff;margin-bottom:2px;">🔥 今月限定キャンペーン</div>
+                <div class="mini-cta" style="font-size:9px;padding:3px 10px;">今すぐ始める</div>
+              </div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="alt-label alt-label-pro">Pros</div>
+            <div class="alt-text">ペルソナの悩みに直接アプローチ、解決までの道筋が見える</div>
+            <div class="alt-label alt-label-con">Cons</div>
+            <div class="alt-text">ステップの説明が長くなりがち、共感が弱い場合がある</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- アプローチ比較テーブル -->
+    <div class="compare-title">📊 アプローチ比較</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>観点</th>
+          <th class="th-blue">情報整理型</th>
+          <th class="th-purple">ストーリー型</th>
+          <th class="th-orange">問題解決型</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>メッセージの説得力</td>
+          <td>○ 論理的</td>
+          <td>◎ 感情的共感</td>
+          <td>○ 課題直結</td>
+        </tr>
+        <tr>
+          <td>コンテンツ対応力</td>
+          <td>◎ 整理しやすい</td>
+          <td>△ 素材が必要</td>
+          <td>○ ステップ明確</td>
+        </tr>
+        <tr>
+          <td>ペルソナとの適合</td>
+          <td>○ 万人向け</td>
+          <td>◎ 悩み深い層</td>
+          <td>◎ 解決志向層</td>
+        </tr>
+        <tr>
+          <td>CVR期待値</td>
+          <td>○ 安定</td>
+          <td>◎ ターゲット合致時</td>
+          <td>○ 比較検討後</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ナビゲーションボタン -->
+    <div class="nav-row">
+      <button class="btn-nav" onclick="goScreen(1)">← お題一覧に戻る</button>
+      <button class="btn-nav btn-nav-primary" onclick="goScreen(1)">次のお題へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     JavaScript: 画面遷移制御
+     ======================================== -->
+<script>
+/**
+ * 画面遷移関数
+ * スクリーン番号(1〜4)を受け取り、該当画面を表示する
+ * @param {number} n - 表示するスクリーン番号
+ */
+function goScreen(n) {
+  // 全スクリーンを非表示にする
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  // 指定されたスクリーンを表示
+  var target = document.getElementById('screen' + n);
+  if (target) {
+    target.classList.add('active');
+  }
+  // スクロール位置をリセット
+  window.scrollTo(0, 0);
+  // 中央・右パネルのスクロールもリセット
+  document.querySelectorAll('.panel-center, .panel-right, .panel-left').forEach(function(p) {
+    p.scrollTop = 0;
+  });
+}
+</script>
+
+</body>
+</html>

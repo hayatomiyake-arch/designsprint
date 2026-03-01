@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesignSprint - Level 1 トレーニング</title>
+<style>
+/* ========================================
+   デザインシステム - CSS変数定義
+   ======================================== */
+:root {
+  --bg: #f5f6f8;
+  --surface: #fff;
+  --border: #e2e5ea;
+  --text: #1a1a2e;
+  --sub: #6b7280;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --orange: #ea580c;
+  --orange-bg: #fff7ed;
+}
+
+/* ========================================
+   リセットと基本スタイル
+   ======================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ========================================
+   ヘッダー
+   ======================================== */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo span {
+  color: var(--text);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-badge {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+.level-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* スクリーン名を表示するバッジ */
+.screen-name-badge {
+  font-size: 12px;
+  color: var(--sub);
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.streak-badge {
+  font-size: 13px;
+  color: var(--orange);
+  background: var(--orange-bg);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* ========================================
+   画面切り替え制御
+   ======================================== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ========================================
+   Screen 1: お題選択
+   ======================================== */
+.challenges-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.challenges-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.challenges-subtitle {
+  font-size: 15px;
+  color: var(--sub);
+  margin-bottom: 36px;
+}
+
+.challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* お題カードの共通スタイル */
+.challenge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.challenge-card:not(.locked):not(.new) {
+  cursor: default;
+}
+
+.challenge-card.new {
+  cursor: pointer;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.challenge-card.new:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15), 0 0 0 1px var(--accent);
+}
+
+.challenge-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.challenge-number {
+  font-size: 12px;
+  color: var(--sub);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.challenge-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* 完了済みステータスバッジ */
+.challenge-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-done {
+  font-size: 12px;
+  color: var(--success);
+  background: var(--success-bg);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.status-score {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* NEWバッジ */
+.status-new {
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  animation: pulse-new 2s infinite;
+}
+
+@keyframes pulse-new {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ロックされたカードのテキスト */
+.locked-text {
+  font-size: 14px;
+  color: var(--sub);
+}
+
+/* ========================================
+   Screen 2 & 3: ワークスペース（3カラム）
+   ======================================== */
+.workspace {
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+/* 左パネル */
+.panel-left {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.brief-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* ブリーフ本文カード */
+.brief-card {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+/* 制約条件リスト */
+.constraints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.constraint-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--sub);
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.constraint-icon {
+  font-size: 16px;
+}
+
+/* テキストエリア */
+.instruction-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sub);
+  margin-bottom: 8px;
+}
+
+.instruction-textarea {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.instruction-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* 生成ボタン */
+.generate-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.generate-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* 中央プレビューエリア */
+.panel-center {
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+}
+
+/* 空のプレビュー表示 */
+.empty-preview {
+  text-align: center;
+  color: var(--sub);
+}
+
+.empty-preview-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.empty-preview-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-preview-sub {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 右パネル */
+.panel-right {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.review-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* 空のレビューパネル */
+.empty-review {
+  text-align: center;
+  color: var(--sub);
+  padding-top: 60px;
+}
+
+.empty-review-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.empty-review-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   リアルなスマホモックアップ（Screen 3）
+   ======================================== */
+.phone-frame {
+  width: 340px;
+  height: 680px;
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform-origin: center center;
+  transition: transform 0.15s ease, margin 0.15s ease;
+}
+
+/* ステータスバー */
+.phone-status-bar {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.status-time { font-size: 13px; font-weight: 700; }
+.status-icons { display: flex; gap: 6px; font-size: 11px; }
+
+/* スマホ内部のコンテンツエリア */
+.phone-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+/* ロケーションバー */
+.phone-location {
+  background: #fff;
+  padding: 12px 16px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 検索入力 */
+.phone-search {
+  margin: 0 12px 8px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* フィルターチップ */
+.phone-filters {
+  display: flex;
+  gap: 8px;
+  padding: 4px 12px 12px;
+  overflow-x: auto;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--sub);
+}
+
+.filter-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* レストランカード */
+.restaurant-card {
+  background: #fff;
+  margin: 0 12px 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* カードの写真エリア（CSSグラデーションで表現） */
+.restaurant-photo {
+  height: 110px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restaurant-photo .food-emoji {
+  font-size: 48px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+}
+
+/* 写真上のオーバーレイバッジ */
+.photo-overlay-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+/* お気に入りボタン */
+.fav-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+/* カードの情報エリア */
+.restaurant-info {
+  padding: 12px 14px 14px;
+}
+
+.restaurant-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+/* 星評価 */
+.restaurant-rating {
+  font-size: 12px;
+  color: var(--warn);
+  margin-bottom: 4px;
+}
+
+.rating-count {
+  color: var(--sub);
+  font-size: 11px;
+}
+
+/* ジャンルと価格 */
+.restaurant-meta {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+
+/* 距離と営業状況 */
+.restaurant-distance {
+  font-size: 12px;
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.open-badge {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* プロモーションタグ */
+.promo-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.promo-tag.accent {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.promo-tag.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+/* ボトムナビゲーション */
+.phone-bottom-nav {
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0 10px;
+  font-size: 10px;
+  color: var(--sub);
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.nav-item-icon {
+  font-size: 18px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ========================================
+   レビューパネル（Screen 3）
+   ======================================== */
+/* スコア表示 */
+.score-section {
+  margin-bottom: 24px;
+}
+
+.score-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.score-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.score-max {
+  font-size: 16px;
+  color: var(--sub);
+  font-weight: 600;
+}
+
+/* スコアバー */
+.score-bar-bg {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+/* Goodポイントリスト */
+.review-section {
+  margin-bottom: 20px;
+}
+
+.review-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.review-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.review-item.good {
+  background: var(--success-bg);
+}
+
+.review-item.improve {
+  background: var(--warn-bg);
+}
+
+.review-item-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  margin-top: 1px;
+}
+
+.review-item-text {
+  color: var(--text);
+}
+
+/* 改善テキストエリア */
+.improve-textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.improve-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* アクションボタン群 */
+.action-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.action-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.action-btn.primary:hover {
+  background: #1d4ed8;
+}
+
+.action-btn.secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.action-btn.secondary:hover {
+  background: #ebedf0;
+}
+
+/* ========================================
+   Screen 4: 結果と別解
+   ======================================== */
+.results-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* クリアバナー */
+.clear-banner {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.clear-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.clear-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+
+/* スコア推移 */
+.score-progression {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.score-step {
+  text-align: center;
+}
+
+.score-step-bar {
+  width: 60px;
+  border-radius: 8px 8px 0 0;
+  margin: 0 auto 8px;
+  transition: height 0.6s ease;
+}
+
+.score-step-label {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.score-step-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.score-step-arrow {
+  font-size: 24px;
+  color: var(--sub);
+  margin-bottom: 28px;
+}
+
+/* 学びボックス */
+.takeaway-box {
+  background: var(--accent-bg);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 48px;
+}
+
+.takeaway-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.takeaway-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+/* 別解セクション */
+.alternatives-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.alternatives-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 48px;
+}
+
+/* 別解カード */
+.alt-card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 20px;
+  border-width: 2px;
+  border-style: solid;
+}
+
+.alt-card.user-solution {
+  border-color: var(--accent);
+}
+
+.alt-card.alt-a {
+  border-color: var(--purple);
+  border-style: dashed;
+}
+
+.alt-card.alt-b {
+  border-color: var(--orange);
+  border-style: dashed;
+}
+
+.alt-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.alt-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.alt-card-badge.blue {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.alt-card-badge.purple {
+  background: var(--purple-bg);
+  color: var(--purple);
+}
+
+.alt-card-badge.orange {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+.alt-card-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ミニスマホフレーム（別解用） */
+.mini-phone {
+  width: 100%;
+  height: 340px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  overflow: hidden;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ミニスマホのステータスバー */
+.mini-status-bar {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 4px 12px;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.mini-phone-content {
+  flex: 1;
+  overflow: hidden;
+  background: #f9fafb;
+  font-size: 10px;
+}
+
+.mini-bottom-nav {
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  font-size: 8px;
+}
+
+.mini-nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 4px 0 5px;
+  color: var(--sub);
+}
+
+.mini-nav-item.active { color: var(--accent); }
+.mini-nav-item-icon { font-size: 12px; display: block; }
+
+/* ミニスマホ内のロケーション＆検索 */
+.mini-location {
+  padding: 6px 10px 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #fff;
+}
+
+.mini-search {
+  margin: 0 8px 4px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 9px;
+  color: #9ca3af;
+}
+
+.mini-filters {
+  display: flex;
+  gap: 4px;
+  padding: 2px 8px 6px;
+}
+
+.mini-filter-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 8px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--sub);
+}
+
+.mini-filter-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ミニレストランカード */
+.mini-restaurant {
+  background: #fff;
+  margin: 0 8px 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mini-restaurant-photo {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.mini-restaurant-info {
+  padding: 6px 8px 8px;
+}
+
+.mini-restaurant-name {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.mini-restaurant-rating {
+  font-size: 9px;
+  color: var(--warn);
+  margin-bottom: 2px;
+}
+
+.mini-restaurant-meta {
+  font-size: 9px;
+  color: var(--sub);
+}
+
+.mini-promo-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+/* 別解の解説テキスト */
+.alt-rationale {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.alt-pros-cons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alt-pro, .alt-con {
+  font-size: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.alt-pro { color: var(--success); }
+.alt-con { color: var(--warn); }
+
+/* ========================================
+   比較テーブル
+   ======================================== */
+.comparison-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 48px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.comparison-table th {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+
+.comparison-table th:first-child {
+  background: #374151;
+  text-align: left;
+}
+
+.comparison-table th.col-user { background: var(--accent); }
+.comparison-table th.col-alt-a { background: var(--purple); }
+.comparison-table th.col-alt-b { background: var(--orange); }
+
+.comparison-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  background: var(--surface);
+}
+
+.comparison-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  background: #f9fafb;
+}
+
+/* テーブル内の評価 */
+.rating-good {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.rating-ok {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.rating-excellent {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ナビゲーションボタン群 */
+.results-nav {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.results-nav-btn {
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  border: none;
+}
+
+.results-nav-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.results-nav-btn.primary:hover {
+  background: #1d4ed8;
+}
+
+.results-nav-btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.results-nav-btn.secondary:hover {
+  background: var(--bg);
+}
+
+/* ========================================
+   マップ型ミニスマホ（別解A用）
+   ======================================== */
+.mini-map-area {
+  height: 140px;
+  background: linear-gradient(135deg, #dbeafe, #d1fae5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 道路の表現 */
+.map-road {
+  position: absolute;
+  background: rgba(255,255,255,0.7);
+}
+
+.map-road.h1 { top: 40px; left: 0; right: 0; height: 3px; }
+.map-road.h2 { top: 90px; left: 0; right: 0; height: 3px; }
+.map-road.v1 { left: 30%; top: 0; bottom: 0; width: 3px; }
+.map-road.v2 { left: 65%; top: 0; bottom: 0; width: 3px; }
+
+/* マップピン */
+.map-pin {
+  position: absolute;
+  font-size: 18px;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+}
+
+.map-pin.current {
+  top: 55px;
+  left: 45%;
+  font-size: 14px;
+}
+
+/* ボトムシート */
+.mini-bottom-sheet {
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  padding: 8px 10px 6px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  margin-top: -12px;
+  position: relative;
+  z-index: 2;
+}
+
+.bottom-sheet-handle {
+  width: 32px;
+  height: 3px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 0 auto 8px;
+}
+
+.bottom-sheet-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.bottom-sheet-emoji {
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-sheet-text {
+  flex: 1;
+}
+
+.bottom-sheet-name {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.bottom-sheet-detail {
+  font-size: 8px;
+  color: var(--sub);
+}
+
+/* ========================================
+   おすすめ型ミニスマホ（別解B用）
+   ======================================== */
+.mini-hero-card {
+  margin: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-hero-bg {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mini-hero-emoji {
+  font-size: 40px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+
+/* ヒーローカードのオーバーレイテキスト */
+.mini-hero-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  color: #fff;
+}
+
+.mini-hero-label {
+  font-size: 8px;
+  background: var(--accent);
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.mini-hero-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-hero-meta {
+  font-size: 8px;
+  opacity: 0.9;
+}
+
+/* コンパクトリスト */
+.mini-compact-list {
+  padding: 6px 8px;
+}
+
+.mini-compact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mini-compact-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--sub);
+  flex-shrink: 0;
+}
+
+.mini-compact-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.mini-compact-info {
+  flex: 1;
+}
+
+.mini-compact-name {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mini-compact-detail {
+  font-size: 8px;
+  color: var(--sub);
+}
+
+/* ========================================
+   スクロールバーのカスタマイズ
+   ======================================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+</style>
+</head>
+<body>
+
+<!-- ========================================
+     ヘッダー（全画面共通）
+     ======================================== -->
+<header class="header">
+  <div class="logo">Design<span>Sprint</span></div>
+  <div class="header-right">
+    <span class="screen-name-badge" id="screenNameBadge">お題選択</span>
+    <span class="level-badge">LEVEL</span>
+    <span class="level-label">Level 1</span>
+    <span class="streak-badge">&#x1F525; 3日連続</span>
+  </div>
+</header>
+
+<!-- ========================================
+     Screen 1: お題選択
+     ======================================== -->
+<div class="screen active" id="screen1">
+  <div class="challenges-container">
+    <h1 class="challenges-title">&#x1F4CB; Level 1 のお題</h1>
+    <p class="challenges-subtitle">デザイン4原則を意識した単一画面の設計に挑戦しましょう</p>
+
+    <div class="challenges-grid">
+      <!-- お題01: 完了済み -->
+      <div class="challenge-card">
+        <div class="challenge-number">Challenge 01</div>
+        <div class="challenge-name">ログインページ</div>
+        <div class="challenge-status">
+          <span class="status-done">&#x2705; 完了</span>
+          <span class="score-step-value" style="font-size:14px;">85点</span>
+        </div>
+      </div>
+
+      <!-- お題02: 完了済み -->
+      <div class="challenge-card">
+        <div class="challenge-number">Challenge 02</div>
+        <div class="challenge-name">天気予報ウィジェット</div>
+        <div class="challenge-status">
+          <span class="status-done">&#x2705; 完了</span>
+          <span class="score-step-value" style="font-size:14px;">72点</span>
+        </div>
+      </div>
+
+      <!-- お題03: 完了済み -->
+      <div class="challenge-card">
+        <div class="challenge-number">Challenge 03</div>
+        <div class="challenge-name">ユーザープロフィール</div>
+        <div class="challenge-status">
+          <span class="status-done">&#x2705; 完了</span>
+          <span class="score-step-value" style="font-size:14px;">78点</span>
+        </div>
+      </div>
+
+      <!-- お題04: NEW（クリック可能 → Screen 2） -->
+      <div class="challenge-card new" onclick="goScreen(2)">
+        <div class="challenge-number">Challenge 04</div>
+        <div class="challenge-name">ランチ探しアプリ</div>
+        <div class="challenge-status">
+          <span class="status-new">NEW</span>
+        </div>
+      </div>
+
+      <!-- お題05: ロック -->
+      <div class="challenge-card locked">
+        <div class="challenge-number">Challenge 05</div>
+        <div class="challenge-name">&#x1F512; 音楽プレイヤー</div>
+        <div class="locked-text">Challenge 04 をクリアすると解放</div>
+      </div>
+
+      <!-- お題06: ロック -->
+      <div class="challenge-card locked">
+        <div class="challenge-number">Challenge 06</div>
+        <div class="challenge-name">&#x1F512; ??????</div>
+        <div class="locked-text">Challenge 05 をクリアすると解放</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     Screen 2: ワークスペース（空の状態）
+     ======================================== -->
+<div class="screen" id="screen2">
+  <div class="workspace">
+    <!-- 左パネル：ブリーフ -->
+    <div class="panel-left">
+      <div class="brief-title">&#x1F3AF; ランチ探しアプリ</div>
+      <div class="brief-card">
+        田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを食べたいが、土地勘がない。素早く良さそうな店を見つけたい。
+      </div>
+
+      <div class="constraints">
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x1F4F1;</span>
+          モバイルファースト
+        </div>
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x1F446;</span>
+          メイン操作3タップ以内
+        </div>
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x23F1;</span>
+          30秒以内で店を選べる
+        </div>
+      </div>
+
+      <div class="instruction-label">&#x270F;&#xFE0F; 設計指示</div>
+      <textarea class="instruction-textarea" id="instructionInput" placeholder="例: 現在地の近い順にお店をカードで一覧表示。写真・評価・ジャンル・距離を表示し、スクロールで比較できるようにする。"></textarea>
+      <button class="generate-btn" onclick="goScreen(3)">&#x1F680; 生成する</button>
+    </div>
+
+    <!-- 中央：空のプレビュー -->
+    <div class="panel-center">
+      <div class="empty-preview">
+        <div class="empty-preview-icon">&#x1F3A8;</div>
+        <div class="empty-preview-title">プレビューエリア</div>
+        <div class="empty-preview-sub">設計指示を入力して「生成する」を押すと<br>ここにプレビューが表示されます</div>
+      </div>
+    </div>
+
+    <!-- 右パネル：空のレビュー -->
+    <div class="panel-right">
+      <div class="review-title">&#x1F4CA; レビュー</div>
+      <div class="empty-review">
+        <div class="empty-review-icon">&#x1F4CA;</div>
+        <div class="empty-review-text">生成後にAIレビューが<br>ここに表示されます</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     Screen 3: ワークスペース（生成後＋レビュー）
+     ======================================== -->
+<div class="screen" id="screen3">
+  <div class="workspace">
+    <!-- 左パネル：ブリーフ（入力済み） -->
+    <div class="panel-left">
+      <div class="brief-title">&#x1F3AF; ランチ探しアプリ</div>
+      <div class="brief-card">
+        田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを食べたいが、土地勘がない。素早く良さそうな店を見つけたい。
+      </div>
+
+      <div class="constraints">
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x1F4F1;</span>
+          モバイルファースト
+        </div>
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x1F446;</span>
+          メイン操作3タップ以内
+        </div>
+        <div class="constraint-item">
+          <span class="constraint-icon">&#x23F1;</span>
+          30秒以内で店を選べる
+        </div>
+      </div>
+
+      <div class="instruction-label">&#x270F;&#xFE0F; 設計指示</div>
+      <textarea class="instruction-textarea" readonly>現在地の近い順にお店をカードで一覧表示。写真を大きく見せて食欲を刺激する。評価・ジャンル・距離・価格帯を表示し、スクロールで比較できるようにする。フィルター機能で並び替え可能に。</textarea>
+      <button class="generate-btn" style="background: var(--sub); cursor: default;">&#x2705; 生成済み</button>
+    </div>
+
+    <!-- 中央：リアルなスマホモックアップ -->
+    <div class="panel-center">
+      <div class="phone-frame">
+        <!-- ステータスバー -->
+        <div class="phone-status-bar">
+          <span class="status-time">12:34</span>
+          <span class="status-icons">
+            <span>&#x1F4F6;</span>
+            <span>WiFi</span>
+            <span>&#x1F50B;100%</span>
+          </span>
+        </div>
+
+        <!-- コンテンツエリア -->
+        <div class="phone-content">
+          <!-- ロケーションバー -->
+          <div class="phone-location">
+            &#x1F4CD; 渋谷区神宮前 周辺
+          </div>
+
+          <!-- 検索バー -->
+          <div class="phone-search">
+            &#x1F50D; ジャンル・キーワードで検索
+          </div>
+
+          <!-- フィルターチップ -->
+          <div class="phone-filters">
+            <span class="filter-chip active">近い順 &#x2713;</span>
+            <span class="filter-chip">評価順</span>
+            <span class="filter-chip">&#xA5;安い順</span>
+            <span class="filter-chip">ランチあり</span>
+          </div>
+
+          <!-- レストランカード1 -->
+          <div class="restaurant-card">
+            <div class="restaurant-photo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <span class="food-emoji">&#x1F35D;</span>
+              <div class="photo-overlay-badge">&#x1F4F7; 32枚</div>
+              <div class="fav-btn">&#x2661;</div>
+            </div>
+            <div class="restaurant-info">
+              <div class="restaurant-name">イタリアンキッチン SOLE</div>
+              <div class="restaurant-rating">
+                &#x2605;&#x2605;&#x2605;&#x2605;&#x2606; <span style="color: var(--text); font-weight: 700;">4.2</span>
+                <span class="rating-count">(128件)</span>
+              </div>
+              <div class="restaurant-meta">イタリアン &bull; &#xA5;1,000&#x301C;</div>
+              <div class="restaurant-distance">
+                &#x1F4CD; 徒歩3分 &bull; <span class="open-badge">&#x1F7E2; 営業中</span>
+              </div>
+              <span class="promo-tag accent">ランチセット &#xA5;980&#x301C;</span>
+            </div>
+          </div>
+
+          <!-- レストランカード2 -->
+          <div class="restaurant-card">
+            <div class="restaurant-photo" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <span class="food-emoji">&#x1F35C;</span>
+              <div class="photo-overlay-badge">&#x1F4F7; 56枚</div>
+              <div class="fav-btn">&#x2661;</div>
+            </div>
+            <div class="restaurant-info">
+              <div class="restaurant-name">麺屋 はなび</div>
+              <div class="restaurant-rating">
+                &#x2605;&#x2605;&#x2605;&#x2605;&#x2605; <span style="color: var(--text); font-weight: 700;">4.5</span>
+                <span class="rating-count">(256件)</span>
+              </div>
+              <div class="restaurant-meta">ラーメン &bull; &#xA5;800&#x301C;</div>
+              <div class="restaurant-distance">
+                &#x1F4CD; 徒歩5分 &bull; <span class="open-badge">&#x1F7E2; 営業中</span>
+              </div>
+              <span class="promo-tag warn">本日の限定メニューあり</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ボトムナビゲーション -->
+        <div class="phone-bottom-nav">
+          <div class="nav-item active">
+            <span class="nav-item-icon">&#x1F3E0;</span>
+            ホーム
+          </div>
+          <div class="nav-item">
+            <span class="nav-item-icon">&#x1F50D;</span>
+            検索
+          </div>
+          <div class="nav-item">
+            <span class="nav-item-icon">&#x2764;&#xFE0F;</span>
+            お気に入り
+          </div>
+          <div class="nav-item">
+            <span class="nav-item-icon">&#x1F464;</span>
+            マイページ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右パネル：AIレビュー -->
+    <div class="panel-right">
+      <div class="review-title">&#x1F4CA; AIレビュー</div>
+
+      <!-- スコア表示 -->
+      <div class="score-section">
+        <div class="score-display">
+          <span class="score-number">72</span>
+          <span class="score-max">/ 100</span>
+        </div>
+        <div class="score-bar-bg">
+          <div class="score-bar-fill" style="width: 72%; background: linear-gradient(90deg, var(--accent), #60a5fa);"></div>
+        </div>
+      </div>
+
+      <!-- Good Points -->
+      <div class="review-section">
+        <div class="review-section-title">&#x2705; Good Points</div>
+        <div class="review-item good">
+          <span class="review-item-icon">&#x2705;</span>
+          <span class="review-item-text">「近い順」デフォルトは土地勘のないユーザーに適切</span>
+        </div>
+        <div class="review-item good">
+          <span class="review-item-icon">&#x2705;</span>
+          <span class="review-item-text">距離・ジャンル・評価の3軸で比較しやすい</span>
+        </div>
+        <div class="review-item good">
+          <span class="review-item-icon">&#x2705;</span>
+          <span class="review-item-text">写真が大きく視覚的訴求力がある</span>
+        </div>
+      </div>
+
+      <!-- Development Points -->
+      <div class="review-section">
+        <div class="review-section-title">&#x1F527; Development Points</div>
+        <div class="review-item improve">
+          <span class="review-item-icon">&#x26A0;&#xFE0F;</span>
+          <span class="review-item-text">スクロールリストだと「30秒で選べる」制約と合わない可能性</span>
+        </div>
+        <div class="review-item improve">
+          <span class="review-item-icon">&#x26A0;&#xFE0F;</span>
+          <span class="review-item-text">現在地&#x2192;店舗のルート感覚がつかめず「迷わず行ける」が未達</span>
+        </div>
+      </div>
+
+      <!-- 改善エリア -->
+      <div class="instruction-label">&#x1F4DD; 改善メモ</div>
+      <textarea class="improve-textarea" placeholder="改善のアイデアを入力..."></textarea>
+      <button class="action-btn primary" onclick="goScreen(4)">改善してRound 2 &#x2192;</button>
+      <button class="action-btn secondary" onclick="goScreen(4)">このまま提出する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     Screen 4: 結果と別解
+     ======================================== -->
+<div class="screen" id="screen4">
+  <div class="results-container">
+    <!-- クリアバナー -->
+    <div class="clear-banner">
+      <div class="clear-emoji">&#x1F389;</div>
+      <div class="clear-title">Challenge 04 クリア！</div>
+
+      <!-- スコア推移 -->
+      <div class="score-progression">
+        <div class="score-step">
+          <div class="score-step-bar" style="height: 72px; background: linear-gradient(180deg, #93c5fd, var(--accent));"></div>
+          <div class="score-step-value" style="color: var(--accent);">72</div>
+          <div class="score-step-label">Round 1</div>
+        </div>
+        <div class="score-step-arrow">&#x2192;</div>
+        <div class="score-step">
+          <div class="score-step-bar" style="height: 97px; background: linear-gradient(180deg, #93c5fd, var(--accent));"></div>
+          <div class="score-step-value" style="color: var(--accent);">81</div>
+          <div class="score-step-label">Round 2</div>
+        </div>
+        <div class="score-step-arrow">&#x2192;</div>
+        <div class="score-step">
+          <div class="score-step-bar" style="height: 120px; background: linear-gradient(180deg, #6ee7b7, var(--success));"></div>
+          <div class="score-step-value" style="color: var(--success);">88</div>
+          <div class="score-step-label">Round 3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学びボックス -->
+    <div class="takeaway-box">
+      <div class="takeaway-title">&#x1F4A1; 学び / Takeaways</div>
+      <div class="takeaway-text">
+        &#x2022; <strong>近接</strong>: 関連情報（店名・評価・距離）をカード内にまとめることでスキャンしやすくなった<br>
+        &#x2022; <strong>整列</strong>: カードの左揃えと統一されたレイアウトで、一覧性が向上<br>
+        &#x2022; <strong>反復</strong>: 各カードの構造を統一し、ユーザーが比較しやすいパターンを作れた<br>
+        &#x2022; <strong>対比</strong>: 「営業中」バッジや価格タグに色を使い、重要情報を目立たせた<br>
+        &#x2022; 「30秒で選べる」制約に対しては、マップ型やおすすめ型が優位になるケースもある
+      </div>
+    </div>
+
+    <!-- 別解セクション -->
+    <h2 class="alternatives-title">&#x1F504; 別解を見てみよう</h2>
+
+    <div class="alternatives-grid">
+      <!-- あなたの提出 -->
+      <div class="alt-card user-solution">
+        <div class="alt-card-header">
+          <span class="alt-card-badge blue">あなたの提出</span>
+          <span class="alt-card-label">カードリスト型</span>
+        </div>
+
+        <!-- ミニスマホ: カードリスト型 -->
+        <div class="mini-phone">
+          <div class="mini-status-bar">
+            <span>12:34</span>
+            <span>&#x1F50B;100%</span>
+          </div>
+          <div class="mini-phone-content">
+            <div class="mini-location">&#x1F4CD; 渋谷区神宮前 周辺</div>
+            <div class="mini-search">&#x1F50D; ジャンル・キーワード</div>
+            <div class="mini-filters">
+              <span class="mini-filter-chip active">近い順 &#x2713;</span>
+              <span class="mini-filter-chip">評価順</span>
+              <span class="mini-filter-chip">&#xA5;安い順</span>
+            </div>
+
+            <!-- ミニレストランカード1 -->
+            <div class="mini-restaurant">
+              <div class="mini-restaurant-photo" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                &#x1F35D;
+              </div>
+              <div class="mini-restaurant-info">
+                <div class="mini-restaurant-name">イタリアンキッチン SOLE</div>
+                <div class="mini-restaurant-rating">&#x2605;&#x2605;&#x2605;&#x2605;&#x2606; 4.2 (128件)</div>
+                <div class="mini-restaurant-meta">イタリアン &bull; &#xA5;1,000&#x301C; &bull; 徒歩3分</div>
+                <span class="mini-promo-tag" style="background: var(--accent-bg); color: var(--accent);">ランチセット</span>
+              </div>
+            </div>
+
+            <!-- ミニレストランカード2 -->
+            <div class="mini-restaurant">
+              <div class="mini-restaurant-photo" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                &#x1F35C;
+              </div>
+              <div class="mini-restaurant-info">
+                <div class="mini-restaurant-name">麺屋 はなび</div>
+                <div class="mini-restaurant-rating">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605; 4.5 (256件)</div>
+                <div class="mini-restaurant-meta">ラーメン &bull; &#xA5;800&#x301C; &bull; 徒歩5分</div>
+                <span class="mini-promo-tag" style="background: var(--warn-bg); color: var(--warn);">限定メニュー</span>
+              </div>
+            </div>
+          </div>
+          <div class="mini-bottom-nav">
+            <div class="mini-nav-item active"><span class="mini-nav-item-icon">&#x1F3E0;</span>ホーム</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F50D;</span>検索</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x2764;&#xFE0F;</span>お気に入り</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F464;</span>マイページ</div>
+          </div>
+        </div>
+
+        <div class="alt-rationale">
+          写真が大きく食欲を刺激し、スクロールで複数店舗を比較できる。情報密度と視覚的訴求力のバランスが良い。
+        </div>
+        <div class="alt-pros-cons">
+          <div class="alt-pro">&#x2795; 写真中心で直感的に選べる</div>
+          <div class="alt-pro">&#x2795; 情報が整理され比較しやすい</div>
+          <div class="alt-con">&#x2796; スクロール量が多くなりがち</div>
+          <div class="alt-con">&#x2796; 位置関係がつかみにくい</div>
+        </div>
+      </div>
+
+      <!-- 別解A: マップ＋ボトムシート型 -->
+      <div class="alt-card alt-a">
+        <div class="alt-card-header">
+          <span class="alt-card-badge purple">別解A</span>
+          <span class="alt-card-label">マップ＋ボトムシート型</span>
+        </div>
+
+        <!-- ミニスマホ: マップ型 -->
+        <div class="mini-phone">
+          <div class="mini-status-bar">
+            <span>12:34</span>
+            <span>&#x1F50B;100%</span>
+          </div>
+          <div class="mini-phone-content">
+            <div class="mini-location">&#x1F4CD; 渋谷区神宮前 周辺</div>
+            <div class="mini-search">&#x1F50D; ジャンル・キーワード</div>
+
+            <!-- マップエリア -->
+            <div class="mini-map-area">
+              <!-- 道路 -->
+              <div class="map-road h1"></div>
+              <div class="map-road h2"></div>
+              <div class="map-road v1"></div>
+              <div class="map-road v2"></div>
+              <!-- ピン -->
+              <div class="map-pin" style="top: 25px; left: 22%;">&#x1F534;</div>
+              <div class="map-pin" style="top: 60px; left: 55%;">&#x1F7E0;</div>
+              <div class="map-pin" style="top: 30px; left: 72%;">&#x1F534;</div>
+              <div class="map-pin" style="top: 95px; left: 35%;">&#x1F7E0;</div>
+              <div class="map-pin current" style="top: 65px; left: 45%;">&#x1F4CD;</div>
+            </div>
+
+            <!-- ボトムシート -->
+            <div class="mini-bottom-sheet">
+              <div class="bottom-sheet-handle"></div>
+              <div class="bottom-sheet-item">
+                <div class="bottom-sheet-emoji" style="background: linear-gradient(135deg, #667eea, #764ba2);">&#x1F35D;</div>
+                <div class="bottom-sheet-text">
+                  <div class="bottom-sheet-name">イタリアンキッチン SOLE</div>
+                  <div class="bottom-sheet-detail">&#x2605; 4.2 &bull; 徒歩3分 &bull; &#xA5;1,000&#x301C;</div>
+                </div>
+              </div>
+              <div class="bottom-sheet-item">
+                <div class="bottom-sheet-emoji" style="background: linear-gradient(135deg, #f093fb, #f5576c);">&#x1F35C;</div>
+                <div class="bottom-sheet-text">
+                  <div class="bottom-sheet-name">麺屋 はなび</div>
+                  <div class="bottom-sheet-detail">&#x2605; 4.5 &bull; 徒歩5分 &bull; &#xA5;800&#x301C;</div>
+                </div>
+              </div>
+              <div class="bottom-sheet-item" style="border-bottom: none;">
+                <div class="bottom-sheet-emoji" style="background: linear-gradient(135deg, #a7f3d0, #059669);">&#x1F371;</div>
+                <div class="bottom-sheet-text">
+                  <div class="bottom-sheet-name">和食処 さくら</div>
+                  <div class="bottom-sheet-detail">&#x2605; 4.0 &bull; 徒歩7分 &bull; &#xA5;900&#x301C;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mini-bottom-nav">
+            <div class="mini-nav-item active"><span class="mini-nav-item-icon">&#x1F5FA;&#xFE0F;</span>マップ</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F50D;</span>検索</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x2764;&#xFE0F;</span>お気に入り</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F464;</span>マイページ</div>
+          </div>
+        </div>
+
+        <div class="alt-rationale">
+          マップで店舗の位置関係と距離を一目で把握。ボトムシートで詳細を確認でき、「迷わず行ける」体験を実現。
+        </div>
+        <div class="alt-pros-cons">
+          <div class="alt-pro">&#x2795; 位置関係が直感的にわかる</div>
+          <div class="alt-pro">&#x2795; 「徒歩何分」の実感が持てる</div>
+          <div class="alt-con">&#x2796; 写真が小さく食欲訴求が弱い</div>
+          <div class="alt-con">&#x2796; 情報量が限られる</div>
+        </div>
+      </div>
+
+      <!-- 別解B: おすすめ1件＋コンパクトリスト型 -->
+      <div class="alt-card alt-b">
+        <div class="alt-card-header">
+          <span class="alt-card-badge orange">別解B</span>
+          <span class="alt-card-label">おすすめ1件＋コンパクトリスト型</span>
+        </div>
+
+        <!-- ミニスマホ: おすすめ型 -->
+        <div class="mini-phone">
+          <div class="mini-status-bar">
+            <span>12:34</span>
+            <span>&#x1F50B;100%</span>
+          </div>
+          <div class="mini-phone-content">
+            <div class="mini-location">&#x1F4CD; 渋谷区神宮前 周辺</div>
+
+            <!-- ヒーローカード -->
+            <div class="mini-hero-card">
+              <div class="mini-hero-bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <span class="mini-hero-emoji">&#x1F35D;</span>
+                <div class="mini-hero-overlay">
+                  <div class="mini-hero-label">&#x2728; AI おすすめ</div>
+                  <div class="mini-hero-name">イタリアンキッチン SOLE</div>
+                  <div class="mini-hero-meta">&#x2605; 4.2 &bull; 徒歩3分 &bull; ランチ &#xA5;980&#x301C;</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- コンパクトリスト -->
+            <div class="mini-compact-list">
+              <div style="font-size: 10px; font-weight: 700; padding: 4px 0 6px; color: var(--sub);">その他の候補</div>
+              <div class="mini-compact-item">
+                <div class="mini-compact-num">2</div>
+                <div class="mini-compact-thumb" style="background: linear-gradient(135deg, #f093fb, #f5576c);">&#x1F35C;</div>
+                <div class="mini-compact-info">
+                  <div class="mini-compact-name">麺屋 はなび</div>
+                  <div class="mini-compact-detail">&#x2605; 4.5 &bull; 徒歩5分 &bull; &#xA5;800&#x301C;</div>
+                </div>
+              </div>
+              <div class="mini-compact-item">
+                <div class="mini-compact-num">3</div>
+                <div class="mini-compact-thumb" style="background: linear-gradient(135deg, #a7f3d0, #059669);">&#x1F371;</div>
+                <div class="mini-compact-info">
+                  <div class="mini-compact-name">和食処 さくら</div>
+                  <div class="mini-compact-detail">&#x2605; 4.0 &bull; 徒歩7分 &bull; &#xA5;900&#x301C;</div>
+                </div>
+              </div>
+              <div class="mini-compact-item" style="border-bottom: none;">
+                <div class="mini-compact-num">4</div>
+                <div class="mini-compact-thumb" style="background: linear-gradient(135deg, #fde68a, #f59e0b);">&#x1F354;</div>
+                <div class="mini-compact-info">
+                  <div class="mini-compact-name">バーガーキング 原宿店</div>
+                  <div class="mini-compact-detail">&#x2605; 3.8 &bull; 徒歩2分 &bull; &#xA5;600&#x301C;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mini-bottom-nav">
+            <div class="mini-nav-item active"><span class="mini-nav-item-icon">&#x1F3E0;</span>ホーム</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F50D;</span>検索</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x2764;&#xFE0F;</span>お気に入り</div>
+            <div class="mini-nav-item"><span class="mini-nav-item-icon">&#x1F464;</span>マイページ</div>
+          </div>
+        </div>
+
+        <div class="alt-rationale">
+          AIがトップ1件を大きく推薦。「30秒で選べる」制約を最も直接的に解決。迷ったら1番目をタップするだけ。
+        </div>
+        <div class="alt-pros-cons">
+          <div class="alt-pro">&#x2795; 意思決定が最も速い</div>
+          <div class="alt-pro">&#x2795; 情報の優先順位が明確</div>
+          <div class="alt-con">&#x2796; AI推薦の精度に依存</div>
+          <div class="alt-con">&#x2796; 自分で探す楽しみが薄い</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 比較テーブル -->
+    <h2 class="comparison-title">&#x1F4CA; アプローチ比較</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>評価軸</th>
+          <th class="col-user">カードリスト型</th>
+          <th class="col-alt-a">マップ＋ボトムシート型</th>
+          <th class="col-alt-b">おすすめ型</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>30秒で選べるか</td>
+          <td><span class="rating-ok">&#x25B3; やや長い</span></td>
+          <td><span class="rating-good">&#x25CB; 概ねOK</span></td>
+          <td><span class="rating-excellent">&#x25CE; 最速</span></td>
+        </tr>
+        <tr>
+          <td>比較のしやすさ</td>
+          <td><span class="rating-excellent">&#x25CE; 優秀</span></td>
+          <td><span class="rating-ok">&#x25B3; 限定的</span></td>
+          <td><span class="rating-good">&#x25CB; 十分</span></td>
+        </tr>
+        <tr>
+          <td>位置の把握</td>
+          <td><span class="rating-ok">&#x25B3; テキストのみ</span></td>
+          <td><span class="rating-excellent">&#x25CE; 直感的</span></td>
+          <td><span class="rating-ok">&#x25B3; テキストのみ</span></td>
+        </tr>
+        <tr>
+          <td>視覚的訴求力</td>
+          <td><span class="rating-excellent">&#x25CE; 写真大</span></td>
+          <td><span class="rating-ok">&#x25B3; 写真小</span></td>
+          <td><span class="rating-good">&#x25CB; メリハリ</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ナビゲーション -->
+    <div class="results-nav">
+      <button class="results-nav-btn secondary" onclick="goScreen(1)">&#x1F3E0; お題一覧に戻る</button>
+      <button class="results-nav-btn primary" onclick="goScreen(1)">次のお題へ &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     画面遷移のJavaScript
+     ======================================== -->
+<script>
+// 画面名のマッピング
+const screenNames = {
+  1: 'お題選択',
+  2: 'ワークスペース',
+  3: 'ワークスペース（生成後）',
+  4: '結果・別解'
+};
+
+/**
+ * 画面を切り替える関数
+ * @param {number} n - 遷移先の画面番号（1-4）
+ */
+function goScreen(n) {
+  // 全画面を非表示にする
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+
+  // 指定された画面を表示する
+  var target = document.getElementById('screen' + n);
+  if (target) {
+    target.classList.add('active');
+  }
+
+  // ヘッダーのスクリーン名バッジを更新する
+  var badge = document.getElementById('screenNameBadge');
+  if (badge && screenNames[n]) {
+    badge.textContent = screenNames[n];
+  }
+
+  // ページトップにスクロールする
+  window.scrollTo(0, 0);
+
+  // スマホフレームをビューポートに合わせてスケーリング
+  requestAnimationFrame(adjustPhoneScale);
+}
+
+/**
+ * スマホフレームのレスポンシブスケーリング
+ * ビューポートの高さに応じて phone-frame を縮小表示する
+ */
+function adjustPhoneScale() {
+  document.querySelectorAll('.panel-center').forEach(function(panel) {
+    var phone = panel.querySelector('.phone-frame');
+    if (!phone || !panel.clientHeight) return;
+
+    var phoneH = 680;
+    var phoneW = 340;
+    var paddingTotal = 48; // 24px * 2
+    var availH = panel.clientHeight - paddingTotal;
+    var scale = Math.min(1, availH / phoneH);
+
+    phone.style.transform = 'scale(' + scale + ')';
+
+    // transform: scale は視覚的に縮小するがレイアウトサイズは変わらないため、
+    // 負のマージンで差分を吸収してレイアウトを正しく調整する
+    var marginV = phoneH * (1 - scale) / 2;
+    var marginH = phoneW * (1 - scale) / 2;
+    phone.style.marginTop = -marginV + 'px';
+    phone.style.marginBottom = -marginV + 'px';
+    phone.style.marginLeft = -marginH + 'px';
+    phone.style.marginRight = -marginH + 'px';
+  });
+}
+
+window.addEventListener('resize', adjustPhoneScale);
+</script>
+
+</body>
+</html>

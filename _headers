@@ -1,0 +1,14 @@
+# DesignSprint — Cloudflare Pages カスタムヘッダー
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# HTML ページ用 CSP
+# - script-src 'unsafe-inline': index.html のインラインスクリプトに必要
+# - connect-src: BYOK (Gemini直接) + Free (Worker proxy) 両対応
+# - frame-src は不要（srcdoc iframe は URL ロードではない）
+/*.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com https://*.workers.dev; font-src 'self' data:; frame-ancestors 'none'

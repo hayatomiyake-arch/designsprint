@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept C: Design Dialogue — ソクラテス式対話型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e8e5e0;
+    --text: #2c2c2c;
+    --text-sub: #7a7a7a;
+    --accent: #c06014;
+    --accent-light: #e8833a;
+    --accent-bg: #fef7f0;
+    --purple: #6d28d9;
+    --purple-bg: #f5f0ff;
+    --chat-ai: #f2f0ed;
+    --chat-user: var(--accent-bg);
+  }
+
+  body {
+    font-family: 'Georgia', 'Hiragino Mincho ProN', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Banner */
+  .concept-banner {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(90deg, var(--accent), #b45309);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-family: -apple-system, sans-serif;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .header-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+    font-family: -apple-system, sans-serif;
+  }
+  .phase-badge {
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: -apple-system, sans-serif;
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Left: Scenario */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .scenario-section {
+    padding: 28px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    font-family: -apple-system, sans-serif;
+    font-weight: 700;
+  }
+  .scenario-text {
+    font-size: 16px;
+    line-height: 2;
+    color: var(--text);
+  }
+  .scenario-text .highlight {
+    background: linear-gradient(transparent 60%, rgba(192, 96, 20, 0.15) 60%);
+    padding: 0 2px;
+  }
+
+  .insight-section {
+    padding: 20px 24px;
+    background: var(--purple-bg);
+  }
+  .insight-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--purple);
+    margin-bottom: 12px;
+    font-family: -apple-system, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .insight-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #4c1d95;
+    font-family: -apple-system, sans-serif;
+  }
+  .insight-num {
+    width: 22px;
+    height: 22px;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .preview-section {
+    padding: 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg);
+  }
+  .preview-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+    font-family: -apple-system, sans-serif;
+    font-weight: 700;
+  }
+  .mini-preview {
+    width: 200px;
+    height: 360px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    overflow: hidden;
+    opacity: 0.4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, sans-serif;
+    font-size: 12px;
+    color: var(--text-sub);
+    text-align: center;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .mini-preview.active {
+    opacity: 1;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+  }
+
+  /* Right: Chat */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    overflow-y: auto;
+  }
+
+  .chat-area {
+    flex: 1;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .chat-message {
+    display: flex;
+    gap: 12px;
+    max-width: 85%;
+  }
+  .chat-message.ai { align-self: flex-start; }
+  .chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-family: -apple-system, sans-serif;
+  }
+  .chat-message.ai .chat-avatar {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white;
+  }
+  .chat-message.user .chat-avatar {
+    background: #e2e8f0;
+  }
+
+  .chat-bubble {
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    font-family: -apple-system, 'Hiragino Sans', sans-serif;
+  }
+  .chat-message.ai .chat-bubble {
+    background: var(--chat-ai);
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+  .chat-message.user .chat-bubble {
+    background: var(--accent);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .chat-question {
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 8px;
+    display: block;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .question-number {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  .typing-dot {
+    width: 8px;
+    height: 8px;
+    background: #bbb;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+    30% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Input area */
+  .chat-input-area {
+    padding: 16px 32px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .chat-input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .chat-input {
+    flex: 1;
+    min-height: 48px;
+    max-height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    font-family: -apple-system, 'Hiragino Sans', sans-serif;
+    color: var(--text);
+  }
+  .chat-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .chat-send-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .chat-send-btn:hover { background: #a85412; }
+
+  .progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .progress-dot.done { background: var(--accent); }
+  .progress-dot.current {
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(192, 96, 20, 0.2);
+  }
+</style>
+</head>
+<body>
+
+<div class="concept-banner">CONCEPT C — DESIGN DIALOGUE（ソクラテス式対話型）</div>
+
+<header class="header">
+  <div class="logo">Design Dialogue</div>
+  <div class="header-meta">
+    <span class="phase-badge">Phase 2 / 5 — 対話</span>
+    <span>Level 1 — Challenge 4</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- LEFT: Scenario + Insights -->
+  <div class="panel-left">
+    <div class="scenario-section">
+      <div class="scenario-label">📖 ストーリー</div>
+      <div class="scenario-text">
+        田中さん（32歳）は3日前に<span class="highlight">引っ越してきたばかり</span>。
+        お昼休み、オフィスを出た田中さんは途方に暮れている。
+        <span class="highlight">周りに知り合いもいない</span>し、
+        <span class="highlight">土地勘もない</span>。
+        せめて美味しいものを食べて、午後の仕事に向けて
+        <span class="highlight">気分を上げたい</span>——
+        スマホを手に取った。
+      </div>
+    </div>
+
+    <div class="insight-section">
+      <div class="insight-title">💡 対話から見えてきた要件</div>
+      <div class="insight-item">
+        <div class="insight-num">1</div>
+        <span>最優先情報 = 現在地からの距離と所要時間</span>
+      </div>
+      <div class="insight-item">
+        <div class="insight-num">2</div>
+        <span>「写真」が最も直感的な判断材料になる</span>
+      </div>
+      <div class="insight-item">
+        <div class="insight-num">3</div>
+        <span style="opacity:0.3;">まだ対話中...</span>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-label">🖼 生成プレビュー</div>
+      <div class="mini-preview">
+        対話が進むと<br>ここに画面が<br>自動生成されます
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Chat -->
+  <div class="panel-right">
+    <div class="chat-area">
+      <!-- AI Message 1 -->
+      <div class="chat-message ai">
+        <div class="chat-avatar">🎨</div>
+        <div class="chat-bubble">
+          田中さんのストーリーを読みましたね。<br>
+          それでは、一緒にこの画面を設計していきましょう。
+          <span class="chat-question">
+            <span class="question-number">1</span>
+            田中さんがスマホを開いた瞬間、最初に知りたい情報は何だと思いますか？
+          </span>
+        </div>
+      </div>
+
+      <!-- User Answer 1 -->
+      <div class="chat-message user">
+        <div class="chat-avatar">👤</div>
+        <div class="chat-bubble">
+          近くにどんなお店があるか、距離と一緒に知りたいと思います。
+          土地勘がないので、まず「近さ」が一番重要かなと。
+        </div>
+      </div>
+
+      <!-- AI Message 2 -->
+      <div class="chat-message ai">
+        <div class="chat-avatar">🎨</div>
+        <div class="chat-bubble">
+          良い着眼点ですね。「近さ」を最優先にするのは、
+          引っ越したばかりのユーザーにとって理にかなっています。<br><br>
+          では、もう少し掘り下げましょう。
+          <span class="chat-question">
+            <span class="question-number">2</span>
+            「近い」ことがわかった上で、田中さんは何を見て「この店にしよう」と決断すると思いますか？
+          </span>
+        </div>
+      </div>
+
+      <!-- User Answer 2 -->
+      <div class="chat-message user">
+        <div class="chat-avatar">👤</div>
+        <div class="chat-bubble">
+          やっぱり料理の写真が見たいと思います。テキストの説明だけだとイメージが湧かないので、
+          見た目で「美味しそう」と感じられることが決め手になるかと。
+        </div>
+      </div>
+
+      <!-- AI Message 3 (current) -->
+      <div class="chat-message ai">
+        <div class="chat-avatar">🎨</div>
+        <div class="chat-bubble">
+          なるほど。「距離」で絞り込み、「写真」で決断する——
+          2段階の意思決定プロセスですね。とても論理的です。<br><br>
+          ここで視点を変えてみましょう。
+          <span class="chat-question">
+            <span class="question-number">3</span>
+            田中さんは「迷っている」状態です。画面のデザインで、この「迷い」を減らすにはどうすれば良いでしょう？<br>
+            情報量を増やす？ 減らす？ それとも別のアプローチ？
+          </span>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="chat-message ai" style="opacity: 0.5;">
+        <div class="chat-avatar" style="opacity:0;">🎨</div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <textarea class="chat-input" placeholder="あなたの考えを書いてください..." rows="1"></textarea>
+        <button class="chat-send-btn" onclick="sendMessage()">↑</button>
+      </div>
+      <div class="progress-dots">
+        <div class="progress-dot done"></div>
+        <div class="progress-dot done"></div>
+        <div class="progress-dot current"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function sendMessage() {
+  alert('【プロトタイプ】回答を送信しました。\n\nAIが回答を分析し、次の問いを生成します。\n5問の対話が完了すると、思考の整理→画面自動生成に進みます。');
+}
+</script>
+
+</body>
+</html>

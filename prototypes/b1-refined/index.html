@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesignSprint — 決定版プロトタイプ</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#f5f6f8;--surface:#fff;--border:#e2e5ea;--text:#1a1a2e;--sub:#6b7280;--accent:#2563eb;--accent-bg:#eff6ff;--success:#059669;--success-bg:#ecfdf5;--warn:#d97706;--warn-bg:#fffbeb;--red:#dc2626;--purple:#7c3aed;--purple-bg:#f5f3ff;--orange:#ea580c;--orange-bg:#fff7ed}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* Header */
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .logo{font-size:16px;font-weight:800;color:var(--accent)}
+  .hdr-r{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--sub)}
+  .badge{padding:3px 10px;border-radius:16px;font-size:11px;font-weight:700;background:var(--accent-bg);color:var(--accent)}
+
+  /* Screens */
+  .screens{position:relative;min-height:calc(100vh - 46px)}
+  .screen{display:none;min-height:calc(100vh - 46px)}
+  .screen.active{display:flex;flex-direction:column}
+
+  /* === SCREEN 1: お題選択 === */
+  .s1-wrap{max-width:900px;margin:0 auto;padding:32px 24px}
+  .s1-title{font-size:22px;font-weight:800;margin-bottom:6px}
+  .s1-sub{font-size:14px;color:var(--sub);margin-bottom:28px}
+  .challenge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .ch-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s}
+  .ch-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 24px rgba(37,99,235,.1)}
+  .ch-card.locked{opacity:.45;pointer-events:none}
+  .ch-num{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px}
+  .ch-name{font-size:15px;font-weight:700;margin-bottom:8px}
+  .ch-desc{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:12px}
+  .ch-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .ch-tag{font-size:10px;padding:3px 8px;background:var(--bg);border-radius:4px;color:var(--sub)}
+  .ch-done{color:var(--success);font-size:12px;font-weight:700}
+
+  /* === SCREEN 2: ワークスペース（空） === */
+  .ws{display:grid;grid-template-columns:320px 1fr 320px;flex:1}
+  .pnl{display:flex;flex-direction:column;overflow-y:auto}
+  .pnl-l{background:var(--surface);border-right:1px solid var(--border)}
+  .pnl-c{background:#fafbfc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative}
+  .pnl-r{background:var(--surface);border-left:1px solid var(--border)}
+  .pnl-hd{padding:12px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sub);border-bottom:1px solid var(--border)}
+  .brief{padding:16px}
+  .brief h3{font-size:14px;font-weight:700;margin-bottom:8px}
+  .brief p{font-size:13px;color:var(--sub);line-height:1.7}
+  .consts{padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--border)}
+  .const-i{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sub);padding:3px 0}
+  .inp-sec{padding:16px;flex:1;display:flex;flex-direction:column}
+  .inp-sec label{font-size:13px;font-weight:600;margin-bottom:8px;display:block}
+  .ta{flex:1;min-height:140px;width:100%;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;line-height:1.7;resize:none;font-family:inherit;color:var(--text)}
+  .ta:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+  .btn{padding:11px 20px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-accent:hover{background:#1d4ed8}
+  .btn-green{background:var(--success);color:#fff}
+
+  /* Phone preview */
+  .phone{width:340px;height:520px;background:#fff;border-radius:22px;box-shadow:0 6px 30px rgba(0,0,0,.07);overflow:hidden;position:relative}
+  .phone-notch{width:100px;height:20px;background:#1a1a2e;border-radius:0 0 12px 12px;margin:0 auto}
+  .phone-body{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .ph-search{background:#f3f4f6;border-radius:10px;padding:10px 14px;font-size:12px;color:#9ca3af;display:flex;align-items:center;gap:8px}
+  .ph-tabs{display:flex;gap:3px;padding:3px;background:#f3f4f6;border-radius:8px}
+  .ph-tab{flex:1;text-align:center;padding:6px;font-size:11px;border-radius:6px;color:var(--sub)}
+  .ph-tab.on{background:#fff;color:var(--text);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .ph-card{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .ph-card-img{height:90px}
+  .g1{background:linear-gradient(135deg,#667eea,#764ba2)}
+  .g2{background:linear-gradient(135deg,#f093fb,#f5576c)}
+  .g3{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+  .g4{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+  .g5{background:linear-gradient(135deg,#fa709a,#fee140)}
+  .ph-card-bd{padding:10px 12px}
+  .ph-card-t{font-size:13px;font-weight:700;margin-bottom:3px}
+  .ph-card-m{display:flex;gap:10px;font-size:10px;color:var(--sub)}
+  .round-dots{position:absolute;bottom:16px;display:flex;gap:6px}
+  .rd{width:28px;height:5px;border-radius:3px;background:var(--border)}
+  .rd.on{background:var(--accent)}
+
+  /* Review panel */
+  .score-box{text-align:center;padding:16px;border-bottom:1px solid var(--border)}
+  .score-v{font-size:40px;font-weight:800;color:var(--accent)}
+  .score-l{font-size:11px;color:var(--sub)}
+  .score-bar{display:flex;gap:3px;margin-top:8px}
+  .sb{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .sb.f{background:var(--accent)}
+  .rev-sec{padding:14px 16px;border-bottom:1px solid var(--border)}
+  .rev-sec h4{font-size:12px;font-weight:700;margin-bottom:10px}
+  .rev-i{display:flex;gap:8px;padding:6px 0;font-size:12px;line-height:1.6;color:var(--sub)}
+  .rev-b{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:2px}
+  .rev-b.g{background:var(--success-bg);color:var(--success)}
+  .rev-b.d{background:var(--warn-bg);color:var(--warn)}
+
+  /* === SCREEN 4: 結果 === */
+  .result-wrap{max-width:1100px;margin:0 auto;padding:32px 24px}
+  .result-header{text-align:center;margin-bottom:32px}
+  .result-icon{font-size:48px;margin-bottom:12px}
+  .result-title{font-size:24px;font-weight:800;margin-bottom:6px}
+  .result-sub{font-size:14px;color:var(--sub)}
+
+  /* 上段: スコア + 学び */
+  .result-top{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px}
+  .result-card{background:var(--surface);border-radius:16px;padding:24px;border:1px solid var(--border)}
+  .result-card h3{font-size:15px;font-weight:700;margin-bottom:16px}
+  .growth-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .growth-label{font-size:13px;width:80px;color:var(--sub)}
+  .growth-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+  .growth-fill{height:100%;border-radius:4px}
+  .growth-val{font-size:13px;font-weight:700;width:36px;text-align:right}
+  .takeaway{background:var(--accent-bg);border-radius:12px;padding:20px;text-align:left}
+  .takeaway h4{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px}
+  .takeaway li{font-size:13px;line-height:1.8;color:var(--text);margin-left:16px}
+
+  /* 別解セクション */
+  .alt-section{margin-bottom:32px}
+  .alt-section-hd{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .alt-section-hd h2{font-size:18px;font-weight:800}
+  .alt-section-hd .alt-tag{font-size:11px;padding:4px 12px;border-radius:20px;background:var(--purple-bg);color:var(--purple);font-weight:700}
+  .alt-section-sub{font-size:13px;color:var(--sub);margin-top:4px}
+
+  /* 3つの提出+別解カード */
+  .alt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .alt-card{background:var(--surface);border-radius:16px;padding:20px;border:2px solid var(--border);position:relative}
+  .alt-card.mine{border-color:var(--accent);box-shadow:0 4px 20px rgba(37,99,235,.08)}
+  .alt-card.alt-a{border-color:var(--purple);border-style:dashed}
+  .alt-card.alt-b{border-color:var(--orange);border-style:dashed}
+  .alt-label{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin-bottom:14px;padding:4px 12px;border-radius:20px}
+  .alt-label.mine-l{background:var(--accent-bg);color:var(--accent)}
+  .alt-label.alt-a-l{background:var(--purple-bg);color:var(--purple)}
+  .alt-label.alt-b-l{background:var(--orange-bg);color:var(--orange)}
+
+  /* 結果画面用ミニフォン */
+  .mini-phone{width:100%;max-width:260px;background:#fff;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.06);overflow:hidden;margin:0 auto 16px}
+  .mp-notch{width:70px;height:14px;background:#1a1a2e;border-radius:0 0 8px 8px;margin:0 auto}
+  .mp-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+  .mp-bar{height:24px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:9px;color:#aaa}
+  .mp-tabs{display:flex;gap:2px;padding:2px;background:#f3f4f6;border-radius:6px}
+  .mp-tab{flex:1;text-align:center;padding:4px;font-size:9px;border-radius:4px;color:var(--sub)}
+  .mp-tab.on{background:#fff;font-weight:700;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .mp-card{border:1px solid #eee;border-radius:6px;overflow:hidden}
+  .mp-img{height:48px}
+  .mp-bd{padding:6px 8px}
+  .mp-t{font-size:10px;font-weight:700;margin-bottom:2px}
+  .mp-m{font-size:8px;color:var(--sub)}
+  .mp-map{height:80px;background:#e8eef4;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .mp-map::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,#dde4ec 25%,transparent 25%),linear-gradient(-45deg,#dde4ec 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dde4ec 75%),linear-gradient(-45deg,transparent 75%,#dde4ec 75%);background-size:16px 16px;opacity:.3}
+  .mp-pin{width:10px;height:10px;background:#e74c3c;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:relative;z-index:1}
+  .mp-list-i{display:flex;align-items:center;gap:6px;background:#f9fafb;border-radius:6px;padding:6px 8px}
+  .mp-rank{font-size:12px;font-weight:800;width:16px;text-align:center}
+  .mp-thumb{width:24px;height:24px;border-radius:4px}
+  .mp-lines{flex:1;display:flex;flex-direction:column;gap:3px}
+  .mp-line{height:4px;background:#ddd;border-radius:2px}
+  .mp-line.s{width:55%}
+
+  /* 別解の設計意図 */
+  .alt-rationale{font-size:12px;color:var(--sub);line-height:1.7;margin-bottom:12px}
+  .alt-rationale strong{color:var(--text);font-weight:700}
+  .alt-point{display:flex;gap:6px;font-size:11px;line-height:1.6;padding:3px 0;color:var(--sub)}
+  .alt-point .dot{flex-shrink:0;width:6px;height:6px;border-radius:50%;margin-top:6px}
+
+  /* 比較テーブル */
+  .compare-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .compare-table th{text-align:left;padding:8px 10px;background:var(--bg);font-weight:700;font-size:11px;color:var(--sub);border-bottom:1px solid var(--border)}
+  .compare-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  .compare-table .c-mine{color:var(--accent);font-weight:600}
+  .compare-table .c-a{color:var(--purple);font-weight:600}
+  .compare-table .c-b{color:var(--orange);font-weight:600}
+
+  /* ボトムボタン */
+  .next-btns{display:flex;gap:12px;justify-content:center;margin-top:8px}
+  .btn-outline{padding:12px 28px;border:2px solid var(--border);border-radius:10px;background:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--text)}
+  .btn-primary{padding:12px 28px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">DesignSprint</div>
+  <div class="hdr-r">
+    <span class="badge" id="screenBadge">お題選択</span>
+    <span>Level 1</span>
+    <span>🔥 3日連続</span>
+  </div>
+</header>
+
+<div class="screens">
+  <!-- ===== SCREEN 1: お題選択 ===== -->
+  <div class="screen active" id="screen1">
+    <div class="s1-wrap">
+      <div class="s1-title">📋 Level 1 のお題</div>
+      <div class="s1-sub">デザイン4原則を意識した単一画面の設計に挑戦しましょう</div>
+      <div class="challenge-grid">
+        <div class="ch-card" style="border-color:var(--success);opacity:.7">
+          <div class="ch-num">Challenge 01</div>
+          <div class="ch-name">ログインページ</div>
+          <div class="ch-desc">シンプルなログイン画面を設計。情報の優先順位とCTAの明確さを意識。</div>
+          <div class="ch-done">✅ 完了 — 85点</div>
+        </div>
+        <div class="ch-card" style="border-color:var(--success);opacity:.7">
+          <div class="ch-num">Challenge 02</div>
+          <div class="ch-name">天気予報ウィジェット</div>
+          <div class="ch-desc">限られたスペースに情報を整理。視覚的階層の練習。</div>
+          <div class="ch-done">✅ 完了 — 72点</div>
+        </div>
+        <div class="ch-card" style="border-color:var(--success);opacity:.7">
+          <div class="ch-num">Challenge 03</div>
+          <div class="ch-name">ユーザープロフィール</div>
+          <div class="ch-desc">個人情報の見せ方とアクション導線。</div>
+          <div class="ch-done">✅ 完了 — 78点</div>
+        </div>
+        <div class="ch-card" onclick="goScreen(2)">
+          <div class="ch-num" style="color:var(--red)">Challenge 04 — NEW</div>
+          <div class="ch-name">ランチ探しアプリ</div>
+          <div class="ch-desc">引っ越したばかりの会社員が、近所のランチを素早く見つけられる画面を設計。</div>
+          <div class="ch-tags">
+            <span class="ch-tag">📱 モバイル</span>
+            <span class="ch-tag">🎯 情報探索</span>
+            <span class="ch-tag">⏱ 短時間決定</span>
+          </div>
+        </div>
+        <div class="ch-card locked">
+          <div class="ch-num">Challenge 05</div>
+          <div class="ch-name">🔒 音楽プレイヤー</div>
+          <div class="ch-desc">Challenge 04をクリアすると解放されます</div>
+        </div>
+        <div class="ch-card locked">
+          <div class="ch-num">Challenge 06</div>
+          <div class="ch-name">🔒 ??????</div>
+          <div class="ch-desc">Challenge 05をクリアすると解放されます</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 2: ワークスペース（空の状態） ===== -->
+  <div class="screen" id="screen2">
+    <div class="ws" style="flex:1">
+      <div class="pnl pnl-l">
+        <div class="pnl-hd">📋 ブリーフ</div>
+        <div class="brief">
+          <h3>🎯 ランチ探しアプリ</h3>
+          <p>田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを食べたいが、土地勘がない。素早く良さそうな店を見つけたい。</p>
+        </div>
+        <div class="consts">
+          <div class="const-i">📱 モバイルファースト</div>
+          <div class="const-i">👆 メイン操作3タップ以内</div>
+          <div class="const-i">⏱ 30秒以内で店を選べる</div>
+        </div>
+        <div class="inp-sec">
+          <label>✏️ 設計指示を書いてください</label>
+          <textarea class="ta" placeholder="どんな画面を作りたいですか？&#10;&#10;例:&#10;・どんな要素を配置する？&#10;・情報の優先順位は？&#10;・ユーザーをどう導く？"></textarea>
+          <button class="btn btn-accent" onclick="goScreen(3)">🚀 生成する</button>
+        </div>
+      </div>
+      <div class="pnl pnl-c" style="color:var(--sub);font-size:14px">
+        <div style="text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px;opacity:.3">🎨</div>
+          <div style="font-weight:600;margin-bottom:8px">プレビューエリア</div>
+          <div style="font-size:13px">設計指示を入力して<br>「生成する」を押すと<br>ここにプレビューが表示されます</div>
+        </div>
+      </div>
+      <div class="pnl pnl-r">
+        <div class="pnl-hd">📊 レビュー</div>
+        <div style="padding:40px;text-align:center;color:var(--sub);font-size:13px">
+          画面生成後にAIレビューが<br>表示されます
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 3: ワークスペース（生成後 + レビュー） ===== -->
+  <div class="screen" id="screen3">
+    <div class="ws" style="flex:1">
+      <div class="pnl pnl-l">
+        <div class="pnl-hd">📋 ブリーフ</div>
+        <div class="brief">
+          <h3>🎯 ランチ探しアプリ</h3>
+          <p>田中さん（32歳）は引っ越したばかり。お昼休みに近所で美味しいランチを食べたいが、土地勘がない。</p>
+        </div>
+        <div class="consts">
+          <div class="const-i">📱 モバイルファースト</div>
+          <div class="const-i">👆 メイン操作3タップ以内</div>
+          <div class="const-i">⏱ 30秒以内で店を選べる</div>
+        </div>
+        <div class="inp-sec">
+          <label>✏️ 設計指示</label>
+          <textarea class="ta">・上部に検索バー+現在地表示
+・メインは写真付きカード一覧
+・各カードに店名/ジャンル/評価/距離
+・「近い順」をデフォルトソート
+・下部にジャンルフィルター</textarea>
+          <button class="btn btn-accent" onclick="goScreen(3)">🔄 再生成する</button>
+        </div>
+      </div>
+
+      <div class="pnl pnl-c">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-search">🔍 渋谷区神宮前</div>
+            <div class="ph-tabs"><div class="ph-tab on">近い順</div><div class="ph-tab">評価順</div><div class="ph-tab">人気順</div></div>
+            <div class="ph-card"><div class="ph-card-img g1"></div><div class="ph-card-bd"><div class="ph-card-t">イタリアンキッチン SOLE</div><div class="ph-card-m"><span>🍝 イタリアン</span><span>⭐4.2</span><span>📍 3分</span></div></div></div>
+            <div class="ph-card"><div class="ph-card-img g2"></div><div class="ph-card-bd"><div class="ph-card-t">麺屋 はなび</div><div class="ph-card-m"><span>🍜 ラーメン</span><span>⭐4.5</span><span>📍 5分</span></div></div></div>
+          </div>
+        </div>
+        <div class="round-dots">
+          <div class="rd on"></div><div class="rd"></div><div class="rd"></div>
+        </div>
+      </div>
+
+      <div class="pnl pnl-r">
+        <div class="pnl-hd">📊 AIレビュー — Round 1</div>
+        <div class="score-box">
+          <div class="score-v">72</div>
+          <div class="score-l">/ 100 points</div>
+          <div class="score-bar"><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb f"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div></div>
+        </div>
+        <div class="rev-sec">
+          <h4>✅ Good Points</h4>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>「近い順」デフォルトは土地勘のないユーザーに適切</span></div>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>距離・ジャンル・評価の3軸で比較しやすい</span></div>
+          <div class="rev-i"><div class="rev-b g">✓</div><span>写真が大きく視覚的訴求力がある</span></div>
+        </div>
+        <div class="rev-sec">
+          <h4>🔧 Development Points</h4>
+          <div class="rev-i"><div class="rev-b d">!</div><span>スクロールリストだと「30秒で選べる」制約と合わない可能性</span></div>
+          <div class="rev-i"><div class="rev-b d">!</div><span>現在地→店舗のルート感覚がつかめず「迷わず行ける」が未達</span></div>
+        </div>
+        <div style="padding:14px 16px">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:8px">💡 改善方針</label>
+          <textarea class="ta" style="min-height:70px" placeholder="レビューを踏まえて改善を書いてください"></textarea>
+          <button class="btn btn-green" style="margin-top:8px" onclick="goScreen(4)">改善して Round 2 →</button>
+          <button class="btn" style="margin-top:6px;background:var(--bg);border:1px solid var(--border);text-align:center;font-size:12px" onclick="goScreen(4)">このまま提出する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 4: 結果 + 別解 ===== -->
+  <div class="screen" id="screen4">
+    <div class="result-wrap">
+      <div class="result-header">
+        <div class="result-icon">🎉</div>
+        <div class="result-title">Challenge 04 クリア！</div>
+        <div class="result-sub">ランチ探しアプリの画面設計をクリアしました</div>
+      </div>
+
+      <!-- 上段: スコア + 学び -->
+      <div class="result-top">
+        <div class="result-card">
+          <h3>📈 スコア推移</h3>
+          <div class="growth-bar">
+            <div class="growth-label">Round 1</div>
+            <div class="growth-track"><div class="growth-fill" style="width:72%;background:var(--accent)"></div></div>
+            <div class="growth-val">72</div>
+          </div>
+          <div class="growth-bar">
+            <div class="growth-label">Round 2</div>
+            <div class="growth-track"><div class="growth-fill" style="width:81%;background:var(--accent)"></div></div>
+            <div class="growth-val">81</div>
+          </div>
+          <div class="growth-bar">
+            <div class="growth-label">最終</div>
+            <div class="growth-track"><div class="growth-fill" style="width:88%;background:var(--success)"></div></div>
+            <div class="growth-val" style="color:var(--success)">88</div>
+          </div>
+        </div>
+        <div class="takeaway">
+          <h4>💡 今回の学び</h4>
+          <ul>
+            <li>「近い順」デフォルトはユーザーの状況に合った適切な設計判断</li>
+            <li>写真×距離の2軸が「迷い」を減らすポイント</li>
+            <li>スクロールが長い場合は「おすすめ1件」の提示が時短に効果的</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ======= 別解セクション ======= -->
+      <div class="alt-section">
+        <div class="alt-section-hd">
+          <h2>🔍 別解を見てみよう</h2>
+          <span class="alt-tag">設計の引き出しを増やす</span>
+        </div>
+        <p class="alt-section-sub" style="margin-top:-14px;margin-bottom:20px">正解は1つではありません。同じお題でも異なるアプローチが考えられます。あなたの提出と、2つの別解を比較してみましょう。</p>
+
+        <div class="alt-grid">
+          <!-- あなたの提出 -->
+          <div class="alt-card mine">
+            <div class="alt-label mine-l">✅ あなたの提出</div>
+            <div class="mini-phone">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div class="mp-tabs"><div class="mp-tab on">近い順</div><div class="mp-tab">評価順</div><div class="mp-tab">人気</div></div>
+                <div class="mp-card"><div class="mp-img g1" style="height:56px"></div><div class="mp-bd"><div class="mp-t">イタリアンキッチン SOLE</div><div class="mp-m">🍝 ⭐4.2 📍3分</div></div></div>
+                <div class="mp-card"><div class="mp-img g2" style="height:56px"></div><div class="mp-bd"><div class="mp-t">麺屋 はなび</div><div class="mp-m">🍜 ⭐4.5 📍5分</div></div></div>
+              </div>
+            </div>
+            <div class="alt-rationale">
+              <strong>カードリスト型</strong> — 写真を大きく見せ、スクロールで一覧比較するスタンダードなアプローチ。
+            </div>
+            <div class="alt-point"><div class="dot" style="background:var(--success)"></div>写真の訴求力が高く、視覚的に店を選べる</div>
+            <div class="alt-point"><div class="dot" style="background:var(--success)"></div>距離・評価・ジャンルの3軸が見やすい</div>
+            <div class="alt-point"><div class="dot" style="background:var(--warn)"></div>スクロール量が多いと30秒制約に厳しい</div>
+          </div>
+
+          <!-- 別解 A -->
+          <div class="alt-card alt-a">
+            <div class="alt-label alt-a-l">💡 別解 A</div>
+            <div class="mini-phone">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div class="mp-map"><div class="mp-pin"></div></div>
+                <div style="background:#fff;border-radius:8px 8px 0 0;padding:8px 10px;box-shadow:0 -2px 6px rgba(0,0,0,.04);margin-top:-4px">
+                  <div style="width:28px;height:3px;background:#ddd;border-radius:2px;margin:0 auto 6px"></div>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <div style="width:40px;height:40px;border-radius:6px" class="g1"></div>
+                    <div><div class="mp-t">SOLE — 📍3分</div><div class="mp-m">⭐4.2 イタリアン</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="alt-rationale">
+              <strong>マップ＋ボトムシート型</strong> — 地図で距離感を直感的に把握。スワイプで店舗詳細を表示。
+            </div>
+            <div class="alt-point"><div class="dot" style="background:var(--purple)"></div>距離感がビジュアルで伝わり「迷わず行ける」</div>
+            <div class="alt-point"><div class="dot" style="background:var(--purple)"></div>土地勘がなくても位置関係を理解できる</div>
+            <div class="alt-point"><div class="dot" style="background:var(--sub)"></div>写真の表示面積が小さくなりがち</div>
+          </div>
+
+          <!-- 別解 B -->
+          <div class="alt-card alt-b">
+            <div class="alt-label alt-b-l">💡 別解 B</div>
+            <div class="mini-phone">
+              <div class="mp-notch"></div>
+              <div class="mp-body">
+                <div class="mp-bar">🔍 渋谷区神宮前</div>
+                <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:8px;padding:10px;color:#fff">
+                  <div style="font-size:9px;opacity:.8">🏆 AIおすすめ — あなたの好みに近い</div>
+                  <div style="font-size:12px;font-weight:700;margin-top:3px">イタリアンキッチン SOLE</div>
+                  <div style="font-size:9px;opacity:.8;margin-top:2px">📍3分 ⭐4.2 💰 ¥1,000前後</div>
+                </div>
+                <div style="font-size:9px;font-weight:700;color:var(--sub);margin-top:2px">他の候補</div>
+                <div class="mp-list-i"><div class="mp-rank" style="color:var(--orange)">1</div><div class="mp-thumb g2"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+                <div class="mp-list-i"><div class="mp-rank" style="color:var(--orange)">2</div><div class="mp-thumb g3"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+                <div class="mp-list-i"><div class="mp-rank" style="color:var(--orange)">3</div><div class="mp-thumb g4"></div><div class="mp-lines"><div class="mp-line"></div><div class="mp-line s"></div></div></div>
+              </div>
+            </div>
+            <div class="alt-rationale">
+              <strong>おすすめ1件＋コンパクトリスト型</strong> — AIが最適な1件を大きく提示し、迷いを最小化。
+            </div>
+            <div class="alt-point"><div class="dot" style="background:var(--orange)"></div>「30秒で選べる」制約に最も強いアプローチ</div>
+            <div class="alt-point"><div class="dot" style="background:var(--orange)"></div>意思決定コストを大幅に削減できる</div>
+            <div class="alt-point"><div class="dot" style="background:var(--sub)"></div>AIの精度に依存し、自分で探す余地が少ない</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 比較テーブル -->
+      <div class="result-card" style="margin-bottom:28px">
+        <h3>📊 3つのアプローチ比較</h3>
+        <table class="compare-table">
+          <thead>
+            <tr><th>観点</th><th class="c-mine">あなたの提出</th><th class="c-a">別解A: マップ型</th><th class="c-b">別解B: おすすめ型</th></tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-weight:600">30秒で選べる</td><td>△ スクロール量次第</td><td>○ 近い店が一目瞭然</td><td class="c-b">◎ 1件提示で即決</td></tr>
+            <tr><td style="font-weight:600">写真の訴求力</td><td class="c-mine">◎ 大きな写真</td><td>△ 小サムネイル</td><td>○ おすすめは大きい</td></tr>
+            <tr><td style="font-weight:600">土地勘の補完</td><td>△ 距離テキストのみ</td><td class="c-a">◎ 地図で直感的</td><td>○ 距離+AI判断</td></tr>
+            <tr><td style="font-weight:600">自分で選ぶ自由度</td><td class="c-mine">◎ 一覧で比較可能</td><td>○ 地図から選べる</td><td>△ AI依存が強い</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ボタン -->
+      <div class="next-btns">
+        <button class="btn-outline" onclick="goScreen(1)">お題一覧に戻る</button>
+        <button class="btn-primary">次のChallenge →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function goScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  const labels={1:'お題選択',2:'設計中',3:'Round 1',4:'結果'};
+  document.getElementById('screenBadge').textContent=labels[n]||'';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

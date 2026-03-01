@@ -1,0 +1,56 @@
+/* ========================================
+   DesignSprint — CSS変数定義（デザインシステム）
+   ======================================== */
+:root {
+  /* 背景・サーフェス */
+  --bg: #f5f6f8;
+  --surface: #fff;
+  --border: #e2e5ea;
+
+  /* テキスト */
+  --text: #1a1a2e;
+  --sub: #6b7280;
+
+  /* アクセント */
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --accent-hover: #1d4ed8;
+
+  /* ステータス */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+
+  /* カテゴリカラー */
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --orange: #ea580c;
+  --orange-bg: #fff7ed;
+
+  /* フォント */
+  --font: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+
+  /* サイズ */
+  --header-h: 52px;
+  --panel-w: 320px;
+  --phone-w: 340px;
+  --phone-h: 640px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 20px;
+  --radius-phone: 32px;
+
+  /* シャドウ */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+  --shadow-phone: 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+
+  /* トランジション */
+  --ease: 0.2s ease;
+  --ease-spring: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}

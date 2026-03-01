@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept B: Design Sprint — 実践ワークショップ型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #e2e5ea;
+    --text: #1a1a2e;
+    --text-sub: #6b7280;
+    --accent: #2563eb;
+    --accent-light: #3b82f6;
+    --accent-bg: #eff6ff;
+    --success: #059669;
+    --success-bg: #ecfdf5;
+    --warning: #d97706;
+    --warning-bg: #fffbeb;
+    --panel-bg: #fafbfc;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Concept Banner */
+  .concept-banner {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .header-meta {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .round-badge {
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* 3 Column Layout */
+  .workspace {
+    display: grid;
+    grid-template-columns: 340px 1fr 340px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Left Panel: Brief + Input */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .panel-header {
+    padding: 16px 20px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-sub);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brief-card {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brief-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brief-card p {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+  .constraints {
+    padding: 16px 20px;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .constraint-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+    padding: 4px 0;
+  }
+  .constraint-icon {
+    width: 20px;
+    height: 20px;
+    background: var(--accent-bg);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .input-section {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .input-section label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .design-input {
+    flex: 1;
+    min-height: 160px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: none;
+    font-family: inherit;
+    color: var(--text);
+  }
+  .design-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .generate-btn {
+    margin-top: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+  }
+  .generate-btn:hover { background: #1d4ed8; }
+
+  /* Center: Preview */
+  .panel-center {
+    background: var(--panel-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    position: relative;
+  }
+  .preview-frame {
+    width: 375px;
+    height: 580px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    width: 120px;
+    height: 24px;
+    background: #1a1a2e;
+    border-radius: 0 0 16px 16px;
+    margin: 0 auto;
+  }
+  .preview-content {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .prev-search {
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #9ca3af;
+  }
+  .prev-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #f3f4f6;
+    border-radius: 10px;
+  }
+  .prev-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 8px;
+    color: var(--text-sub);
+    font-weight: 500;
+  }
+  .prev-tab.active {
+    background: white;
+    color: var(--text);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .prev-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .prev-card-img {
+    height: 120px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+  .prev-card-img.food2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .prev-card-body {
+    padding: 12px 14px;
+  }
+  .prev-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .prev-card-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+  .round-indicator {
+    position: absolute;
+    bottom: 24px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .round-dot {
+    width: 32px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+  .round-dot.active { background: var(--accent); }
+  .round-dot.done { background: var(--success); }
+
+  /* Right Panel: Review */
+  .panel-right {
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .score-card {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .score-value {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+  .score-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+  }
+  .score-segment {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+  .score-segment.filled { background: var(--accent); }
+  .score-segment.filled.high { background: var(--success); }
+
+  .review-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .review-section h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .review-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+  .review-badge {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  .review-badge.good { background: var(--success-bg); color: var(--success); }
+  .review-badge.dev { background: var(--warning-bg); color: var(--warning); }
+
+  .improve-section {
+    padding: 16px 20px;
+    flex: 1;
+  }
+  .improve-input {
+    width: 100%;
+    height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: none;
+    font-family: inherit;
+    color: var(--text);
+  }
+  .improve-btn {
+    margin-top: 10px;
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="concept-banner">CONCEPT B — DESIGN SPRINT（実践ワークショップ型）</div>
+
+<header class="header">
+  <div class="logo">DesignSprint</div>
+  <div class="header-meta">
+    <span class="round-badge">Round 1 / 3</span>
+    <span>Level 1 — Challenge 4</span>
+    <span>⏱ 12:30</span>
+  </div>
+</header>
+
+<div class="workspace">
+  <!-- LEFT: Brief + Input -->
+  <div class="panel-left">
+    <div class="panel-header">📋 ブリーフ</div>
+
+    <div class="brief-card">
+      <h3>🎯 近所のランチ探しアプリ</h3>
+      <p>
+        田中さん（32歳・会社員）は3日前に引っ越してきたばかり。
+        お昼休みに近所で美味しいランチを食べたいが、土地勘がなく、
+        どこに何があるか全くわからない。
+      </p>
+    </div>
+
+    <div class="constraints">
+      <div class="constraint-item">
+        <div class="constraint-icon">📱</div>
+        <span>モバイルファースト</span>
+      </div>
+      <div class="constraint-item">
+        <div class="constraint-icon">👆</div>
+        <span>メイン操作は3タップ以内</span>
+      </div>
+      <div class="constraint-item">
+        <div class="constraint-icon">⏱</div>
+        <span>30秒以内で店を選べる</span>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <label>✏️ 設計指示を書いてください</label>
+      <textarea class="design-input" placeholder="どんな画面を作りたいですか？
+
+例）
+・画面上部に検索バーと現在地表示
+・メインエリアは写真付きのカード一覧
+・各カードには店名、ジャンル、評価、距離を表示
+・下部にジャンルフィルタータブ
+・最初から「近い順」でソート済み">・画面上部に検索バーと現在地表示
+・メインエリアは写真付きのカード一覧
+・各カードには店名、ジャンル、評価、距離を表示
+・下部にジャンルフィルタータブ
+・最初から「近い順」でソート済み</textarea>
+      <button class="generate-btn" onclick="generate()">🚀 画面を生成する</button>
+    </div>
+  </div>
+
+  <!-- CENTER: Preview -->
+  <div class="panel-center">
+    <div class="preview-frame">
+      <div class="phone-notch"></div>
+      <div class="preview-content">
+        <div class="prev-search">🔍 現在地: 渋谷区神宮前</div>
+        <div class="prev-tabs">
+          <div class="prev-tab active">近い順</div>
+          <div class="prev-tab">評価順</div>
+          <div class="prev-tab">人気順</div>
+        </div>
+        <div class="prev-card">
+          <div class="prev-card-img"></div>
+          <div class="prev-card-body">
+            <div class="prev-card-title">イタリアンキッチン SOLE</div>
+            <div class="prev-card-meta">
+              <span>🍝 イタリアン</span>
+              <span>⭐ 4.2</span>
+              <span>📍 徒歩3分</span>
+            </div>
+          </div>
+        </div>
+        <div class="prev-card">
+          <div class="prev-card-img food2"></div>
+          <div class="prev-card-body">
+            <div class="prev-card-title">麺屋 はなび</div>
+            <div class="prev-card-meta">
+              <span>🍜 ラーメン</span>
+              <span>⭐ 4.5</span>
+              <span>📍 徒歩5分</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="round-indicator">
+      <div class="round-dot active"></div>
+      <div class="round-dot"></div>
+      <div class="round-dot"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Review -->
+  <div class="panel-right">
+    <div class="panel-header">📊 レビュー結果</div>
+
+    <div class="score-card">
+      <div class="score-value">72</div>
+      <div class="score-label">/ 100 points</div>
+      <div class="score-bar">
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment filled"></div>
+        <div class="score-segment"></div>
+        <div class="score-segment"></div>
+        <div class="score-segment"></div>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <h4>✅ Good Points</h4>
+      <div class="review-item">
+        <div class="review-badge good">✓</div>
+        <span>「近い順」をデフォルトにしているのは、土地勘のないユーザーに適切</span>
+      </div>
+      <div class="review-item">
+        <div class="review-badge good">✓</div>
+        <span>カードに距離・ジャンル・評価の3軸を表示し、比較しやすい</span>
+      </div>
+      <div class="review-item">
+        <div class="review-badge good">✓</div>
+        <span>写真を大きく見せることで視覚的な訴求力がある</span>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <h4>🔧 Development Points</h4>
+      <div class="review-item">
+        <div class="review-badge dev">!</div>
+        <span>「30秒で選べる」制約に対し、スクロールが必要なリスト型は最適か再考の余地あり</span>
+      </div>
+      <div class="review-item">
+        <div class="review-badge dev">!</div>
+        <span>現在地からのルート表示がないため「迷わず行ける」ゴールに到達しにくい</span>
+      </div>
+    </div>
+
+    <div class="improve-section">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px;">💡 改善方針を書いてください</label>
+      <textarea class="improve-input" placeholder="レビューを踏まえて、何をどう改善しますか？"></textarea>
+      <button class="improve-btn" onclick="improve()">改善してRound 2へ →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function generate() {
+  alert('【プロトタイプ】指示に基づいて画面を生成しました。\n\n右パネルにレビュー結果が表示されます。');
+}
+function improve() {
+  alert('【プロトタイプ】改善方針を受けてRound 2の画面を再生成します。\n\nスコアの変化を確認しましょう。');
+}
+</script>
+
+</body>
+</html>

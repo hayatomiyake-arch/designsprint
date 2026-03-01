@@ -1,0 +1,203 @@
+/* ========================================
+   DesignSprint — ワークスペース（ブリーフ、入力、レビュー）
+   ======================================== */
+
+/* ===== 左パネル: ブリーフ ===== */
+.brief {
+  padding: 16px;
+}
+.brief h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.brief p {
+  font-size: 13px;
+  color: var(--sub);
+  line-height: 1.7;
+}
+
+/* ブリーフカード（背景付き） */
+.brief-card {
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+/* 制約条件 */
+.constraints {
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid var(--border);
+}
+.constraint-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--sub);
+  padding: 3px 0;
+}
+.constraint-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--sub);
+  border: 1px solid var(--border);
+}
+
+/* チャレンジヒント */
+.challenge-hints {
+  padding: 12px 16px;
+  background: var(--accent-bg);
+  border-bottom: 1px solid var(--border);
+}
+.challenge-hints h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.challenge-hints ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.challenge-hints li {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+/* 入力セクション */
+.input-section {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.input-section label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--sub);
+}
+
+/* ===== 右パネル: レビュー ===== */
+
+/* スコアボックス */
+.score-box {
+  text-align: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.score-value {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.score-label {
+  font-size: 11px;
+  color: var(--sub);
+}
+
+/* スコアバー */
+.score-bar {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+}
+.score-segment {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.score-segment.filled { background: var(--accent); }
+
+/* レビューセクション */
+.review-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.review-section h4 {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.review-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+/* レビューバッジ（Good/Dev） */
+.review-badge {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.review-badge.good { background: var(--success-bg); color: var(--success); }
+.review-badge.dev { background: var(--warn-bg); color: var(--warn); }
+
+/* 空のレビュー */
+.empty-review {
+  text-align: center;
+  color: var(--sub);
+  padding-top: 60px;
+}
+.empty-review-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.empty-review-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ===== ヒントセクション ===== */
+.hint-section {
+  padding: 14px 16px;
+  background: var(--accent-bg);
+  border-radius: var(--radius-md);
+  margin: 12px 16px;
+}
+.hint-section h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.hint-section p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* ===== アクションボタン（ワークスペース下部） ===== */
+.ws-actions {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}

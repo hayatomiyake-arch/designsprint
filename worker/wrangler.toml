@@ -1,0 +1,35 @@
+# DesignSprint — Cloudflare Worker 設定
+#
+# デプロイ手順:
+#   1. cd worker
+#   2. npx wrangler kv:namespace create RATE_LIMIT   ← KV作成
+#   3. 返却された id で下の kv_namespaces.id を更新
+#   4. npx wrangler secret put GROQ_API_KEY           ← Groq APIキー登録
+#   5. npx wrangler secret put ALLOWED_ORIGINS         ← 許可オリジン登録
+#      (例: https://designsprint.pages.dev,https://your-domain.com)
+#   6. npx wrangler deploy
+
+name = "designsprint-proxy"
+main = "proxy.js"
+compatibility_date = "2024-12-01"
+
+# Workers Free: 100,000 リクエスト/日
+# https://developers.cloudflare.com/workers/platform/pricing/
+
+[vars]
+# 非秘匿変数はここに（任意）
+# ALLOWED_ORIGINS はカンマ区切りで許可オリジンを指定
+# 秘匿にしたい場合は `wrangler secret put ALLOWED_ORIGINS` で設定
+# 例: "https://designsprint.pages.dev,https://custom-domain.com"
+
+# KV Namespace バインディング
+# `npx wrangler kv:namespace create RATE_LIMIT` 実行後、
+# 返却された id をここに貼り付ける
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "05a3653ec295432f98e3f628fd8719b3"
+
+# ===== 環境変数（秘匿） =====
+# GROQ_API_KEY      → `npx wrangler secret put GROQ_API_KEY`
+# ALLOWED_ORIGINS   → `npx wrangler secret put ALLOWED_ORIGINS`（任意）
+# ブラウザやログに露出しない

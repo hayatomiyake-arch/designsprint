@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesignSprint — Level 3: マルチスクリーン アプリUI/UX</title>
+<style>
+/* ===========================
+   CSS変数 — デザインシステム
+   =========================== */
+:root {
+  --bg: #f5f6f8;
+  --surface: #fff;
+  --border: #e2e5ea;
+  --text: #1a1a2e;
+  --sub: #6b7280;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --orange: #ea580c;
+  --orange-bg: #fff7ed;
+}
+
+/* ===========================
+   リセット＆基本スタイル
+   =========================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ===========================
+   ヘッダー
+   =========================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--text); }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.badge-level {
+  background: var(--purple-bg);
+  color: var(--purple);
+}
+.badge-streak {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+/* ===========================
+   スクリーン共通
+   =========================== */
+.screen { display: none; min-height: calc(100vh - 52px); }
+.screen.active { display: block; }
+
+/* ===========================
+   Screen 1: お題選択
+   =========================== */
+.challenge-header {
+  text-align: center;
+  padding: 40px 20px 20px;
+}
+.challenge-header h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+.challenge-header p {
+  color: var(--sub);
+  font-size: 14px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.challenge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 920px;
+  margin: 24px auto;
+  padding: 0 24px 40px;
+}
+.challenge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.challenge-card:hover:not(.locked) {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+  transform: translateY(-2px);
+}
+.challenge-card.completed {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+.challenge-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.challenge-card .number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+.challenge-card .title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.challenge-card .score {
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 600;
+}
+.challenge-card .status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.status-done { background: var(--success-bg); color: var(--success); }
+.status-new { background: var(--accent-bg); color: var(--accent); }
+.status-locked { background: var(--bg); color: var(--sub); }
+.challenge-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.challenge-tags span {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--sub);
+}
+
+/* ===========================
+   Screen 2 & 3: 3カラムワークスペース
+   =========================== */
+.workspace {
+  display: grid;
+  grid-template-columns: 360px 1fr 340px;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+.panel {
+  overflow-y: auto;
+  padding: 20px;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; border-left: 1px solid var(--border); }
+.panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===========================
+   左パネル: ブリーフ
+   =========================== */
+.brief-section { margin-bottom: 16px; }
+.brief-section h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent-bg);
+}
+.brief-section p, .brief-section li {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.brief-section ul { list-style: none; padding: 0; }
+.brief-section ul li {
+  padding: 2px 0 2px 16px;
+  position: relative;
+}
+.brief-section ul li::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+.brief-persona {
+  background: var(--accent-bg);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+.brief-scenario { counter-reset: scenario; }
+.brief-scenario li {
+  padding-left: 24px !important;
+  counter-increment: scenario;
+}
+.brief-scenario li::before {
+  content: counter(scenario) '.' !important;
+  font-weight: 700;
+  color: var(--accent);
+}
+.constraints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.constraint-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--sub);
+  border: 1px solid var(--border);
+}
+.gen-area { margin-top: 20px; }
+.gen-area textarea {
+  width: 100%;
+  height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  resize: none;
+  font-family: inherit;
+}
+.gen-area textarea:focus { outline: none; border-color: var(--accent); }
+.btn-generate {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-generate:hover { background: #1d4ed8; }
+
+/* ===========================
+   中央パネル: インタラクティブプロトタイプ
+   =========================== */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.phone-wrapper {
+  position: relative;
+  width: 340px;
+}
+.phone-frame {
+  width: 340px;
+  height: 640px;
+  background: #fff;
+  border-radius: 32px;
+  border: 3px solid #1a1a2e;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  transform-origin: center center;
+  transition: transform 0.15s ease, margin 0.15s ease;
+}
+.phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 28px;
+  background: #1a1a2e;
+  border-radius: 0 0 16px 16px;
+  z-index: 10;
+}
+.phone-status-bar {
+  height: 44px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 20px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  position: relative;
+  z-index: 5;
+  background: #fff;
+}
+.phone-status-bar .time { margin-left: 4px; }
+.phone-status-bar .icons { display: flex; gap: 4px; font-size: 11px; }
+.phone-body {
+  height: calc(640px - 44px);
+  overflow: hidden;
+  position: relative;
+}
+.phone-screens-track {
+  display: flex;
+  width: 500%;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.app-screen {
+  width: 340px;
+  min-width: 340px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  font-size: 13px;
+}
+.app-screen::-webkit-scrollbar { width: 0; }
+
+/* アプリ共通ヘッダー */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 5;
+}
+.app-back {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--accent);
+  padding: 4px;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.app-header-action { font-size: 18px; cursor: pointer; }
+
+/* タップ可能エリアのヒント */
+.tappable {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+.tappable:hover { opacity: 0.88; }
+.tappable::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  transition: border-color 0.2s;
+  pointer-events: none;
+}
+.tappable:hover::after { border-color: rgba(37,99,235,0.3); }
+/* パルスアニメ — タップ可能を示唆 */
+@keyframes pulse-hint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+}
+.tappable-pulse { animation: pulse-hint 2s infinite; }
+
+/* ===========================
+   アプリ画面1: 検索
+   =========================== */
+.search-screen { padding: 16px; }
+.search-screen h3 { font-size: 20px; margin-bottom: 16px; }
+.search-field { margin-bottom: 14px; }
+.search-field label {
+  font-size: 12px;
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+.date-row { display: flex; gap: 8px; }
+.date-row .search-input { flex: 1; text-align: center; font-size: 13px; }
+.date-row .arrow { display: flex; align-items: center; color: var(--sub); font-size: 16px; }
+.search-input-sub { font-size: 10px; color: var(--sub); text-align: center; margin-top: 2px; }
+.slider-mock {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  position: relative;
+  margin-top: 8px;
+}
+.slider-mock::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 60%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+.slider-mock .knob {
+  position: absolute;
+  left: 60%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px; height: 18px;
+  background: var(--accent);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.popular-area { margin-top: 16px; margin-bottom: 12px; }
+.popular-area h4 { font-size: 12px; color: var(--sub); margin-bottom: 8px; }
+.popular-tags { display: flex; gap: 8px; }
+.popular-tags span {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--bg);
+  font-size: 13px;
+  cursor: pointer;
+}
+.popular-tags span:first-child {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+.btn-search {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* ===========================
+   アプリ画面2: 結果一覧
+   =========================== */
+.results-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.results-tabs span {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--sub);
+  border-bottom: 2px solid transparent;
+}
+.results-tabs span.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+.result-card {
+  margin: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.result-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.result-photo { height: 140px; position: relative; }
+.result-photo .photo-count {
+  position: absolute;
+  bottom: 8px; right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.result-info { padding: 12px; }
+.result-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.result-rating { font-size: 12px; color: var(--warn); margin-bottom: 4px; }
+.result-price { font-size: 14px; font-weight: 700; color: var(--accent); }
+.result-price span { font-size: 12px; font-weight: 400; color: var(--sub); }
+.result-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.result-fav { font-size: 18px; color: var(--border); cursor: pointer; }
+
+/* ===========================
+   アプリ画面3: 宿詳細
+   =========================== */
+.detail-photo { height: 200px; position: relative; }
+.detail-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+.detail-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+.detail-dots span.active { background: #fff; }
+.detail-content { padding: 16px; }
+.detail-rating { font-size: 13px; color: var(--warn); margin-bottom: 2px; }
+.detail-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.detail-tabs span {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--sub);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.detail-tabs span.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+.detail-features h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.detail-features ul { list-style: none; padding: 0; }
+.detail-features ul li {
+  font-size: 13px;
+  padding: 4px 0 4px 20px;
+  position: relative;
+}
+.detail-features ul li::before {
+  content: '\2022';
+  position: absolute;
+  left: 4px;
+  color: var(--accent);
+}
+.detail-review {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.detail-review .stars { color: var(--warn); font-size: 12px; }
+.detail-review .text { font-size: 13px; margin-top: 4px; }
+.detail-review .author { font-size: 11px; color: var(--sub); margin-top: 4px; }
+.detail-bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  z-index: 5;
+}
+.detail-bottom-price { font-size: 14px; font-weight: 700; }
+.detail-bottom-price span { font-size: 12px; font-weight: 400; color: var(--sub); }
+.btn-book {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===========================
+   アプリ画面4: 予約フォーム
+   =========================== */
+.booking-screen { padding: 16px; padding-bottom: 80px; }
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--border);
+  color: var(--sub);
+}
+.step-dot.active { background: var(--accent); color: #fff; }
+.step-dot.done { background: var(--success); color: #fff; }
+.step-line { width: 40px; height: 2px; background: var(--border); }
+.step-line.done { background: var(--success); }
+.step-labels {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+.step-labels span { font-size: 11px; color: var(--sub); }
+.step-labels span.active { color: var(--accent); font-weight: 600; }
+.booking-summary {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.booking-summary h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.booking-summary p { font-size: 13px; color: var(--sub); line-height: 1.6; }
+.booking-summary .total {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 6px;
+}
+.form-section h4 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.form-field { margin-bottom: 12px; }
+.form-field label { font-size: 12px; color: var(--sub); display: block; margin-bottom: 4px; }
+.form-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--bg);
+  font-family: inherit;
+}
+.btn-next {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* ===========================
+   アプリ画面5: 予約完了
+   =========================== */
+.complete-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 20px;
+  text-align: center;
+}
+.complete-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.complete-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.complete-number { font-size: 13px; color: var(--sub); margin-bottom: 20px; }
+.complete-detail {
+  width: 100%;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+.complete-detail h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.complete-detail p { font-size: 13px; color: var(--sub); line-height: 1.7; }
+.complete-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.btn-complete-action {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+.btn-complete-action:hover { background: var(--bg); }
+.btn-home {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: inherit;
+}
+
+/* ===========================
+   フローインジケーター（コンパクト1行タブバー）
+   =========================== */
+.flow-indicator { margin-top: 12px; text-align: center; }
+.flow-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.flow-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sub);
+  transition: all 0.2s;
+  white-space: nowrap;
+  user-select: none;
+}
+.flow-tab:hover { background: var(--bg); }
+.flow-tab.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+}
+.flow-tab .num {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.07);
+  color: var(--sub);
+  flex-shrink: 0;
+}
+.flow-tab.active .num {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+/* ===========================
+   空ワークスペース中央プレースホルダ
+   =========================== */
+.empty-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--sub);
+}
+.empty-center .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-center p { font-size: 14px; }
+
+/* ===========================
+   右パネル: レビュー
+   =========================== */
+.review-score {
+  text-align: center;
+  padding: 16px;
+  background: var(--accent-bg);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.review-score .score { font-size: 42px; font-weight: 800; color: var(--accent); }
+.review-score .max { font-size: 16px; color: var(--sub); }
+.review-section { margin-bottom: 16px; }
+.review-section h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--border);
+}
+.review-item {
+  font-size: 13px;
+  padding: 6px 0;
+  line-height: 1.6;
+  display: flex;
+  gap: 6px;
+}
+.review-item .icon { flex-shrink: 0; width: 20px; text-align: center; }
+.review-item.good .icon { color: var(--success); }
+.review-item.warn .icon { color: var(--warn); }
+.review-item.fix .icon { color: var(--orange); }
+.improve-area { margin-top: 16px; }
+.improve-area textarea {
+  width: 100%;
+  height: 60px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+  resize: none;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+.improve-area textarea:focus { outline: none; border-color: var(--accent); }
+.improve-btns { display: flex; gap: 8px; }
+.improve-btns button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--surface);
+  font-family: inherit;
+}
+.improve-btns button.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ===========================
+   Screen 4: 結果＆別解
+   =========================== */
+.result-screen {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+}
+.result-top { text-align: center; margin-bottom: 32px; }
+.result-top h2 { font-size: 24px; margin-bottom: 8px; }
+.score-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.score-flow .old { color: var(--sub); }
+.score-flow .arrow { color: var(--sub); font-size: 14px; }
+.score-flow .current { color: var(--accent); }
+.takeaways {
+  max-width: 700px;
+  margin: 16px auto;
+  text-align: left;
+  background: var(--accent-bg);
+  padding: 16px 20px;
+  border-radius: 12px;
+}
+.takeaways h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.takeaways ul { list-style: none; padding: 0; }
+.takeaways ul li {
+  font-size: 13px;
+  padding: 4px 0 4px 24px;
+  position: relative;
+  line-height: 1.6;
+}
+.takeaways ul li::before { content: '\1F4A1'; position: absolute; left: 0; }
+.alt-section { margin-top: 32px; }
+.alt-section h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+.alt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.alt-card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 20px;
+  border: 2px solid var(--border);
+  position: relative;
+}
+.alt-card.blue { border-color: var(--accent); border-style: solid; }
+.alt-card.purple { border-color: var(--purple); border-style: dashed; }
+.alt-card.orange { border-color: var(--orange); border-style: dashed; }
+.alt-card-label { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.alt-card.blue .alt-card-label { color: var(--accent); }
+.alt-card.purple .alt-card-label { color: var(--purple); }
+.alt-card.orange .alt-card-label { color: var(--orange); }
+.alt-card-type { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.alt-card-desc { font-size: 12px; color: var(--sub); margin-bottom: 12px; line-height: 1.5; }
+
+/* ミニフォンフレーム */
+.mini-phone-wrapper { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+.mini-phone {
+  width: 180px; height: 320px;
+  background: #fff;
+  border-radius: 20px;
+  border: 2px solid #333;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.mini-phone-notch {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 70px; height: 16px;
+  background: #333;
+  border-radius: 0 0 10px 10px;
+  z-index: 10;
+}
+.mini-phone-body { height: 100%; overflow: hidden; position: relative; }
+.mini-screens-track {
+  display: flex;
+  width: 500%;
+  height: 100%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mini-screen {
+  width: 180px; min-width: 180px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  font-size: 8px;
+  padding: 20px 8px 8px;
+}
+.mini-screen::-webkit-scrollbar { width: 0; }
+.mini-screen h5 { font-size: 10px; font-weight: 600; margin-bottom: 4px; text-align: center; }
+.mini-screen p { font-size: 8px; color: var(--sub); text-align: center; line-height: 1.4; }
+.mini-screen .mini-btn {
+  display: block;
+  margin: 6px auto 4px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  font-family: inherit;
+}
+.mini-screen .mini-card-block {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 6px;
+  margin: 4px 0;
+  font-size: 8px;
+}
+.mini-flow { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+.mini-flow-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mini-flow-dot.active { background: var(--accent); transform: scale(1.3); }
+.alt-card.purple .mini-flow-dot.active { background: var(--purple); }
+.alt-card.orange .mini-flow-dot.active { background: var(--orange); }
+.alt-pros-cons { font-size: 12px; line-height: 1.6; }
+.alt-pros-cons .pro { color: var(--success); }
+.alt-pros-cons .con { color: var(--orange); }
+
+/* 比較テーブル */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  font-size: 13px;
+}
+.compare-table th, .compare-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.compare-table th {
+  background: var(--bg);
+  font-weight: 600;
+  font-size: 12px;
+}
+.compare-table th:first-child, .compare-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* ナビゲーションボタン */
+.nav-btns {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding: 0 20px;
+}
+.nav-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.nav-btn-back {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.nav-btn-back:hover { background: var(--bg); }
+.nav-btn-next { background: var(--accent); color: #fff; border: none; }
+.nav-btn-next:hover { background: #1d4ed8; }
+
+/* ===========================
+   ローディングオーバーレイ
+   =========================== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-overlay.active { display: flex; }
+.loading-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--sub); }
+
+/* グラデーション写真モック */
+.photo-grad-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.photo-grad-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.photo-grad-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+</style>
+</head>
+<body>
+
+<!-- ===========================
+     ヘッダー
+     =========================== -->
+<header class="header">
+  <div class="logo">Design<span>Sprint</span></div>
+  <div class="header-right">
+    <span class="badge badge-level">🎨 Level 3</span>
+    <span class="badge badge-streak">🔥 3日連続</span>
+  </div>
+</header>
+
+<!-- ===========================
+     Screen 1: お題選択
+     =========================== -->
+<div id="screen1" class="screen active">
+  <div class="challenge-header">
+    <h2>📋 Level 3 のお題</h2>
+    <p>複数画面を跨いだユーザーフロー・動線設計・インタラクション設計に挑戦しましょう</p>
+  </div>
+  <div class="challenge-grid">
+    <!-- 完了済み 01 -->
+    <div class="challenge-card completed">
+      <span class="status-badge status-done">✅ 完了</span>
+      <div class="number">CHALLENGE 01</div>
+      <div class="title">タスク管理アプリ</div>
+      <div class="score">スコア: 78/100</div>
+    </div>
+    <!-- 完了済み 02 -->
+    <div class="challenge-card completed">
+      <span class="status-badge status-done">✅ 完了</span>
+      <div class="number">CHALLENGE 02</div>
+      <div class="title">フィットネス記録アプリ</div>
+      <div class="score">スコア: 70/100</div>
+    </div>
+    <!-- 完了済み 03 -->
+    <div class="challenge-card completed">
+      <span class="status-badge status-done">✅ 完了</span>
+      <div class="number">CHALLENGE 03</div>
+      <div class="title">レシピ共有アプリ</div>
+      <div class="score">スコア: 83/100</div>
+    </div>
+    <!-- NEW: 04 旅行予約 -->
+    <div class="challenge-card" onclick="goScreen(2)" style="border-color:var(--accent);">
+      <span class="status-badge status-new">🆕 NEW</span>
+      <div class="number">CHALLENGE 04</div>
+      <div class="title">旅行予約アプリ</div>
+      <div class="challenge-tags">
+        <span>📱 モバイル</span>
+        <span>🔄 5画面フロー</span>
+        <span>🎯 予約完了CVR</span>
+        <span>🖱 インタラクション</span>
+      </div>
+    </div>
+    <!-- ロック 05 -->
+    <div class="challenge-card locked">
+      <span class="status-badge status-locked">🔒</span>
+      <div class="number">CHALLENGE 05</div>
+      <div class="title">SNSメッセージアプリ</div>
+    </div>
+    <!-- ロック 06 -->
+    <div class="challenge-card locked">
+      <span class="status-badge status-locked">🔒</span>
+      <div class="number">CHALLENGE 06</div>
+      <div class="title">ECアプリ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================
+     Screen 2: ワークスペース（空）
+     =========================== -->
+<div id="screen2" class="screen">
+  <div class="workspace">
+    <!-- 左パネル: ブリーフ -->
+    <div class="panel" id="briefPanel2">
+      <div class="panel-title">📋 ブリーフ</div>
+      <div class="brief-section">
+        <h4>🎯 旅行予約アプリ — 検索から予約完了まで</h4>
+      </div>
+      <div class="brief-section">
+        <h4>━━ ペルソナ ━━</h4>
+        <div class="brief-persona">
+          <strong>鈴木健太（28歳・男性）</strong><br>
+          Web制作会社勤務。彼女と週末の温泉旅行を計画中。箱根エリアで、2名1泊、予算3万円以内の旅館を探したい。普段はスマホで空き時間に比較検討するタイプ。じゃらんや楽天トラベルは使ったことがあるが、「写真が少なくて雰囲気がわからない」のが不満。
+        </div>
+      </div>
+      <div class="brief-section">
+        <h4>━━ サービス要件 ━━</h4>
+        <ul>
+          <li>検索→予約完了まで5画面以内</li>
+          <li>検索条件: エリア/日付/人数/予算</li>
+          <li>結果: 写真重視のカード一覧</li>
+          <li>詳細: 写真ギャラリー＋部屋選択＋レビュー</li>
+          <li>予約: ステップ式フォーム</li>
+          <li>完了: 確認＋次のアクション</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 体験ゴール ━━</h4>
+        <p>「写真と口コミで宿の雰囲気をつかんで、迷わず予約を完了できる」</p>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 想定ユーザー行動シナリオ ━━</h4>
+        <ul class="brief-scenario">
+          <li>「箱根 温泉」で検索し、条件を絞り込む</li>
+          <li>写真が綺麗な宿をいくつかチェック</li>
+          <li>口コミを読んで「ここにしよう」と決める</li>
+          <li>予約フォームをサクッと入力</li>
+          <li>予約完了 → カレンダーに追加</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 評価ポイント ━━</h4>
+        <ul>
+          <li>画面間の情報引き継ぎ（文脈が途切れないか）</li>
+          <li>「戻る」操作で入力情報が保持されるか</li>
+          <li>テキストに頼らない直感的な操作設計</li>
+          <li>写真/ビジュアルによる「雰囲気の伝達」</li>
+          <li>予約完了までの心理的ハードルの最小化</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 制約条件 ━━</h4>
+        <div class="constraints">
+          <span class="constraint-tag">📱 モバイルファースト</span>
+          <span class="constraint-tag">🔄 5画面以内で完結</span>
+          <span class="constraint-tag">⏱ 検索→予約完了 3分以内</span>
+          <span class="constraint-tag">🔙 どの画面からも前に戻れる</span>
+          <span class="constraint-tag">💡 テキストに頼らない直感的操作</span>
+          <span class="constraint-tag">📸 写真で雰囲気が伝わる</span>
+        </div>
+      </div>
+      <div class="gen-area">
+        <textarea placeholder="デザインのアイデアやアプローチをメモ..."></textarea>
+        <button class="btn-generate" onclick="handleGenerate()">🚀 生成する</button>
+      </div>
+    </div>
+    <!-- 中央: 空の状態 -->
+    <div class="center-panel">
+      <div class="empty-center">
+        <div class="icon">📱</div>
+        <p>左パネルの「生成する」でプロトタイプを作成</p>
+      </div>
+    </div>
+    <!-- 右: 空の状態 -->
+    <div class="panel" style="border-left:1px solid var(--border);">
+      <div class="empty-center">
+        <div class="icon">📊</div>
+        <p>プロトタイプ生成後にレビューが表示されます</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================
+     Screen 3: ワークスペース（生成後＋レビュー）
+     =========================== -->
+<div id="screen3" class="screen">
+  <div class="workspace">
+    <!-- 左パネル: ブリーフ（同内容） -->
+    <div class="panel">
+      <div class="panel-title">📋 ブリーフ</div>
+      <div class="brief-section">
+        <h4>🎯 旅行予約アプリ — 検索から予約完了まで</h4>
+      </div>
+      <div class="brief-section">
+        <h4>━━ ペルソナ ━━</h4>
+        <div class="brief-persona">
+          <strong>鈴木健太（28歳・男性）</strong><br>
+          Web制作会社勤務。彼女と週末の温泉旅行を計画中。箱根エリアで、2名1泊、予算3万円以内の旅館を探したい。普段はスマホで空き時間に比較検討するタイプ。じゃらんや楽天トラベルは使ったことがあるが、「写真が少なくて雰囲気がわからない」のが不満。
+        </div>
+      </div>
+      <div class="brief-section">
+        <h4>━━ サービス要件 ━━</h4>
+        <ul>
+          <li>検索→予約完了まで5画面以内</li>
+          <li>検索条件: エリア/日付/人数/予算</li>
+          <li>結果: 写真重視のカード一覧</li>
+          <li>詳細: 写真ギャラリー＋部屋選択＋レビュー</li>
+          <li>予約: ステップ式フォーム</li>
+          <li>完了: 確認＋次のアクション</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 体験ゴール ━━</h4>
+        <p>「写真と口コミで宿の雰囲気をつかんで、迷わず予約を完了できる」</p>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 想定ユーザー行動シナリオ ━━</h4>
+        <ul class="brief-scenario">
+          <li>「箱根 温泉」で検索し、条件を絞り込む</li>
+          <li>写真が綺麗な宿をいくつかチェック</li>
+          <li>口コミを読んで「ここにしよう」と決める</li>
+          <li>予約フォームをサクッと入力</li>
+          <li>予約完了 → カレンダーに追加</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 評価ポイント ━━</h4>
+        <ul>
+          <li>画面間の情報引き継ぎ（文脈が途切れないか）</li>
+          <li>「戻る」操作で入力情報が保持されるか</li>
+          <li>テキストに頼らない直感的な操作設計</li>
+          <li>写真/ビジュアルによる「雰囲気の伝達」</li>
+          <li>予約完了までの心理的ハードルの最小化</li>
+        </ul>
+      </div>
+      <div class="brief-section">
+        <h4>━━ 制約条件 ━━</h4>
+        <div class="constraints">
+          <span class="constraint-tag">📱 モバイルファースト</span>
+          <span class="constraint-tag">🔄 5画面以内で完結</span>
+          <span class="constraint-tag">⏱ 検索→予約完了 3分以内</span>
+          <span class="constraint-tag">🔙 どの画面からも前に戻れる</span>
+          <span class="constraint-tag">💡 テキストに頼らない直感的操作</span>
+          <span class="constraint-tag">📸 写真で雰囲気が伝わる</span>
+        </div>
+      </div>
+      <div class="gen-area">
+        <textarea placeholder="改善メモ..."></textarea>
+        <button class="btn-generate" onclick="handleRegenerate()">🔄 再生成する</button>
+      </div>
+    </div>
+
+    <!-- ========================================
+         中央パネル: インタラクティブプロトタイプ
+         ======================================== -->
+    <div class="center-panel">
+      <div class="phone-wrapper">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-status-bar">
+            <span class="time">9:41</span>
+            <span class="icons">📶 📡 🔋</span>
+          </div>
+          <div class="phone-body">
+            <div class="phone-screens-track" id="phoneTrack">
+
+              <!-- ===== アプリ画面1: 検索 ===== -->
+              <div class="app-screen" id="appScreen1">
+                <div class="app-header">
+                  <span style="color:var(--sub);font-size:14px;">←</span>
+                  <span>旅行を探す</span>
+                  <span></span>
+                </div>
+                <div class="search-screen">
+                  <div class="search-field">
+                    <label>📍 エリア</label>
+                    <div class="search-input">箱根・湯河原</div>
+                  </div>
+                  <div class="search-field">
+                    <label>📅 日程</label>
+                    <div class="date-row">
+                      <div style="flex:1;">
+                        <div class="search-input" style="text-align:center;">3/15 土</div>
+                        <div class="search-input-sub">チェックイン</div>
+                      </div>
+                      <div class="arrow">→</div>
+                      <div style="flex:1;">
+                        <div class="search-input" style="text-align:center;">3/16 日</div>
+                        <div class="search-input-sub">チェックアウト</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="search-field">
+                    <label>👥 人数</label>
+                    <div class="search-input">2名（大人2）</div>
+                  </div>
+                  <div class="search-field">
+                    <label>💰 予算（1泊あたり）</label>
+                    <div class="search-input">〜 ¥30,000</div>
+                    <div class="slider-mock"><div class="knob"></div></div>
+                  </div>
+                  <div class="popular-area">
+                    <h4>人気のエリア</h4>
+                    <div class="popular-tags">
+                      <span>箱根 ♨️</span>
+                      <span>熱海 🌊</span>
+                      <span>草津 ♨️</span>
+                    </div>
+                  </div>
+                  <button class="btn-search tappable tappable-pulse" onclick="goAppScreen(2)">🔍 この条件で検索する</button>
+                </div>
+              </div>
+
+              <!-- ===== アプリ画面2: 結果一覧 ===== -->
+              <div class="app-screen" id="appScreen2">
+                <div class="app-header">
+                  <button class="app-back" onclick="goAppScreen(1)">←</button>
+                  <span>箱根 12件の宿</span>
+                  <span class="app-header-action">🗺</span>
+                </div>
+                <div class="results-tabs">
+                  <span class="active">おすすめ</span>
+                  <span>安い順</span>
+                  <span>評価順</span>
+                </div>
+                <!-- 宿カード1 -->
+                <div class="result-card tappable tappable-pulse" onclick="goAppScreen(3)">
+                  <div class="result-photo photo-grad-1">
+                    <span class="photo-count">📸 +12</span>
+                  </div>
+                  <div class="result-info">
+                    <h4>箱根 湯の宿 花月</h4>
+                    <div class="result-rating">★★★★☆ 4.3（246件）</div>
+                    <div class="result-price">¥18,000〜 <span>/泊　♨️ 露天風呂あり</span></div>
+                    <div class="result-meta">
+                      <span>📍 箱根湯本駅 徒歩8分</span>
+                      <span class="result-fav">♡</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 宿カード2 -->
+                <div class="result-card">
+                  <div class="result-photo photo-grad-2">
+                    <span class="photo-count">📸 +8</span>
+                  </div>
+                  <div class="result-info">
+                    <h4>強羅温泉 旅庵</h4>
+                    <div class="result-rating">★★★★★ 4.7（189件）</div>
+                    <div class="result-price">¥24,000〜 <span>/泊　🍽 食事付き</span></div>
+                    <div class="result-meta">
+                      <span>📍 強羅駅 徒歩3分</span>
+                      <span class="result-fav">♡</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== アプリ画面3: 宿詳細 ===== -->
+              <div class="app-screen" id="appScreen3">
+                <div class="app-header">
+                  <button class="app-back" onclick="goAppScreen(2)">←</button>
+                  <span>箱根 湯の宿 花月</span>
+                  <span class="app-header-action">♡</span>
+                </div>
+                <div class="detail-photo photo-grad-1">
+                  <div class="detail-dots">
+                    <span></span><span></span><span class="active"></span><span></span><span></span>
+                  </div>
+                </div>
+                <div class="detail-content">
+                  <div class="detail-rating">★★★★☆ 4.3（246件のレビュー）</div>
+                  <div class="detail-price">¥18,000〜 <span style="font-size:13px;font-weight:400;color:var(--sub);">/泊</span></div>
+                  <div class="detail-tabs">
+                    <span class="active">客室</span>
+                    <span>温泉 ♨️</span>
+                    <span>食事 🍽</span>
+                    <span>口コミ 💬</span>
+                  </div>
+                  <div class="detail-features">
+                    <h4>✨ この宿の特徴</h4>
+                    <ul>
+                      <li>源泉かけ流し露天風呂</li>
+                      <li>四季折々の懐石料理</li>
+                      <li>箱根湯本駅から無料送迎</li>
+                    </ul>
+                  </div>
+                  <div class="detail-review">
+                    <div class="stars">📝 最新の口コミ</div>
+                    <div class="text">★★★★★ 「露天風呂が最高でした！」</div>
+                    <div class="author">佐藤さん　2025年2月</div>
+                  </div>
+                </div>
+                <div class="detail-bottom-bar">
+                  <div class="detail-bottom-price">¥18,000〜 <span>/泊</span></div>
+                  <button class="btn-book tappable tappable-pulse" onclick="goAppScreen(4)">🎯 予約に進む</button>
+                </div>
+              </div>
+
+              <!-- ===== アプリ画面4: 予約フォーム ===== -->
+              <div class="app-screen" id="appScreen4">
+                <div class="app-header">
+                  <button class="app-back" onclick="goAppScreen(3)">←</button>
+                  <span>予約手続き</span>
+                  <span></span>
+                </div>
+                <div class="booking-screen">
+                  <div class="stepper">
+                    <div class="step-dot done">✓</div>
+                    <div class="step-line done"></div>
+                    <div class="step-dot active">2</div>
+                    <div class="step-line"></div>
+                    <div class="step-dot">3</div>
+                  </div>
+                  <div class="step-labels">
+                    <span>プラン</span>
+                    <span class="active">ゲスト</span>
+                    <span>確認</span>
+                  </div>
+                  <div class="booking-summary">
+                    <h4>━━ 予約内容 ━━</h4>
+                    <p>
+                      箱根 湯の宿 花月<br>
+                      3/15（土）→ 3/16（日）1泊<br>
+                      大人2名<br>
+                      スタンダード和室 10畳
+                    </p>
+                    <div class="total">合計 ¥36,000（税込）</div>
+                  </div>
+                  <div class="form-section">
+                    <h4>━━ ゲスト情報 ━━</h4>
+                    <div class="form-field">
+                      <label>名前</label>
+                      <input type="text" value="鈴木 健太" readonly>
+                    </div>
+                    <div class="form-field">
+                      <label>電話番号</label>
+                      <input type="text" value="090-xxxx-xxxx" readonly>
+                    </div>
+                    <div class="form-field">
+                      <label>メールアドレス</label>
+                      <input type="text" value="k.suzuki@example.com" readonly>
+                    </div>
+                  </div>
+                  <button class="btn-next tappable tappable-pulse" onclick="goAppScreen(5)">次へ進む</button>
+                </div>
+              </div>
+
+              <!-- ===== アプリ画面5: 予約完了 ===== -->
+              <div class="app-screen" id="appScreen5">
+                <div class="app-header">
+                  <span></span>
+                  <span>予約完了</span>
+                  <span></span>
+                </div>
+                <div class="complete-screen">
+                  <div class="complete-icon">✅</div>
+                  <div class="complete-title">予約が完了しました！</div>
+                  <div class="complete-number">予約番号: HTL-20260315-0042</div>
+                  <div class="complete-detail">
+                    <h4>箱根 湯の宿 花月</h4>
+                    <p>
+                      3/15（土）チェックイン 15:00<br>
+                      3/16（日）チェックアウト 11:00<br>
+                      大人2名 / ¥36,000
+                    </p>
+                  </div>
+                  <div class="complete-actions">
+                    <button class="btn-complete-action">📅 カレンダーに追加</button>
+                    <button class="btn-complete-action">📤 旅行プランをシェア</button>
+                    <button class="btn-complete-action">📍 アクセスを確認</button>
+                  </div>
+                  <button class="btn-home tappable tappable-pulse" onclick="goAppScreen(1)">🏠 ホームに戻る</button>
+                </div>
+              </div>
+
+            </div><!-- /phone-screens-track -->
+          </div><!-- /phone-body -->
+        </div><!-- /phone-frame -->
+      </div><!-- /phone-wrapper -->
+
+      <!-- フローインジケーター（コンパクト1行タブバー） -->
+      <div class="flow-indicator">
+        <div class="flow-bar" id="flowSteps">
+          <span class="flow-tab active" onclick="goAppScreen(1)"><span class="num">1</span>検索</span>
+          <span class="flow-tab" onclick="goAppScreen(2)"><span class="num">2</span>結果</span>
+          <span class="flow-tab" onclick="goAppScreen(3)"><span class="num">3</span>詳細</span>
+          <span class="flow-tab" onclick="goAppScreen(4)"><span class="num">4</span>予約</span>
+          <span class="flow-tab" onclick="goAppScreen(5)"><span class="num">5</span>完了</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===========================
+         右パネル: レビュー
+         =========================== -->
+    <div class="panel" style="border-left:1px solid var(--border);">
+      <div class="panel-title">📊 フロー＆体験レビュー</div>
+      <div class="review-score">
+        <span class="score">68</span><span class="max"> / 100</span>
+      </div>
+      <!-- Good Points -->
+      <div class="review-section">
+        <h4>✅ Good Points</h4>
+        <div class="review-item good">
+          <span class="icon">✓</span>
+          <span>検索→結果→詳細の流れが自然で迷わない</span>
+        </div>
+        <div class="review-item good">
+          <span class="icon">✓</span>
+          <span>写真ギャラリーで宿の雰囲気が伝わる設計</span>
+        </div>
+        <div class="review-item good">
+          <span class="icon">✓</span>
+          <span>固定CTAバーで「予約する」が常にアクセス可能</span>
+        </div>
+      </div>
+      <!-- 体験コミュニケーション評価 -->
+      <div class="review-section">
+        <h4>🔍 体験コミュニケーション評価</h4>
+        <div class="review-item good">
+          <span class="icon">✓</span>
+          <span>画面1→2: 検索条件がそのまま結果ヘッダーに引き継がれ文脈維持 ◎</span>
+        </div>
+        <div class="review-item warn">
+          <span class="icon">⚠</span>
+          <span>画面2→3: 一覧で見た写真と詳細の写真が一致するか不明 → 同じ写真をヒーローに</span>
+        </div>
+        <div class="review-item warn">
+          <span class="icon">⚠</span>
+          <span>画面3→4: 選んだプランの情報が予約画面に反映されているか確認しづらい</span>
+        </div>
+        <div class="review-item warn">
+          <span class="icon">⚠</span>
+          <span>画面4→5: 完了画面に「次にすること」の提案が弱い</span>
+        </div>
+      </div>
+      <!-- インタラクション改善 -->
+      <div class="review-section">
+        <h4>🔧 インタラクション改善</h4>
+        <div class="review-item fix">
+          <span class="icon">!</span>
+          <span>写真ギャラリーのスワイプ操作が定義されていない</span>
+        </div>
+        <div class="review-item fix">
+          <span class="icon">!</span>
+          <span>「お気に入り保存→後で比較」の動線がない</span>
+        </div>
+        <div class="review-item fix">
+          <span class="icon">!</span>
+          <span>戻る際のデータ保持が不明確</span>
+        </div>
+        <div class="review-item fix">
+          <span class="icon">!</span>
+          <span>ローディング/エラー状態の設計がない</span>
+        </div>
+      </div>
+      <!-- 改善エリア -->
+      <div class="improve-area">
+        <textarea placeholder="改善ポイントをメモ..."></textarea>
+        <div class="improve-btns">
+          <button onclick="goScreen(4)">📊 結果を見る</button>
+          <button class="primary" onclick="handleRegenerate()">🔄 改善して再生成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================
+     Screen 4: 結果＋別解
+     =========================== -->
+<div id="screen4" class="screen">
+  <div class="result-screen">
+    <!-- トップ: クリア表示 -->
+    <div class="result-top">
+      <h2>🎉 Challenge 04 クリア！</h2>
+      <div class="score-flow">
+        <span class="old">68</span>
+        <span class="arrow">→</span>
+        <span class="old">76</span>
+        <span class="arrow">→</span>
+        <span class="current">84</span>
+      </div>
+      <div class="takeaways">
+        <h4>📚 学びのポイント</h4>
+        <ul>
+          <li>画面遷移では「前の画面の情報を引き継ぐ」ことで文脈が途切れない</li>
+          <li>写真/ビジュアルは言葉より雄弁 — 雰囲気を伝える最強のコミュニケーション</li>
+          <li>「戻れる安心感」が探索行動を促進する</li>
+          <li>予約完了後の「次のアクション」提示がリピート利用の鍵</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 別解セクション -->
+    <div class="alt-section">
+      <h3>🔀 3つのアプローチ比較</h3>
+      <div class="alt-grid">
+
+        <!-- ===== あなたの提出（blue） ===== -->
+        <div class="alt-card blue">
+          <div class="alt-card-label">あなたの提出</div>
+          <div class="alt-card-type">リニアフロー型</div>
+          <div class="alt-card-desc">検索→結果→詳細→予約→完了の直線的な動線</div>
+          <div class="mini-phone-wrapper">
+            <div class="mini-phone">
+              <div class="mini-phone-notch"></div>
+              <div class="mini-phone-body">
+                <div class="mini-screens-track" id="altTrack0">
+                  <div class="mini-screen">
+                    <h5>🔍 検索</h5>
+                    <div class="mini-card-block">📍 箱根・湯河原</div>
+                    <div class="mini-card-block">📅 3/15 → 3/16</div>
+                    <div class="mini-card-block">👥 2名 💰 〜¥30,000</div>
+                    <button class="mini-btn" style="background:var(--accent);" onclick="goAltScreen(0,2)">検索する</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>📋 12件の宿</h5>
+                    <div class="mini-card-block" style="cursor:pointer;" onclick="goAltScreen(0,3)">
+                      <strong>🏨 湯の宿 花月</strong><br>★4.3 ¥18,000〜
+                    </div>
+                    <div class="mini-card-block">
+                      <strong>🏨 旅庵</strong><br>★4.7 ¥24,000〜
+                    </div>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>🏨 湯の宿 花月</h5>
+                    <div class="mini-card-block" style="height:40px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:4px;"></div>
+                    <p>★4.3 ¥18,000〜/泊</p>
+                    <p style="font-size:7px;">源泉かけ流し露天風呂</p>
+                    <button class="mini-btn" style="background:var(--accent);" onclick="goAltScreen(0,4)">予約に進む</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>📝 予約手続き</h5>
+                    <div class="mini-card-block">花月 / 3/15-3/16<br>大人2名 / ¥36,000</div>
+                    <div class="mini-card-block">名前: 鈴木 健太</div>
+                    <button class="mini-btn" style="background:var(--accent);" onclick="goAltScreen(0,5)">次へ進む</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5 style="margin-top:20px;">✅ 予約完了</h5>
+                    <p>HTL-20260315-0042</p>
+                    <div class="mini-card-block">花月<br>3/15 IN → 3/16 OUT</div>
+                    <button class="mini-btn" style="background:var(--accent);" onclick="goAltScreen(0,1)">ホームへ</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-flow" id="altFlow0">
+              <div class="mini-flow-dot active" onclick="goAltScreen(0,1)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(0,2)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(0,3)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(0,4)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(0,5)"></div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="pro">✅ シンプルで迷いにくい、最短ルート</div>
+            <div class="con">⚠️ 比較検討がしづらい、行き来が面倒</div>
+          </div>
+        </div>
+
+        <!-- ===== 別解A（purple） ===== -->
+        <div class="alt-card purple">
+          <div class="alt-card-label">別解 A</div>
+          <div class="alt-card-type">ハブ＆比較型</div>
+          <div class="alt-card-desc">結果一覧をハブに、お気に入り保存→比較画面で選定</div>
+          <div class="mini-phone-wrapper">
+            <div class="mini-phone">
+              <div class="mini-phone-notch"></div>
+              <div class="mini-phone-body">
+                <div class="mini-screens-track" id="altTrack1">
+                  <div class="mini-screen">
+                    <h5>🔍 検索</h5>
+                    <div class="mini-card-block">📍 箱根・湯河原</div>
+                    <div class="mini-card-block">📅 3/15 → 3/16</div>
+                    <button class="mini-btn" style="background:var(--purple);" onclick="goAltScreen(1,2)">検索する</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>📋 結果 + ♡保存</h5>
+                    <div class="mini-card-block" style="cursor:pointer;" onclick="goAltScreen(1,3)">
+                      🏨 花月 ★4.3<br>
+                      <span style="color:var(--purple);font-weight:600;">♡ お気に入り</span>
+                    </div>
+                    <div class="mini-card-block">
+                      🏨 旅庵 ★4.7<br>
+                      <span style="color:var(--purple);font-weight:600;">♡ お気に入り</span>
+                    </div>
+                    <button class="mini-btn" style="background:var(--purple);" onclick="goAltScreen(1,4)">比較する(2)</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>🏨 詳細 + 保存</h5>
+                    <div class="mini-card-block" style="height:36px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:4px;"></div>
+                    <p>♡ 保存済み</p>
+                    <button class="mini-btn" style="background:var(--purple);" onclick="goAltScreen(1,4)">比較リストに追加</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>⚖️ 比較</h5>
+                    <div style="display:flex;gap:4px;">
+                      <div class="mini-card-block" style="flex:1;font-size:7px;">花月<br>¥18,000<br>★4.3</div>
+                      <div class="mini-card-block" style="flex:1;font-size:7px;">旅庵<br>¥24,000<br>★4.7</div>
+                    </div>
+                    <button class="mini-btn" style="background:var(--purple);" onclick="goAltScreen(1,5)">この宿を予約</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5 style="margin-top:20px;">✅ 予約完了</h5>
+                    <p>比較して選んだ宿</p>
+                    <div class="mini-card-block">花月<br>3/15 → 3/16</div>
+                    <button class="mini-btn" style="background:var(--purple);" onclick="goAltScreen(1,1)">ホームへ</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-flow" id="altFlow1">
+              <div class="mini-flow-dot active" onclick="goAltScreen(1,1)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(1,2)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(1,3)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(1,4)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(1,5)"></div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="pro">✅ 複数の宿を比較しやすい、じっくり選べる</div>
+            <div class="con">⚠️ 画面遷移が増え、完了までに時間がかかる</div>
+          </div>
+        </div>
+
+        <!-- ===== 別解B（orange） ===== -->
+        <div class="alt-card orange">
+          <div class="alt-card-label">別解 B</div>
+          <div class="alt-card-type">AIガイド＋プログレス型</div>
+          <div class="alt-card-desc">AIが最適宿を提案し、進捗バーで安心感を演出</div>
+          <div class="mini-phone-wrapper">
+            <div class="mini-phone">
+              <div class="mini-phone-notch"></div>
+              <div class="mini-phone-body">
+                <div class="mini-screens-track" id="altTrack2">
+                  <div class="mini-screen">
+                    <h5>🔍 検索</h5>
+                    <div class="mini-card-block">📍 箱根・湯河原</div>
+                    <div class="mini-card-block">📅 3/15 → 3/16</div>
+                    <button class="mini-btn" style="background:var(--orange);" onclick="goAltScreen(2,2)">AIにおまかせ</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>🤖 AIおすすめ</h5>
+                    <div class="mini-card-block" style="border:1px solid var(--orange);cursor:pointer;" onclick="goAltScreen(2,3)">
+                      <strong style="color:var(--orange);">🏆 花月</strong><br>
+                      <span style="font-size:7px;">あなたにぴったり！</span>
+                    </div>
+                    <p style="margin-top:4px;">他の候補</p>
+                    <div class="mini-card-block" style="font-size:7px;">旅庵 / 湯邸</div>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>🏨 詳細</h5>
+                    <div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:6px;"><div style="width:60%;height:100%;background:var(--orange);border-radius:2px;"></div></div>
+                    <div class="mini-card-block" style="height:32px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:4px;"></div>
+                    <p>★4.3 ¥18,000〜/泊</p>
+                    <button class="mini-btn" style="background:var(--orange);" onclick="goAltScreen(2,4)">予約に進む</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5>📝 予約</h5>
+                    <div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:6px;"><div style="width:80%;height:100%;background:var(--orange);border-radius:2px;"></div></div>
+                    <div class="mini-card-block">花月 / ¥36,000</div>
+                    <div class="mini-card-block">名前: 鈴木 健太</div>
+                    <button class="mini-btn" style="background:var(--orange);" onclick="goAltScreen(2,5)">確定する</button>
+                  </div>
+                  <div class="mini-screen">
+                    <h5 style="margin-top:16px;">✅ 予約完了</h5>
+                    <div style="height:4px;background:var(--orange);border-radius:2px;margin-bottom:6px;"></div>
+                    <div class="mini-card-block" style="font-size:7px;">
+                      📅 カレンダー追加<br>
+                      🗺 周辺観光スポット<br>
+                      🍽 おすすめグルメ
+                    </div>
+                    <button class="mini-btn" style="background:var(--orange);" onclick="goAltScreen(2,1)">ホームへ</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-flow" id="altFlow2">
+              <div class="mini-flow-dot active" onclick="goAltScreen(2,1)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(2,2)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(2,3)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(2,4)"></div>
+              <div class="mini-flow-dot" onclick="goAltScreen(2,5)"></div>
+            </div>
+          </div>
+          <div class="alt-pros-cons">
+            <div class="pro">✅ 意思決定コスト低い、どこまで進んだか常に見える</div>
+            <div class="con">⚠️ 自分で探す自由度が低い、AI精度に依存</div>
+          </div>
+        </div>
+      </div><!-- /alt-grid -->
+
+      <!-- 比較テーブル -->
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>観点</th>
+            <th style="color:var(--accent);">リニアフロー型</th>
+            <th style="color:var(--purple);">ハブ＆比較型</th>
+            <th style="color:var(--orange);">AIガイド型</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>比較検討</td>
+            <td>△ 行き来必要</td>
+            <td>◎ 比較画面あり</td>
+            <td>△ AI任せ</td>
+          </tr>
+          <tr>
+            <td>予約速度</td>
+            <td>◎ 最短3分</td>
+            <td>△ 比較で時間増</td>
+            <td>◎ AI提案で即決</td>
+          </tr>
+          <tr>
+            <td>体験の豊かさ</td>
+            <td>○ 基本的</td>
+            <td>◎ 探索の楽しさ</td>
+            <td>○ ガイド感</td>
+          </tr>
+          <tr>
+            <td>離脱リスク</td>
+            <td>○ 直線的</td>
+            <td>△ 迷いやすい</td>
+            <td>◎ 進捗が見える</td>
+          </tr>
+        </tbody>
+      </table>
+    </div><!-- /alt-section -->
+
+    <!-- ナビゲーションボタン -->
+    <div class="nav-btns">
+      <button class="nav-btn nav-btn-back" onclick="goScreen(3)">← ワークスペースに戻る</button>
+      <button class="nav-btn nav-btn-next" onclick="goScreen(1)">次のお題へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================
+     ローディングオーバーレイ
+     =========================== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">プロトタイプを生成中...</div>
+</div>
+
+<!-- ===========================
+     JavaScript
+     =========================== -->
+<script>
+/* ===========================
+   外側の画面切り替え（Screen 1〜4）
+   =========================== */
+function goScreen(n) {
+  // 全画面を非アクティブに
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  // 指定画面をアクティブに
+  var target = document.getElementById('screen' + n);
+  if (target) target.classList.add('active');
+  // ページトップにスクロール
+  window.scrollTo(0, 0);
+  // スマホフレームをビューポートに合わせてスケーリング
+  requestAnimationFrame(adjustPhoneScale);
+}
+
+/* ===========================
+   ローディング → 画面3へ遷移
+   =========================== */
+function handleGenerate() {
+  var overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+  setTimeout(function() {
+    overlay.classList.remove('active');
+    goScreen(3);
+    goAppScreen(1);
+  }, 2000);
+}
+
+/* ===========================
+   再生成（画面3のまま）
+   =========================== */
+function handleRegenerate() {
+  var overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+  setTimeout(function() {
+    overlay.classList.remove('active');
+    goAppScreen(1);
+  }, 1500);
+}
+
+/* ===========================
+   インタラクティブプロトタイプ:
+   アプリ画面の切り替え（5画面スライド）
+   =========================== */
+var currentAppScreen = 1;
+
+function goAppScreen(n) {
+  if (n < 1) n = 1;
+  if (n > 5) n = 5;
+  currentAppScreen = n;
+
+  // translateXで画面をスライド（画面幅 340px）
+  var track = document.getElementById('phoneTrack');
+  var offset = -(n - 1) * 340;
+  track.style.transform = 'translateX(' + offset + 'px)';
+
+  // フローインジケーター更新
+  updateFlowIndicator(n);
+}
+
+/* フロータブのアクティブ切替 */
+function updateFlowIndicator(n) {
+  var tabs = document.querySelectorAll('#flowSteps .flow-tab');
+  tabs.forEach(function(tab, i) {
+    tab.classList.toggle('active', i === n - 1);
+  });
+}
+
+/* ===========================
+   別解カードのミニプロトタイプ切り替え
+   altId: 0=あなたの提出, 1=別解A, 2=別解B
+   =========================== */
+var altScreens = [1, 1, 1];
+
+function goAltScreen(altId, n) {
+  if (n < 1) n = 1;
+  if (n > 5) n = 5;
+  altScreens[altId] = n;
+
+  // ミニフォン幅 180px でスライド
+  var track = document.getElementById('altTrack' + altId);
+  var offset = -(n - 1) * 180;
+  track.style.transform = 'translateX(' + offset + 'px)';
+
+  // ミニフローインジケーター更新
+  var dots = document.querySelectorAll('#altFlow' + altId + ' .mini-flow-dot');
+  dots.forEach(function(dot, i) {
+    dot.classList.toggle('active', i === n - 1);
+  });
+}
+
+/* ===========================
+   スマホフレームのレスポンシブスケーリング
+   =========================== */
+function adjustPhoneScale() {
+  // メインのインタラクティブプロトタイプ用
+  document.querySelectorAll('.center-panel').forEach(function(panel) {
+    var phone = panel.querySelector('.phone-frame');
+    if (!phone || !panel.clientHeight) return;
+
+    var phoneH = 640;
+    var phoneW = 340;
+    var paddingTotal = 40; // 20px * 2
+
+    // フローインジケーター（ステップ＋サムネイル）の実測高さを取得
+    var flowIndicator = panel.querySelector('.flow-indicator');
+    var flowH = 0;
+    if (flowIndicator) {
+      flowH = flowIndicator.offsetHeight + 16; // +16 = margin-top
+    }
+
+    var availH = panel.clientHeight - paddingTotal - flowH;
+    var scale = Math.min(1, availH / phoneH);
+
+    phone.style.transform = 'scale(' + scale + ')';
+
+    // transform: scale は視覚サイズだけ変えるため、
+    // 負マージンでレイアウトスペースを合わせる
+    var marginV = phoneH * (1 - scale) / 2;
+    var marginH = phoneW * (1 - scale) / 2;
+    phone.style.marginTop = -marginV + 'px';
+    phone.style.marginBottom = -marginV + 'px';
+    phone.style.marginLeft = -marginH + 'px';
+    phone.style.marginRight = -marginH + 'px';
+  });
+}
+
+window.addEventListener('resize', adjustPhoneScale);
+
+/* ===========================
+   初期化
+   =========================== */
+document.addEventListener('DOMContentLoaded', function() {
+  goScreen(1);
+});
+</script>
+</body>
+</html>
