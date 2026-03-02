@@ -3,647 +3,645 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pattern B: プロトタイプ進化録</title>
+<title>Pattern B: Before / After</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #faf8f5;
-    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
     min-height: 100vh;
-    overflow-x: hidden;
   }
 
   /* ヘッダー */
-  .concept-header {
-    text-align: center;
-    padding: 40px 20px 20px;
-    border-bottom: 1px solid #e8e0d8;
-  }
-  .concept-header .label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: #999;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .concept-header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #5b4a3f;
-    margin-bottom: 8px;
-  }
-  .concept-header p {
-    font-size: 15px;
-    color: #888;
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-
-  /* ストーリーボード */
-  .storyboard {
-    max-width: 560px;
-    margin: 0 auto;
-    padding: 32px 20px 100px;
-  }
-
-  .scene {
-    display: none;
-    animation: fadeIn 0.4s ease;
-  }
-  .scene.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .scene-number {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #b08860;
-    margin-bottom: 16px;
-    font-weight: 600;
-  }
-
-  .scene-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: #3a2e26;
-  }
-
-  /* カード */
-  .card {
+  .app-header {
     background: #fff;
-    border: 1px solid #e8e0d8;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-
-  .card-label {
-    font-size: 11px;
-    color: #b08860;
-    font-weight: 600;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
-
-  /* タイムライン */
-  .timeline {
-    position: relative;
-    padding-left: 28px;
-  }
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 4px;
-    bottom: 4px;
-    width: 2px;
-    background: linear-gradient(to bottom, #e8d8c8, #b08860);
-    border-radius: 1px;
-  }
-  .timeline-item {
-    position: relative;
-    margin-bottom: 24px;
-    animation: fadeIn 0.3s ease;
-  }
-  .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -24px;
-    top: 6px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid #b08860;
-  }
-  .timeline-item.current::before {
-    background: #b08860;
-  }
-
-  .version-card {
-    background: #fff;
-    border: 1px solid #e8e0d8;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .version-card.highlight {
-    border-color: #b08860;
-    box-shadow: 0 2px 8px rgba(176,136,96,0.15);
-  }
-
-  .version-header {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
   }
-  .version-name {
-    font-weight: 600;
-    font-size: 14px;
-    color: #3a2e26;
-  }
-  .version-date {
-    font-size: 12px;
-    color: #aaa;
-  }
-
-  .version-score {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .score-bar-bg {
-    flex: 1;
-    height: 6px;
-    background: #f0ebe5;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .score-bar {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s ease;
-  }
-  .score-num {
-    font-size: 18px;
+  .app-header .logo {
+    font-size: 15px;
     font-weight: 700;
-    min-width: 36px;
-    text-align: right;
+    color: #2563eb;
   }
-
-  .version-changes {
-    font-size: 13px;
-    color: #777;
-    line-height: 1.6;
-  }
-  .change-tag {
-    display: inline-block;
+  .app-header .logo span { color: #888; font-weight: 400; }
+  .concept-badge {
     font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-right: 4px;
-    font-weight: 600;
-  }
-  .change-tag.up { background: #e8f5e9; color: #2e7d32; }
-  .change-tag.new { background: #e3f2fd; color: #1565c0; }
-
-  /* 成長グラフ */
-  .growth-chart {
-    background: #fff;
-    border: 1px solid #e8e0d8;
+    background: #2563eb;
+    color: #fff;
+    padding: 4px 12px;
     border-radius: 12px;
-    padding: 20px;
-    margin: 20px 0;
-  }
-  .chart-title {
-    font-size: 12px;
-    color: #999;
-    margin-bottom: 16px;
-    letter-spacing: 1px;
     font-weight: 600;
   }
-  .chart-visual {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    height: 120px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #f0ebe5;
+
+  /* メインレイアウト */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
   }
-  .chart-bar-wrap {
+
+  /* 比較エリア */
+  .compare-section {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    align-items: flex-start;
+  }
+
+  .compare-col {
     flex: 1;
+  }
+  .compare-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .label-before {
+    background: #fef2f2;
+    color: #e63946;
+  }
+  .label-after {
+    background: #e8f5e9;
+    color: #2d9d3a;
+  }
+
+  .phone-frame {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 9/16;
+    background: #fff;
+    border-radius: 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    padding: 40px 16px 28px;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 72px;
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 3px;
+  }
+
+  /* Before版 */
+  .proto-before {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    height: 100%;
-    justify-content: flex-end;
-  }
-  .chart-bar {
-    width: 32px;
-    border-radius: 6px 6px 0 0;
-    transition: height 0.6s ease;
-  }
-  .chart-bar-label {
-    margin-top: 8px;
-    font-size: 11px;
-    color: #999;
-  }
-  .chart-bar-score {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  /* クセ発見 */
-  .insight-card {
-    background: #fffbf0;
-    border: 1px solid #f0e0c0;
-    border-radius: 10px;
-    padding: 16px;
-    margin-top: 16px;
-  }
-  .insight-icon {
-    font-size: 20px;
-    margin-bottom: 8px;
-  }
-  .insight-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #8a6d3b;
-    margin-bottom: 4px;
-  }
-  .insight-text {
-    font-size: 13px;
-    color: #777;
-    line-height: 1.6;
-  }
-
-  /* 感情 */
-  .emotion {
-    text-align: center;
+    justify-content: center;
     padding: 20px;
-    margin: 16px 0;
   }
-  .emotion .bubble {
-    display: inline-block;
-    background: #fff;
-    border: 1px solid #e8e0d8;
-    border-radius: 20px;
-    padding: 10px 24px;
+  .proto-before h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .proto-before input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     font-size: 14px;
-    color: #666;
-    font-style: italic;
+    color: #999;
+    background: #fafafa;
+    margin-bottom: 10px;
+    outline: none;
+  }
+  .proto-before .btn-login {
+    width: 100%;
+    padding: 11px;
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .proto-before .forgot {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 14px;
   }
 
-  /* 最終画面 */
-  .final-message {
-    text-align: center;
-    padding: 40px 20px;
+  /* After版 */
+  .proto-after {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
   }
-  .final-message h2 {
+  .proto-after h2 {
     font-size: 22px;
-    color: #5b4a3f;
-    margin-bottom: 16px;
+    color: #1d1d1f;
+    margin-bottom: 6px;
+    font-weight: 700;
   }
-  .final-message p {
-    font-size: 14px;
-    line-height: 1.8;
+  .proto-after .subtitle {
+    font-size: 13px;
     color: #888;
-    max-width: 400px;
-    margin: 0 auto;
+    margin-bottom: 28px;
   }
-  .journey-visual {
-    margin: 32px auto;
-    max-width: 400px;
+  .proto-after .input-group {
+    margin-bottom: 18px;
   }
-  .journey-months {
+  .proto-after .input-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .proto-after input {
+    width: 100%;
+    padding: 14px 14px;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #666;
+    background: #fff;
+    outline: none;
+  }
+  .proto-after .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 8px;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+  }
+  .proto-after .forgot {
+    text-align: center;
+    font-size: 13px;
+    color: #2563eb;
+    margin-top: 18px;
+    font-weight: 500;
+  }
+
+  /* 中央の矢印 */
+  .compare-arrow {
+    display: flex;
+    align-items: center;
+    padding-top: 180px;
+    font-size: 28px;
+    color: #ccc;
+    flex-shrink: 0;
+  }
+
+  /* スライダー比較 */
+  .slider-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+  }
+  .slider-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    height: 80px;
-    padding: 0 8px;
-    border-bottom: 2px solid #e8e0d8;
+    align-items: center;
+    margin-bottom: 16px;
   }
-  .journey-month {
-    text-align: center;
+  .slider-header h3 {
+    font-size: 15px;
+    font-weight: 700;
   }
-  .journey-dot {
-    width: 12px;
-    height: 12px;
+  .slider-score {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .score-chip {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+  }
+  .score-before { background: #fef2f2; color: #e63946; }
+  .score-after { background: #e8f5e9; color: #2d9d3a; }
+  .score-arrow { color: #ccc; font-size: 16px; }
+
+  .slider-container {
+    position: relative;
+    height: 320px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f8f8f8;
+    cursor: ew-resize;
+  }
+  .slider-left, .slider-right {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .slider-left {
+    left: 0;
+    width: 50%;
+    background: #fafafa;
+    border-right: 3px solid #e63946;
+    z-index: 2;
+  }
+  .slider-right {
+    left: 0;
+    width: 100%;
+    background: #f0f7ff;
+    z-index: 1;
+  }
+  .slider-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 36px;
+    left: calc(50% - 18px);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ew-resize;
+  }
+  .slider-handle-grip {
+    width: 36px;
+    height: 36px;
+    background: #e63946;
     border-radius: 50%;
-    margin: 0 auto 8px;
-  }
-  .journey-label {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
-  /* ナビゲーション */
-  .nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #faf8f5;
-    border-top: 1px solid #e8e0d8;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-  }
-  .nav button {
-    background: none;
-    border: 1px solid #d8d0c8;
-    color: #666;
-    padding: 10px 28px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav button:hover { border-color: #b08860; color: #b08860; }
-  .nav button.primary {
-    background: #b08860;
-    border-color: #b08860;
-    color: #fff;
-    font-weight: 600;
-  }
-  .nav button.primary:hover { background: #96724e; }
-  .nav button:disabled { opacity: 0.3; cursor: default; }
-  .nav .progress {
-    font-size: 12px;
-    color: #aaa;
-    min-width: 48px;
+  .slider-inner-frame {
+    width: 180px;
+    padding: 20px 12px;
     text-align: center;
+  }
+  .slider-inner-frame h3 { font-size: 16px; margin-bottom: 14px; color: #333; }
+  .slider-inner-frame .mock-input {
+    width: 100%;
+    height: 32px;
+    background: #eee;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .slider-inner-frame .mock-btn-before {
+    width: 100%;
+    height: 32px;
+    background: #ccc;
+    border-radius: 4px;
+    margin-top: 4px;
+  }
+  .slider-inner-frame .mock-btn-after {
+    width: 100%;
+    height: 36px;
+    background: #2563eb;
+    border-radius: 10px;
+    margin-top: 8px;
+    box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+  }
+  .slider-inner-frame .mock-input-after {
+    width: 100%;
+    height: 36px;
+    background: #fff;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .slider-label-overlay {
+    position: absolute;
+    bottom: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    z-index: 4;
+  }
+  .slider-label-overlay.left-label {
+    left: 12px;
+    background: rgba(230,57,70,0.1);
+    color: #e63946;
+  }
+  .slider-label-overlay.right-label {
+    right: 12px;
+    background: rgba(37,99,235,0.1);
+    color: #2563eb;
+  }
+
+  /* 変更点リスト */
+  .changes-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+  }
+  .changes-section h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .change-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .change-item:last-child { border-bottom: none; }
+  .change-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .change-icon.color { background: #ede9fe; }
+  .change-icon.space { background: #e0f2fe; }
+  .change-icon.typo { background: #fef3c7; }
+  .change-icon.shape { background: #fce7f3; }
+
+  .change-content { flex: 1; }
+  .change-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .change-detail {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.6;
+  }
+  .change-diff {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 12px;
+  }
+  .diff-old {
+    background: #fef2f2;
+    color: #e63946;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-decoration: line-through;
+    font-family: monospace;
+  }
+  .diff-new {
+    background: #e8f5e9;
+    color: #2d9d3a;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .diff-arrow { color: #ccc; }
+
+  /* アクション */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  /* コンセプト説明 */
+  .concept-footer {
+    background: #1d1d1f;
+    color: #aaa;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .concept-footer h3 {
+    color: #2563eb;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .concept-footer p {
+    font-size: 13px;
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto;
   }
 </style>
 </head>
 <body>
 
-<div class="concept-header">
-  <div class="label">Concept B</div>
-  <h1>プロトタイプ進化録</h1>
-  <p>プロトタイプの進化を記録し、自分の成長を実感する"日記"</p>
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ Before / After</span></div>
+  <div class="concept-badge">Concept B</div>
 </div>
 
-<div class="storyboard">
-
-  <!-- Scene 1 -->
-  <div class="scene active" data-scene="1">
-    <div class="scene-number">SCENE 1 / 5</div>
-    <div class="scene-title">最初のプロトタイプを登録する</div>
-
-    <div class="card">
-      <div class="card-label">あなた</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        TODOアプリのプロトタイプをClaude Codeで作った。<br>
-        まずは記録として登録しておこう。
-      </p>
+<div class="main">
+  <!-- 並列比較 -->
+  <div class="compare-section">
+    <div class="compare-col">
+      <div class="compare-label label-before">BEFORE — あなたのプロト</div>
+      <div class="phone-frame">
+        <div class="proto-before">
+          <h2>ログイン</h2>
+          <input type="text" value="メールアドレス" readonly>
+          <input type="text" value="パスワード" readonly>
+          <button class="btn-login">ログイン</button>
+          <div class="forgot">パスワードをお忘れですか？</div>
+        </div>
+      </div>
     </div>
 
-    <div class="card" style="text-align: center; padding: 32px;">
-      <div style="font-size: 13px; color: #aaa; margin-bottom: 12px;">初回スナップショット</div>
-      <div style="font-size: 48px; font-weight: 700; color: #e0a060;">58</div>
-      <div style="font-size: 13px; color: #aaa; margin-top: 8px;">TODOアプリ v1 — 2024/12/01</div>
-    </div>
+    <div class="compare-arrow">→</div>
 
-    <div class="emotion">
-      <div class="bubble">「まずは記録。ここからスタート。」</div>
+    <div class="compare-col">
+      <div class="compare-label label-after">AFTER — 改善イメージ</div>
+      <div class="phone-frame">
+        <div class="proto-after">
+          <h2>おかえりなさい</h2>
+          <div class="subtitle">アカウントにログイン</div>
+          <div class="input-group">
+            <label class="input-label">メールアドレス</label>
+            <input type="text" value="example@mail.com" readonly>
+          </div>
+          <div class="input-group">
+            <label class="input-label">パスワード</label>
+            <input type="text" value="••••••••" readonly>
+          </div>
+          <button class="btn-login">ログイン</button>
+          <div class="forgot">パスワードをお忘れですか？</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Scene 2 -->
-  <div class="scene" data-scene="2">
-    <div class="scene-number">SCENE 2 / 5</div>
-    <div class="scene-title">数日後、改善版を登録</div>
-
-    <div class="card">
-      <div class="card-label">あなた</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        フィードバックをもとに色とレイアウトを改善。<br>
-        v2として登録する。
-      </p>
-    </div>
-
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="version-card">
-          <div class="version-header">
-            <span class="version-name">v1</span>
-            <span class="version-date">12/01</span>
-          </div>
-          <div class="version-score">
-            <div class="score-bar-bg">
-              <div class="score-bar" style="width: 58%; background: #e0a060;"></div>
-            </div>
-            <span class="score-num" style="color: #e0a060;">58</span>
-          </div>
-        </div>
-      </div>
-      <div class="timeline-item current">
-        <div class="version-card highlight">
-          <div class="version-header">
-            <span class="version-name">v2</span>
-            <span class="version-date">12/05</span>
-          </div>
-          <div class="version-score">
-            <div class="score-bar-bg">
-              <div class="score-bar" style="width: 71%; background: #b08860;"></div>
-            </div>
-            <span class="score-num" style="color: #b08860;">71</span>
-          </div>
-          <div class="version-changes">
-            <span class="change-tag up">+8</span> 色のコントラスト改善<br>
-            <span class="change-tag up">+5</span> 余白の統一
-          </div>
-        </div>
+  <!-- スライダー比較 -->
+  <div class="slider-section">
+    <div class="slider-header">
+      <h3>スライダーで重ねて比較</h3>
+      <div class="slider-score">
+        <span class="score-chip score-before">42点</span>
+        <span class="score-arrow">→</span>
+        <span class="score-chip score-after">78点</span>
       </div>
     </div>
-
-    <div class="emotion">
-      <div class="bubble">「おお、ちゃんと良くなってる」</div>
+    <div class="slider-container" id="sliderContainer">
+      <div class="slider-right">
+        <div class="slider-inner-frame">
+          <h3 style="color: #1d1d1f; font-size: 17px;">おかえりなさい</h3>
+          <div style="font-size: 10px; color: #888; margin-bottom: 14px;">アカウントにログイン</div>
+          <div class="mock-input-after"></div>
+          <div class="mock-input-after"></div>
+          <div class="mock-btn-after"></div>
+        </div>
+      </div>
+      <div class="slider-left" id="sliderLeft">
+        <div class="slider-inner-frame">
+          <h3>ログイン</h3>
+          <div class="mock-input"></div>
+          <div class="mock-input"></div>
+          <div class="mock-btn-before"></div>
+        </div>
+      </div>
+      <div class="slider-handle" id="sliderHandle">
+        <div class="slider-handle-grip">⇔</div>
+      </div>
+      <div class="slider-label-overlay left-label">BEFORE</div>
+      <div class="slider-label-overlay right-label">AFTER</div>
     </div>
   </div>
 
-  <!-- Scene 3 -->
-  <div class="scene" data-scene="3">
-    <div class="scene-number">SCENE 3 / 5</div>
-    <div class="scene-title">タイムラインを眺める</div>
+  <!-- 変更点リスト -->
+  <div class="changes-section">
+    <h3>何が変わった？</h3>
 
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="version-card">
-          <div class="version-header">
-            <span class="version-name">v1</span>
-            <span class="version-date">12/01</span>
-          </div>
-          <div class="version-score">
-            <div class="score-bar-bg">
-              <div class="score-bar" style="width: 58%; background: #ddb88a;"></div>
-            </div>
-            <span class="score-num" style="color: #ddb88a;">58</span>
-          </div>
-        </div>
-      </div>
-      <div class="timeline-item">
-        <div class="version-card">
-          <div class="version-header">
-            <span class="version-name">v2</span>
-            <span class="version-date">12/05</span>
-          </div>
-          <div class="version-score">
-            <div class="score-bar-bg">
-              <div class="score-bar" style="width: 71%; background: #c09860;"></div>
-            </div>
-            <span class="score-num" style="color: #c09860;">71</span>
-          </div>
-        </div>
-      </div>
-      <div class="timeline-item current">
-        <div class="version-card highlight">
-          <div class="version-header">
-            <span class="version-name">v3</span>
-            <span class="version-date">12/12</span>
-          </div>
-          <div class="version-score">
-            <div class="score-bar-bg">
-              <div class="score-bar" style="width: 83%; background: #8a6d3b;"></div>
-            </div>
-            <span class="score-num" style="color: #8a6d3b;">83</span>
-          </div>
-          <div class="version-changes">
-            <span class="change-tag up">+7</span> 情報階層の整理<br>
-            <span class="change-tag up">+5</span> インタラクションフィードバック追加
-          </div>
+    <div class="change-item">
+      <div class="change-icon color">🎨</div>
+      <div class="change-content">
+        <div class="change-title">ボタンの背景色を変更</div>
+        <div class="change-detail">コントラスト比を改善し、主要アクションとしての存在感を強化</div>
+        <div class="change-diff">
+          <span class="diff-old">#ccc</span>
+          <span class="diff-arrow">→</span>
+          <span class="diff-new">#2563eb</span>
         </div>
       </div>
     </div>
 
-    <div class="growth-chart">
-      <div class="chart-title">成長グラフ — TODOアプリ</div>
-      <div class="chart-visual">
-        <div class="chart-bar-wrap">
-          <div class="chart-bar-score" style="color: #ddb88a;">58</div>
-          <div class="chart-bar" style="height: 58%; background: #ddb88a;"></div>
-          <div class="chart-bar-label">v1</div>
-        </div>
-        <div class="chart-bar-wrap">
-          <div class="chart-bar-score" style="color: #c09860;">71</div>
-          <div class="chart-bar" style="height: 71%; background: #c09860;"></div>
-          <div class="chart-bar-label">v2</div>
-        </div>
-        <div class="chart-bar-wrap">
-          <div class="chart-bar-score" style="color: #8a6d3b;">83</div>
-          <div class="chart-bar" style="height: 83%; background: #8a6d3b;"></div>
-          <div class="chart-bar-label">v3</div>
+    <div class="change-item">
+      <div class="change-icon space">📐</div>
+      <div class="change-content">
+        <div class="change-title">入力欄の余白を拡大</div>
+        <div class="change-detail">フォーム要素間の垂直リズムを統一し、窮屈さを解消</div>
+        <div class="change-diff">
+          <span class="diff-old">padding: 11px</span>
+          <span class="diff-arrow">→</span>
+          <span class="diff-new">padding: 14px</span>
         </div>
       </div>
     </div>
 
-    <div class="emotion">
-      <div class="bubble">「1週間前の自分、こんなの作ってたのか…」</div>
+    <div class="change-item">
+      <div class="change-icon typo">✏️</div>
+      <div class="change-content">
+        <div class="change-title">タイトルをウェルカムメッセージに</div>
+        <div class="change-detail">「ログイン」→「おかえりなさい」で親しみやすさを演出。サブタイトル追加でコンテキストを補足</div>
+        <div class="change-diff">
+          <span class="diff-old">ログイン</span>
+          <span class="diff-arrow">→</span>
+          <span class="diff-new">おかえりなさい</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="change-item">
+      <div class="change-icon shape">🔲</div>
+      <div class="change-content">
+        <div class="change-title">入力欄にラベルを追加</div>
+        <div class="change-detail">placeholder だけではフォーカス時にラベルが消えてしまう。明示的なラベルでアクセシビリティ向上</div>
+        <div class="change-diff">
+          <span class="diff-old">placeholder のみ</span>
+          <span class="diff-arrow">→</span>
+          <span class="diff-new">label + placeholder</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Scene 4 -->
-  <div class="scene" data-scene="4">
-    <div class="scene-number">SCENE 4 / 5</div>
-    <div class="scene-title">自分のクセが見えてくる</div>
-
-    <div class="card">
-      <div class="card-label">あなた</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        新しいプロジェクト、EC商品ページのプロトタイプも登録してみた。
-      </p>
-    </div>
-
-    <div class="insight-card">
-      <div class="insight-title">横断インサイト</div>
-      <div class="insight-text">
-        TODOアプリでも今回のEC商品ページでも、<br>
-        <strong>「入力フォーム周辺の余白不足」</strong>が共通して指摘されています。<br><br>
-        あなたのクセかもしれません。<br>
-        input要素の上下に最低16pxの余白を意識してみましょう。
-      </div>
-    </div>
-
-    <div class="insight-card">
-      <div class="insight-title">得意な領域</div>
-      <div class="insight-text">
-        一方、<strong>色の選定とタイポグラフィ</strong>は全プロジェクトで高評価。<br>
-        v1時点から平均スコアが78で安定しています。
-      </div>
-    </div>
-
-    <div class="emotion">
-      <div class="bubble">「苦手と得意が数字で見えるの、面白い」</div>
-    </div>
+  <div class="actions">
+    <button class="btn btn-secondary">この改善を無視</button>
+    <button class="btn btn-primary">改善案をコピー</button>
   </div>
-
-  <!-- Scene 5 -->
-  <div class="scene" data-scene="5">
-    <div class="scene-number">SCENE 5 / 5</div>
-    <div class="scene-title">このサービスの核心</div>
-
-    <div class="final-message">
-      <h2>記録する → 振り返る → 自分を知る</h2>
-      <p>
-        デザインの成長は普段見えない。<br>
-        プロトタイプの進化を記録し続けることで、<br>
-        「前の自分」と「今の自分」の差が見える。
-      </p>
-
-      <div class="journey-visual">
-        <div class="journey-months">
-          <div class="journey-month">
-            <div class="journey-dot" style="background: #e0c8a8; margin-bottom: 48px;"></div>
-          </div>
-          <div class="journey-month">
-            <div class="journey-dot" style="background: #d0b090; margin-bottom: 36px;"></div>
-          </div>
-          <div class="journey-month">
-            <div class="journey-dot" style="background: #c09870; margin-bottom: 20px;"></div>
-          </div>
-          <div class="journey-month">
-            <div class="journey-dot" style="background: #b08860; margin-bottom: 24px;"></div>
-          </div>
-          <div class="journey-month">
-            <div class="journey-dot" style="background: #8a6d3b; margin-bottom: 8px;"></div>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 8px;">
-          <span class="journey-label">1ヶ月前</span>
-          <span class="journey-label">今日</span>
-        </div>
-      </div>
-
-      <p style="margin-top: 24px; color: #8a6d3b; font-weight: 600;">
-        使うほどデータが貯まり、自分だけの成長記録になる。
-      </p>
-    </div>
-  </div>
-
 </div>
 
-<div class="nav">
-  <button id="prev" disabled>← 戻る</button>
-  <span class="progress" id="progress">1 / 5</span>
-  <button id="next" class="primary">次へ →</button>
+<div class="concept-footer">
+  <h3>コンセプト: Before / After</h3>
+  <p>
+    言葉の説明だけではピンとこない。でも2つ並べれば違いが見える。<br>
+    「こう変えるとこう良くなる」が、目で見て一瞬でわかる体験。<br>
+    100の説明より1の見比べ。
+  </p>
 </div>
 
 <script>
-  const scenes = document.querySelectorAll('.scene');
-  const totalScenes = scenes.length;
-  let current = 1;
+  const container = document.getElementById('sliderContainer');
+  const sliderLeft = document.getElementById('sliderLeft');
+  const sliderHandle = document.getElementById('sliderHandle');
+  let isDragging = false;
 
-  function showScene(n) {
-    scenes.forEach(s => s.classList.remove('active'));
-    document.querySelector(`[data-scene="${n}"]`).classList.add('active');
-    document.getElementById('progress').textContent = `${n} / ${totalScenes}`;
-    document.getElementById('prev').disabled = n === 1;
-    document.getElementById('next').textContent = n === totalScenes ? '最初に戻る' : '次へ →';
+  function updateSlider(x) {
+    const rect = container.getBoundingClientRect();
+    let ratio = (x - rect.left) / rect.width;
+    ratio = Math.max(0.05, Math.min(0.95, ratio));
+    sliderLeft.style.width = (ratio * 100) + '%';
+    sliderHandle.style.left = `calc(${ratio * 100}% - 18px)`;
   }
 
-  document.getElementById('next').addEventListener('click', () => {
-    if (current === totalScenes) { current = 1; }
-    else { current++; }
-    showScene(current);
-  });
-
-  document.getElementById('prev').addEventListener('click', () => {
-    if (current > 1) { current--; showScene(current); }
-  });
+  sliderHandle.addEventListener('mousedown', () => { isDragging = true; });
+  sliderHandle.addEventListener('touchstart', () => { isDragging = true; });
+  document.addEventListener('mousemove', (e) => { if (isDragging) updateSlider(e.clientX); });
+  document.addEventListener('touchmove', (e) => { if (isDragging) updateSlider(e.touches[0].clientX); });
+  document.addEventListener('mouseup', () => { isDragging = false; });
+  document.addEventListener('touchend', () => { isDragging = false; });
+  container.addEventListener('click', (e) => { if (!isDragging) updateSlider(e.clientX); });
 </script>
 
 </body>

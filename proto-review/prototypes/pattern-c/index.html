@@ -3,576 +3,650 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pattern C: 出荷OKライン</title>
+<title>Pattern C: デザイン健康診断</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f7fa;
-    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
     min-height: 100vh;
-    overflow-x: hidden;
   }
 
   /* ヘッダー */
-  .concept-header {
-    text-align: center;
-    padding: 40px 20px 20px;
-    border-bottom: 1px solid #e0e4ea;
+  .app-header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .concept-header .label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: #999;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .concept-header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1a56db;
-    margin-bottom: 8px;
-  }
-  .concept-header p {
+  .app-header .logo {
     font-size: 15px;
-    color: #888;
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-
-  /* ストーリーボード */
-  .storyboard {
-    max-width: 560px;
-    margin: 0 auto;
-    padding: 32px 20px 100px;
-  }
-
-  .scene {
-    display: none;
-    animation: fadeIn 0.4s ease;
-  }
-  .scene.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .scene-number {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #1a56db;
-    margin-bottom: 16px;
-    font-weight: 600;
-  }
-
-  .scene-title {
-    font-size: 20px;
     font-weight: 700;
-    margin-bottom: 24px;
-    color: #1a1a2e;
+    color: #059669;
   }
-
-  /* カード */
-  .card {
-    background: #fff;
-    border: 1px solid #e0e4ea;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .card-label {
+  .app-header .logo span { color: #888; font-weight: 400; }
+  .concept-badge {
     font-size: 11px;
-    color: #1a56db;
+    background: #059669;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
     font-weight: 600;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
   }
 
-  /* ゲージ */
-  .gauge-container {
-    text-align: center;
-    padding: 32px 20px;
-    background: #fff;
-    border: 1px solid #e0e4ea;
-    border-radius: 12px;
-    margin-bottom: 16px;
+  /* メインレイアウト */
+  .main {
+    display: flex;
+    height: calc(100vh - 49px);
   }
-  .gauge-score {
-    font-size: 64px;
-    font-weight: 800;
-    line-height: 1;
+
+  /* 左: プロトタイプ表示 */
+  .preview-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    background: #eaeaec;
+  }
+
+  .phone-frame {
+    width: 320px;
+    height: 568px;
+    background: #fff;
+    border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 48px 16px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+  }
+
+  /* サンプルプロトタイプ */
+  .sample-proto {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+  }
+  .sample-proto h2 {
+    font-size: 22px;
+    margin-bottom: 24px;
+    color: #333;
+  }
+  .sample-proto .form-group {
+    margin-bottom: 12px;
+  }
+  .sample-proto input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #999;
+    background: #fafafa;
+    outline: none;
+  }
+  .sample-proto .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .sample-proto .forgot {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 16px;
+  }
+
+  /* ハイライトオーバーレイ */
+  .diag-overlay {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 5;
+  }
+  .diag-overlay.active { opacity: 1; }
+
+  /* コントラスト */
+  .overlay-contrast .ol-box {
+    position: absolute;
+    border: 2.5px solid #e63946;
+    border-radius: 6px;
+    background: rgba(230,57,70,0.06);
+  }
+  .overlay-contrast .ol-btn { top: 320px; left: 36px; width: 248px; height: 42px; }
+  .overlay-contrast .ol-forgot { top: 374px; left: 80px; width: 160px; height: 22px; }
+  .overlay-contrast .ol-label {
+    position: absolute;
+    top: 346px;
+    right: 36px;
+    background: #e63946;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  /* タップ領域 */
+  .overlay-tap .ol-box {
+    position: absolute;
+    border: 2.5px dashed #2563eb;
+    border-radius: 6px;
+    background: rgba(37,99,235,0.04);
+  }
+  .overlay-tap .ol-input1 { top: 252px; left: 36px; width: 248px; height: 40px; }
+  .overlay-tap .ol-input2 { top: 296px; left: 36px; width: 248px; height: 40px; }
+  .overlay-tap .ol-btn { top: 320px; left: 36px; width: 248px; height: 42px; }
+  .overlay-tap .ol-size {
+    position: absolute;
+    font-size: 9px;
+    background: #2563eb;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .overlay-tap .size1 { top: 244px; right: 36px; }
+  .overlay-tap .size2 { top: 288px; right: 36px; }
+  .overlay-tap .size3 { top: 312px; right: 36px; }
+
+  /* 余白 */
+  .overlay-spacing .ol-space {
+    position: absolute;
+    background: rgba(245,158,11,0.15);
+    border-left: 2px solid #f59e0b;
+    border-right: 2px solid #f59e0b;
+  }
+  .overlay-spacing .sp1 { top: 237px; left: 36px; width: 248px; height: 12px; }
+  .overlay-spacing .sp2 { top: 281px; left: 36px; width: 248px; height: 12px; }
+  .overlay-spacing .sp3 { top: 329px; left: 36px; width: 248px; height: 8px; }
+  .overlay-spacing .sp-label {
+    position: absolute;
+    font-size: 9px;
+    background: #f59e0b;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .overlay-spacing .lbl1 { top: 238px; left: 36px; }
+  .overlay-spacing .lbl2 { top: 282px; left: 36px; }
+  .overlay-spacing .lbl3 { top: 330px; left: 36px; }
+
+  /* 階層 */
+  .overlay-hierarchy .ol-box {
+    position: absolute;
+    border-radius: 6px;
+  }
+  .overlay-hierarchy .h1 { top: 210px; left: 36px; width: 248px; height: 32px; border: 2px solid #7c3aed; background: rgba(124,58,237,0.08); }
+  .overlay-hierarchy .h2 { top: 252px; left: 36px; width: 248px; height: 84px; border: 2px solid rgba(124,58,237,0.4); background: rgba(124,58,237,0.04); }
+  .overlay-hierarchy .h3 { top: 320px; left: 36px; width: 248px; height: 42px; border: 2px solid rgba(124,58,237,0.2); background: rgba(124,58,237,0.02); }
+  .overlay-hierarchy .h-label {
+    position: absolute;
+    font-size: 9px;
+    background: #7c3aed;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .overlay-hierarchy .hl1 { top: 202px; left: 36px; }
+  .overlay-hierarchy .hl2 { top: 244px; left: 36px; }
+  .overlay-hierarchy .hl3 { top: 312px; left: 36px; }
+
+  /* 右: 診断パネル */
+  .diag-panel {
+    width: 380px;
+    background: #fff;
+    border-left: 1px solid #e0e0e0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .panel-header h2 {
+    font-size: 16px;
+    font-weight: 700;
     margin-bottom: 4px;
   }
-  .gauge-max {
-    font-size: 16px;
-    color: #aaa;
-    margin-bottom: 16px;
+  .panel-header p {
+    font-size: 12px;
+    color: #888;
   }
-  .gauge-bar {
-    width: 100%;
-    height: 12px;
-    background: #eee;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 8px;
+
+  /* プログレスバー */
+  .progress-section {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
   }
-  .gauge-fill {
-    height: 100%;
-    border-radius: 6px;
-    transition: width 0.8s ease;
-  }
-  .gauge-threshold {
+  .progress-label {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
-    color: #aaa;
+    font-size: 12px;
+    margin-bottom: 8px;
   }
-
-  .verdict {
-    display: inline-block;
-    font-size: 16px;
+  .progress-label .count {
     font-weight: 700;
-    padding: 6px 20px;
-    border-radius: 8px;
-    margin-top: 12px;
+    color: #059669;
   }
-  .verdict.retry { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
-  .verdict.pass { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .progress-track {
+    height: 8px;
+    background: #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+  }
+  .progress-fill-ok {
+    height: 100%;
+    background: #059669;
+    transition: width 0.4s ease;
+  }
+  .progress-fill-ng {
+    height: 100%;
+    background: #e63946;
+    transition: width 0.4s ease;
+  }
 
-  /* チェックリスト */
-  .checklist {
-    list-style: none;
+  /* 診断項目 */
+  .diag-list {
+    flex: 1;
     padding: 0;
   }
-  .checklist li {
+
+  .diag-item {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f2f5;
-    font-size: 14px;
-    line-height: 1.6;
   }
-  .checklist li:last-child { border-bottom: none; }
-  .check-icon {
-    flex-shrink: 0;
-    width: 22px;
+  .diag-item:hover { background: #fafafa; }
+  .diag-item.active { background: #f0fdf4; }
+
+  .diag-toggle {
+    width: 40px;
     height: 22px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    margin-top: 1px;
+    background: #ddd;
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+    margin-top: 2px;
   }
-  .check-icon.pass { background: #e8f5e9; color: #2e7d32; }
-  .check-icon.fail { background: #ffeef0; color: #d32f2f; }
-  .check-label { color: #555; }
-  .check-label strong { color: #333; }
-
-  /* 感情 */
-  .emotion {
-    text-align: center;
-    padding: 20px;
-    margin: 16px 0;
-  }
-  .emotion .bubble {
-    display: inline-block;
+  .diag-toggle.on { background: #059669; }
+  .diag-toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
     background: #fff;
-    border: 1px solid #e0e4ea;
-    border-radius: 20px;
-    padding: 10px 24px;
-    font-size: 14px;
-    color: #666;
-    font-style: italic;
-  }
-
-  /* 改善後の比較 */
-  .before-after {
-    display: flex;
-    gap: 12px;
-    margin: 16px 0;
-  }
-  .ba-card {
-    flex: 1;
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    border: 2px solid transparent;
-  }
-  .ba-card.before { border-color: #ffcc80; }
-  .ba-card.after { border-color: #a5d6a7; }
-  .ba-label {
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: #999;
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
-  .ba-score {
-    font-size: 40px;
-    font-weight: 800;
-  }
-  .ba-verdict {
-    font-size: 12px;
-    font-weight: 700;
-    margin-top: 4px;
-    padding: 2px 12px;
-    border-radius: 4px;
-    display: inline-block;
-  }
-  .before .ba-score { color: #e65100; }
-  .before .ba-verdict { background: #fff3e0; color: #e65100; }
-  .after .ba-score { color: #2e7d32; }
-  .after .ba-verdict { background: #e8f5e9; color: #2e7d32; }
-
-  .arrow-between {
-    display: flex;
-    align-items: center;
-    font-size: 24px;
-    color: #ccc;
-  }
-
-  /* バッジ */
-  .badge-card {
-    background: linear-gradient(135deg, #f0f7ff, #e8f5e9);
-    border: 2px solid #a5d6a7;
-    border-radius: 16px;
-    padding: 32px;
-    text-align: center;
-    margin: 16px 0;
-  }
-  .badge-icon {
-    width: 72px;
-    height: 72px;
-    background: #fff;
-    border: 3px solid #4caf50;
     border-radius: 50%;
-    margin: 0 auto 16px;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .diag-toggle.on::after { transform: translateX(18px); }
+
+  .diag-content { flex: 1; }
+
+  .diag-item-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: #4caf50;
-    font-weight: 700;
-  }
-  .badge-text {
-    font-size: 16px;
-    font-weight: 700;
-    color: #2e7d32;
+    gap: 8px;
     margin-bottom: 4px;
   }
-  .badge-sub {
-    font-size: 13px;
-    color: #777;
-  }
-
-  /* 最終画面 */
-  .final-message {
-    text-align: center;
-    padding: 40px 20px;
-  }
-  .final-message h2 {
-    font-size: 22px;
-    color: #1a56db;
-    margin-bottom: 16px;
-  }
-  .final-message p {
+  .diag-name {
     font-size: 14px;
-    line-height: 1.8;
-    color: #888;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-  .gate-visual {
-    margin: 32px auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .gate-step {
-    background: #fff;
-    border: 1px solid #e0e4ea;
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-size: 13px;
-    color: #555;
-  }
-  .gate-step.highlight {
-    border-color: #4caf50;
-    background: #e8f5e9;
-    color: #2e7d32;
     font-weight: 600;
   }
-  .gate-arrow { color: #ccc; font-size: 18px; }
+  .diag-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+  .status-ng { background: #fef2f2; color: #e63946; }
+  .status-ok { background: #e8f5e9; color: #2d9d3a; }
+  .status-warn { background: #fff8e1; color: #f57c00; }
 
-  /* ナビゲーション */
-  .nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #f5f7fa;
-    border-top: 1px solid #e0e4ea;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-  }
-  .nav button {
-    background: none;
-    border: 1px solid #d0d4da;
-    color: #666;
-    padding: 10px 28px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav button:hover { border-color: #1a56db; color: #1a56db; }
-  .nav button.primary {
-    background: #1a56db;
-    border-color: #1a56db;
-    color: #fff;
-    font-weight: 600;
-  }
-  .nav button.primary:hover { background: #1444b0; }
-  .nav button:disabled { opacity: 0.3; cursor: default; }
-  .nav .progress {
+  .diag-detail {
     font-size: 12px;
-    color: #aaa;
-    min-width: 48px;
+    color: #888;
+    line-height: 1.6;
+  }
+  .diag-metric {
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .metric-bar {
+    flex: 1;
+    height: 4px;
+    background: #e8e8e8;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .metric-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s;
+  }
+  .metric-value {
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* 総合判定 */
+  .verdict-section {
+    padding: 20px 24px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
     text-align: center;
+  }
+  .verdict-label {
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .verdict-result {
+    font-size: 20px;
+    font-weight: 700;
+    padding: 8px 24px;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  .verdict-improve {
+    background: #fff8e1;
+    color: #f57c00;
+    border: 2px solid #f59e0b;
+  }
+
+  /* アクション */
+  .panel-actions {
+    padding: 16px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #059669; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  /* コンセプト説明 */
+  .concept-footer {
+    background: #1d1d1f;
+    color: #aaa;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .concept-footer h3 {
+    color: #059669;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .concept-footer p {
+    font-size: 13px;
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto;
   }
 </style>
 </head>
 <body>
 
-<div class="concept-header">
-  <div class="label">Concept C</div>
-  <h1>出荷OKライン</h1>
-  <p>「これ、人に見せて大丈夫？」の不安を解消する品質ゲート</p>
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ デザイン健康診断</span></div>
+  <div class="concept-badge">Concept C</div>
 </div>
 
-<div class="storyboard">
-
-  <!-- Scene 1 -->
-  <div class="scene active" data-scene="1">
-    <div class="scene-number">SCENE 1 / 5</div>
-    <div class="scene-title">「これで大丈夫かな…」</div>
-
-    <div class="card">
-      <div class="card-label">あなた</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        クライアントに見せるLPのプロトタイプができた。<br>
-        でも正直、これで良いのか自信がない。<br>
-        見せる前にチェックしておきたい。
-      </p>
-    </div>
-
-    <div style="text-align: center; padding: 24px;">
-      <div style="font-size: 14px; color: #aaa; margin-bottom: 12px;">プロトタイプを投入</div>
-      <div style="display: inline-block; background: #fff; border: 2px dashed #d0d4da; border-radius: 12px; padding: 40px 60px; color: #aaa; font-size: 14px;">
-        HTMLをペースト / ファイルをドロップ
+<div class="main">
+  <!-- 左: プロトタイプ表示 -->
+  <div class="preview-area">
+    <div class="phone-frame" id="phoneFrame">
+      <div class="sample-proto">
+        <h2>ログイン</h2>
+        <div class="form-group">
+          <input type="text" value="メールアドレス" readonly>
+        </div>
+        <div class="form-group">
+          <input type="text" value="パスワード" readonly>
+        </div>
+        <button class="login-btn">ログイン</button>
+        <div class="forgot">パスワードをお忘れですか？</div>
       </div>
-    </div>
 
-    <div class="emotion">
-      <div class="bubble">「見せる前に客観的なチェックが欲しい…」</div>
+      <!-- 各診断オーバーレイ -->
+      <div class="diag-overlay overlay-contrast" id="overlay-contrast">
+        <div class="ol-box ol-btn"></div>
+        <div class="ol-box ol-forgot"></div>
+        <div class="ol-label">1.4:1 — NG</div>
+      </div>
+
+      <div class="diag-overlay overlay-tap" id="overlay-tap">
+        <div class="ol-box ol-input1"></div>
+        <div class="ol-box ol-input2"></div>
+        <div class="ol-box ol-btn"></div>
+        <div class="ol-size size1">40px</div>
+        <div class="ol-size size2">40px</div>
+        <div class="ol-size size3">42px</div>
+      </div>
+
+      <div class="diag-overlay overlay-spacing" id="overlay-spacing">
+        <div class="ol-space sp1"></div>
+        <div class="ol-space sp2"></div>
+        <div class="ol-space sp3"></div>
+        <div class="sp-label lbl1">12px</div>
+        <div class="sp-label lbl2">12px</div>
+        <div class="sp-label lbl3">8px</div>
+      </div>
+
+      <div class="diag-overlay overlay-hierarchy" id="overlay-hierarchy">
+        <div class="ol-box h1"></div>
+        <div class="ol-box h2"></div>
+        <div class="ol-box h3"></div>
+        <div class="h-label hl1">Level 1</div>
+        <div class="h-label hl2">Level 2</div>
+        <div class="h-label hl3">Level 3 ⚠️</div>
+      </div>
     </div>
   </div>
 
-  <!-- Scene 2 -->
-  <div class="scene" data-scene="2">
-    <div class="scene-number">SCENE 2 / 5</div>
-    <div class="scene-title">判定が出る</div>
-
-    <div class="gauge-container">
-      <div class="gauge-score" style="color: #e65100;">72</div>
-      <div class="gauge-max">/ 100</div>
-      <div class="gauge-bar">
-        <div class="gauge-fill" style="width: 72%; background: linear-gradient(90deg, #ffcc80, #e65100);"></div>
-      </div>
-      <div class="gauge-threshold">
-        <span>0</span>
-        <span style="color: #e65100;">← あなた</span>
-        <span style="color: #4caf50;">出荷OK: 80 →</span>
-        <span>100</span>
-      </div>
-      <div class="verdict retry">もう少し</div>
+  <!-- 右: 診断パネル -->
+  <div class="diag-panel">
+    <div class="panel-header">
+      <h2>健康診断レポート</h2>
+      <p>項目をONにすると画面上にハイライト表示</p>
     </div>
 
-    <div class="card">
-      <div class="card-label">チェック結果</div>
-      <ul class="checklist">
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>色のコントラスト</strong> — WCAG AA基準をクリア</div>
-        </li>
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>視覚的階層</strong> — CTAが適切に目立っている</div>
-        </li>
-        <li>
-          <div class="check-icon fail">&#10007;</div>
-          <div class="check-label"><strong>タップターゲット</strong> — ナビリンクが44px未満（現在: 32px）</div>
-        </li>
-        <li>
-          <div class="check-icon fail">&#10007;</div>
-          <div class="check-label"><strong>主要動線</strong> — CTAまで2クリック以上かかる（現在: 3クリック）</div>
-        </li>
-      </ul>
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>診断進捗</span>
+        <span class="count" id="progressCount">1 / 4 クリア</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill-ok" id="progressOk" style="width: 25%;"></div>
+        <div class="progress-fill-ng" id="progressNg" style="width: 50%;"></div>
+      </div>
     </div>
 
-    <div class="emotion">
-      <div class="bubble">「あと2つ直せばいいのか。明確！」</div>
+    <div class="diag-list">
+      <!-- コントラスト -->
+      <div class="diag-item" data-diag="contrast" id="diag-contrast">
+        <div class="diag-toggle" id="toggle-contrast"></div>
+        <div class="diag-content">
+          <div class="diag-item-header">
+            <div class="diag-name">コントラスト比</div>
+            <span class="diag-status status-ng">NG</span>
+          </div>
+          <div class="diag-detail">
+            ボタンの文字色と背景色のコントラスト比が基準を下回っています
+          </div>
+          <div class="diag-metric">
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: 31%; background: #e63946;"></div>
+            </div>
+            <div class="metric-value" style="color: #e63946;">1.4:1 / 4.5:1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- タップ領域 -->
+      <div class="diag-item" data-diag="tap" id="diag-tap">
+        <div class="diag-toggle" id="toggle-tap"></div>
+        <div class="diag-content">
+          <div class="diag-item-header">
+            <div class="diag-name">タップ領域</div>
+            <span class="diag-status status-warn">注意</span>
+          </div>
+          <div class="diag-detail">
+            入力欄の高さが推奨値（44px）をわずかに下回っています
+          </div>
+          <div class="diag-metric">
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: 90%; background: #f59e0b;"></div>
+            </div>
+            <div class="metric-value" style="color: #f59e0b;">40px / 44px</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 余白 -->
+      <div class="diag-item" data-diag="spacing" id="diag-spacing">
+        <div class="diag-toggle" id="toggle-spacing"></div>
+        <div class="diag-content">
+          <div class="diag-item-header">
+            <div class="diag-name">余白の統一</div>
+            <span class="diag-status status-ng">NG</span>
+          </div>
+          <div class="diag-detail">
+            フォーム要素間の余白が 12px / 12px / 8px と不統一。16〜20px に統一を推奨
+          </div>
+          <div class="diag-metric">
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: 55%; background: #e63946;"></div>
+            </div>
+            <div class="metric-value" style="color: #e63946;">不統一</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 視覚的階層 -->
+      <div class="diag-item" data-diag="hierarchy" id="diag-hierarchy">
+        <div class="diag-toggle" id="toggle-hierarchy"></div>
+        <div class="diag-content">
+          <div class="diag-item-header">
+            <div class="diag-name">視覚的階層</div>
+            <span class="diag-status status-ok">OK</span>
+          </div>
+          <div class="diag-detail">
+            タイトル → 入力欄 → ボタンの階層は適切。ただしボタンの存在感がやや弱い
+          </div>
+          <div class="diag-metric">
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: 75%; background: #2d9d3a;"></div>
+            </div>
+            <div class="metric-value" style="color: #2d9d3a;">概ね良好</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict-section">
+      <div class="verdict-label">総合判定</div>
+      <div class="verdict-result verdict-improve">もう少し 🔧</div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-secondary">再診断する</button>
+      <button class="btn btn-primary">改善ヒントを見る</button>
     </div>
   </div>
-
-  <!-- Scene 3 -->
-  <div class="scene" data-scene="3">
-    <div class="scene-number">SCENE 3 / 5</div>
-    <div class="scene-title">指摘項目を潰す</div>
-
-    <div class="card">
-      <div class="card-label">あなた</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        ナビリンクのサイズを 32px → 48px に修正。<br>
-        ファーストビューにCTAを配置して1クリックに短縮。<br>
-        再チェックに通す。
-      </p>
-    </div>
-
-    <div class="before-after">
-      <div class="ba-card before">
-        <div class="ba-label">BEFORE</div>
-        <div class="ba-score">72</div>
-        <div class="ba-verdict">もう少し</div>
-      </div>
-      <div class="arrow-between">→</div>
-      <div class="ba-card after">
-        <div class="ba-label">AFTER</div>
-        <div class="ba-score">88</div>
-        <div class="ba-verdict">出荷OK</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <ul class="checklist">
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>色のコントラスト</strong> — OK</div>
-        </li>
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>視覚的階層</strong> — OK</div>
-        </li>
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>タップターゲット</strong> — 48px OK</div>
-        </li>
-        <li>
-          <div class="check-icon pass">&#10003;</div>
-          <div class="check-label"><strong>主要動線</strong> — 1クリック OK</div>
-        </li>
-      </ul>
-    </div>
-
-    <div class="emotion">
-      <div class="bubble">「全部グリーン、気持ちいい！」</div>
-    </div>
-  </div>
-
-  <!-- Scene 4 -->
-  <div class="scene" data-scene="4">
-    <div class="scene-number">SCENE 4 / 5</div>
-    <div class="scene-title">自信を持って共有する</div>
-
-    <div class="badge-card">
-      <div class="badge-icon">&#10003;</div>
-      <div class="badge-text">Proto Review: Quality Passed</div>
-      <div class="badge-sub">LP プロトタイプ — 2024/12/12</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">共有時</div>
-      <p style="font-size: 14px; line-height: 1.7; color: #555;">
-        「プロトタイプです。品質チェック済みです。」<br>
-        と、客観的な裏付けとともにクライアントに共有。
-      </p>
-    </div>
-
-    <div class="emotion">
-      <div class="bubble">「チェック済みの安心感、全然違う」</div>
-    </div>
-  </div>
-
-  <!-- Scene 5 -->
-  <div class="scene" data-scene="5">
-    <div class="scene-number">SCENE 5 / 5</div>
-    <div class="scene-title">このサービスの核心</div>
-
-    <div class="final-message">
-      <h2>チェック → 修正 → 合格 → 安心して出す</h2>
-      <p>
-        「これで大丈夫かな…」の不安は、<br>
-        客観的なチェックが通れば消える。<br>
-        明確な基準とチェックリストで、<br>
-        自信を持ってプロトタイプを世に出せる。
-      </p>
-
-      <div class="gate-visual">
-        <div class="gate-step">プロトタイプ</div>
-        <div class="gate-arrow">→</div>
-        <div class="gate-step highlight">品質ゲート</div>
-        <div class="gate-arrow">→</div>
-        <div class="gate-step">安心して共有</div>
-      </div>
-
-      <p style="margin-top: 24px; color: #1a56db; font-weight: 600;">
-        「人に見せて大丈夫」の確信が、ここで手に入る。
-      </p>
-    </div>
-  </div>
-
 </div>
 
-<div class="nav">
-  <button id="prev" disabled>← 戻る</button>
-  <span class="progress" id="progress">1 / 5</span>
-  <button id="next" class="primary">次へ →</button>
+<div class="concept-footer">
+  <h3>コンセプト: デザイン健康診断</h3>
+  <p>
+    「何を見ればいいかわからない」を解消する。<br>
+    チェック項目をON/OFFするだけで、画面上に問題が浮かび上がる。<br>
+    赤=NG、緑=OK。迷わない。一つずつ潰せばクリアできる。
+  </p>
 </div>
 
 <script>
-  const scenes = document.querySelectorAll('.scene');
-  const totalScenes = scenes.length;
-  let current = 1;
+  const diagItems = ['contrast', 'tap', 'spacing', 'hierarchy'];
 
-  function showScene(n) {
-    scenes.forEach(s => s.classList.remove('active'));
-    document.querySelector(`[data-scene="${n}"]`).classList.add('active');
-    document.getElementById('progress').textContent = `${n} / ${totalScenes}`;
-    document.getElementById('prev').disabled = n === 1;
-    document.getElementById('next').textContent = n === totalScenes ? '最初に戻る' : '次へ →';
-  }
+  diagItems.forEach(name => {
+    const toggle = document.getElementById('toggle-' + name);
+    const overlay = document.getElementById('overlay-' + name);
+    const item = document.getElementById('diag-' + name);
 
-  document.getElementById('next').addEventListener('click', () => {
-    if (current === totalScenes) { current = 1; }
-    else { current++; }
-    showScene(current);
+    function toggleDiag() {
+      const isOn = toggle.classList.toggle('on');
+      overlay.classList.toggle('active', isOn);
+      item.classList.toggle('active', isOn);
+    }
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDiag();
+    });
+    item.addEventListener('click', () => {
+      toggleDiag();
+    });
   });
 
-  document.getElementById('prev').addEventListener('click', () => {
-    if (current > 1) { current--; showScene(current); }
-  });
+  // 初期状態でコントラストをON
+  setTimeout(() => {
+    document.getElementById('toggle-contrast').click();
+  }, 600);
 </script>
 
 </body>

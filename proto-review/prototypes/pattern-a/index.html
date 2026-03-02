@@ -3,473 +3,499 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pattern A: 辛口デザインクリティック</title>
+<title>Pattern A: 赤ペンレビュー</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0d0d0d;
-    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
     min-height: 100vh;
-    overflow-x: hidden;
   }
 
   /* ヘッダー */
-  .concept-header {
-    text-align: center;
-    padding: 40px 20px 20px;
-    border-bottom: 1px solid #222;
+  .app-header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .concept-header .label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: #666;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .concept-header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #ff4444;
-    margin-bottom: 8px;
-  }
-  .concept-header p {
+  .app-header .logo {
     font-size: 15px;
-    color: #888;
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-
-  /* ストーリーボード */
-  .storyboard {
-    max-width: 560px;
-    margin: 0 auto;
-    padding: 32px 20px 100px;
-  }
-
-  .scene {
-    display: none;
-    animation: fadeIn 0.4s ease;
-  }
-  .scene.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .scene-number {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #ff4444;
-    margin-bottom: 16px;
-    font-weight: 600;
-  }
-
-  .scene-title {
-    font-size: 20px;
     font-weight: 700;
-    margin-bottom: 24px;
+    color: #e63946;
+  }
+  .app-header .logo span { color: #888; font-weight: 400; }
+  .concept-badge {
+    font-size: 11px;
+    background: #e63946;
     color: #fff;
-  }
-
-  /* ユーザーアクション */
-  .user-action {
-    background: #1a1a2e;
-    border: 1px solid #2a2a4a;
+    padding: 4px 12px;
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  .user-action .who {
-    font-size: 11px;
-    color: #6c8cff;
     font-weight: 600;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
   }
 
-  /* コードペースト風 */
-  .code-paste {
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 12px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 12px;
-    color: #aaa;
-    line-height: 1.7;
-    overflow-x: auto;
+  /* メインレイアウト */
+  .main {
+    display: flex;
+    height: calc(100vh - 49px);
   }
-  .code-paste .tag { color: #ff6b6b; }
-  .code-paste .attr { color: #ffd93d; }
-  .code-paste .val { color: #6bcb77; }
 
-  /* AIレスポンス */
-  .ai-response {
-    background: #1a1a1a;
-    border-left: 3px solid #ff4444;
-    border-radius: 0 12px 12px 0;
-    padding: 20px;
-    margin-bottom: 20px;
+  /* 左: プロトタイプ表示エリア */
+  .preview-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    background: #eaeaec;
   }
-  .ai-response .who {
-    font-size: 11px;
-    color: #ff4444;
-    font-weight: 600;
-    letter-spacing: 1px;
+
+  .phone-frame {
+    width: 320px;
+    height: 568px;
+    background: #fff;
+    border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 48px 16px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+  }
+
+  /* サンプルプロトタイプ（ログイン画面） */
+  .sample-proto {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+    font-family: sans-serif;
+  }
+  .sample-proto h2 {
+    font-size: 22px;
+    margin-bottom: 24px;
+    color: #333;
+  }
+  .sample-proto .form-group {
     margin-bottom: 12px;
+    position: relative;
   }
-
-  .critique-item {
-    padding: 10px 0;
-    border-bottom: 1px solid #222;
+  .sample-proto input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     font-size: 14px;
-    line-height: 1.7;
+    color: #999;
+    background: #fafafa;
+    outline: none;
   }
-  .critique-item:last-child { border-bottom: none; }
-  .critique-item .severity {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-right: 8px;
-    vertical-align: middle;
+  .sample-proto .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 8px;
+    cursor: default;
   }
-  .severity.high { background: #ff4444; color: #fff; }
-  .severity.mid { background: #ff8c00; color: #fff; }
-
-  /* 処方箋 */
-  .prescription {
-    background: #0a1a0a;
-    border: 1px solid #1a3a1a;
-    border-radius: 8px;
-    padding: 16px;
+  .sample-proto .forgot {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
     margin-top: 16px;
   }
-  .prescription h4 {
-    font-size: 12px;
-    color: #4caf50;
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-  }
-  .prescription p {
-    font-size: 13px;
-    line-height: 1.7;
-    color: #a0c8a0;
-  }
 
-  /* 感情バブル */
-  .emotion {
-    text-align: center;
-    padding: 20px;
-    margin: 20px 0;
-  }
-  .emotion .bubble {
-    display: inline-block;
-    background: #222;
-    border: 1px solid #333;
-    border-radius: 20px;
-    padding: 10px 24px;
-    font-size: 14px;
-    color: #ccc;
-    font-style: italic;
-  }
-
-  /* 改善前後の比較 */
-  .comparison {
-    display: flex;
-    gap: 12px;
-    margin: 16px 0;
-  }
-  .comparison .version {
-    flex: 1;
-    background: #111;
-    border-radius: 8px;
-    padding: 16px;
-    text-align: center;
-  }
-  .comparison .version-label {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-  }
-  .comparison .score {
-    font-size: 36px;
-    font-weight: 700;
-  }
-  .score.before { color: #ff4444; }
-  .score.after { color: #ffd93d; }
-
-  .comparison .arrow {
-    display: flex;
-    align-items: center;
-    color: #444;
-    font-size: 24px;
-  }
-
-  /* ナビゲーション */
-  .nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #0d0d0d;
-    border-top: 1px solid #222;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-  }
-  .nav button {
-    background: none;
-    border: 1px solid #333;
-    color: #ccc;
-    padding: 10px 28px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav button:hover { border-color: #ff4444; color: #ff4444; }
-  .nav button.primary {
-    background: #ff4444;
-    border-color: #ff4444;
+  /* 赤ペンマーカー */
+  .marker {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: #e63946;
     color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(230,57,70,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 10;
+    animation: markerPulse 2s infinite;
+  }
+  .marker:hover, .marker.active {
+    transform: scale(1.2);
+    box-shadow: 0 4px 16px rgba(230,57,70,0.6);
+    animation: none;
+  }
+  @keyframes markerPulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(230,57,70,0.4); }
+    50% { box-shadow: 0 2px 16px rgba(230,57,70,0.7); }
+  }
+
+  /* マーカーから対象への線 */
+  .marker-line {
+    position: absolute;
+    height: 2px;
+    background: #e63946;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .marker.active ~ .marker-line { opacity: 0.5; }
+
+  /* ハイライトオーバーレイ */
+  .highlight-overlay {
+    position: absolute;
+    border: 2px solid #e63946;
+    background: rgba(230, 57, 70, 0.08);
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 4;
+  }
+  .highlight-overlay.active { opacity: 1; }
+
+  /* 右: レビューパネル */
+  .review-panel {
+    width: 380px;
+    background: #fff;
+    border-left: 1px solid #e0e0e0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .panel-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .panel-header p {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .review-list {
+    flex: 1;
+    padding: 0;
+  }
+
+  .review-item {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .review-item:hover { background: #fafafa; }
+  .review-item.active { background: #fef2f2; border-left: 3px solid #e63946; }
+
+  .review-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .review-number {
+    width: 22px;
+    height: 22px;
+    background: #e63946;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .review-item.ok .review-number { background: #2d9d3a; }
+
+  .review-title {
+    font-size: 14px;
     font-weight: 600;
   }
-  .nav button.primary:hover { background: #cc3333; }
-  .nav button:disabled { opacity: 0.3; cursor: default; }
-  .nav .progress {
-    font-size: 12px;
-    color: #555;
-    min-width: 48px;
-    text-align: center;
+
+  .severity-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .severity-tag.critical { background: #fef2f2; color: #e63946; }
+  .severity-tag.warning { background: #fff8e1; color: #f57c00; }
+  .severity-tag.good { background: #e8f5e9; color: #2d9d3a; }
+
+  .review-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 8px;
   }
 
-  /* 最終画面 */
-  .final-message {
-    text-align: center;
-    padding: 40px 20px;
+  .review-fix {
+    font-size: 12px;
+    background: #f8f8f8;
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #444;
+    line-height: 1.6;
+    display: none;
   }
-  .final-message h2 {
-    font-size: 22px;
-    color: #ff4444;
-    margin-bottom: 16px;
+  .review-item.active .review-fix { display: block; }
+  .review-fix strong {
+    color: #e63946;
+    font-weight: 600;
   }
-  .final-message p {
-    font-size: 14px;
-    line-height: 1.8;
+
+  /* スコアバー */
+  .score-bar {
+    padding: 16px 24px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+  .score-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
     color: #888;
-    max-width: 400px;
+    margin-bottom: 8px;
+  }
+  .score-value {
+    font-weight: 700;
+    color: #1d1d1f;
+    font-size: 14px;
+  }
+  .bar-track {
+    height: 6px;
+    background: #e8e8e8;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e63946, #f4a261);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  /* アクションボタン */
+  .panel-actions {
+    padding: 16px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary {
+    background: #e63946;
+    color: #fff;
+  }
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #555;
+  }
+
+  /* コンセプト説明（下部） */
+  .concept-footer {
+    background: #1d1d1f;
+    color: #aaa;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .concept-footer h3 {
+    color: #e63946;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .concept-footer p {
+    font-size: 13px;
+    line-height: 1.8;
+    max-width: 480px;
     margin: 0 auto;
   }
-  .loop-visual {
-    margin: 32px auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    max-width: 360px;
-  }
-  .loop-step {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 13px;
-    color: #ccc;
-  }
-  .loop-arrow { color: #ff4444; font-size: 18px; }
 </style>
 </head>
 <body>
 
-<div class="concept-header">
-  <div class="label">Concept A</div>
-  <h1>辛口デザインクリティック</h1>
-  <p>忖度なしの本気フィードバックが返ってくる"師匠"</p>
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ 赤ペンレビュー</span></div>
+  <div class="concept-badge">Concept A</div>
 </div>
 
-<div class="storyboard">
-
-  <!-- Scene 1 -->
-  <div class="scene active" data-scene="1">
-    <div class="scene-number">SCENE 1 / 5</div>
-    <div class="scene-title">プロトタイプを投げ込む</div>
-
-    <div class="user-action">
-      <div class="who">あなた</div>
-      <p>Claude Codeで作ったログイン画面。<br>まあまあの出来だと思ってペーストする。</p>
-      <div class="code-paste">
-        <span class="tag">&lt;div</span> <span class="attr">class=</span><span class="val">"login-form"</span><span class="tag">&gt;</span><br>
-        &nbsp;&nbsp;<span class="tag">&lt;h2&gt;</span>ログイン<span class="tag">&lt;/h2&gt;</span><br>
-        &nbsp;&nbsp;<span class="tag">&lt;input</span> <span class="attr">type=</span><span class="val">"email"</span> <span class="attr">placeholder=</span><span class="val">"メール"</span><span class="tag">/&gt;</span><br>
-        &nbsp;&nbsp;<span class="tag">&lt;input</span> <span class="attr">type=</span><span class="val">"password"</span> <span class="attr">placeholder=</span><span class="val">"パスワード"</span><span class="tag">/&gt;</span><br>
-        &nbsp;&nbsp;<span class="tag">&lt;button&gt;</span>ログイン<span class="tag">&lt;/button&gt;</span><br>
-        <span class="tag">&lt;/div&gt;</span>
+<div class="main">
+  <!-- 左: プロトタイプ表示 -->
+  <div class="preview-area">
+    <div class="phone-frame" id="phoneFrame">
+      <div class="sample-proto">
+        <h2>ログイン</h2>
+        <div class="form-group" id="email-field">
+          <input type="text" value="メールアドレス" readonly>
+        </div>
+        <div class="form-group" id="pw-field">
+          <input type="text" value="パスワード" readonly>
+        </div>
+        <button class="login-btn" id="login-btn">ログイン</button>
+        <div class="forgot" id="forgot-link">パスワードをお忘れですか？</div>
       </div>
-    </div>
 
-    <div class="emotion">
-      <div class="bubble">「まあまあ良くできたかな」</div>
+      <!-- 赤ペンマーカー -->
+      <div class="marker" data-review="1" style="top: 268px; left: 252px;" id="marker1">1</div>
+      <div class="marker" data-review="2" style="top: 340px; left: 252px;" id="marker2">2</div>
+      <div class="marker" data-review="3" style="top: 195px; left: 28px;" id="marker3">3</div>
+
+      <!-- ハイライトオーバーレイ -->
+      <div class="highlight-overlay" id="hl1" style="top: 252px; left: 36px; width: 248px; height: 40px;"></div>
+      <div class="highlight-overlay" id="hl2" style="top: 320px; left: 36px; width: 248px; height: 42px;"></div>
+      <div class="highlight-overlay" id="hl3" style="top: 165px; left: 36px; width: 248px; height: 82px;"></div>
     </div>
   </div>
 
-  <!-- Scene 2 -->
-  <div class="scene" data-scene="2">
-    <div class="scene-number">SCENE 2 / 5</div>
-    <div class="scene-title">師匠の一撃</div>
+  <!-- 右: レビューパネル -->
+  <div class="review-panel">
+    <div class="panel-header">
+      <h2>レビュー結果</h2>
+      <p>3件の指摘 — マーカーをクリックで詳細</p>
+    </div>
 
-    <div class="ai-response">
-      <div class="who">CRITIC</div>
-      <div class="critique-item">
-        <span class="severity high">重大</span>
-        コントラスト比が4.2:1。WCAG AA基準（4.5:1）を満たしていない。アクセシビリティの基本が欠落。
+    <div class="review-list">
+      <!-- 指摘1 -->
+      <div class="review-item" data-review="1" id="review1">
+        <div class="review-item-header">
+          <div class="review-number">1</div>
+          <div class="review-title">ボタンのコントラスト不足</div>
+          <span class="severity-tag critical">重大</span>
+        </div>
+        <div class="review-desc">
+          ログインボタン（#ccc背景 + #fff文字）のコントラスト比は <strong>1.4:1</strong>。WCAG AA基準の4.5:1を大きく下回っています。
+        </div>
+        <div class="review-fix">
+          <strong>💡 改善案:</strong> ボタン背景を #1a73e8（青）に変更 → コントラスト比 4.6:1 を確保。文字色 #fff のままOK。
+        </div>
       </div>
-      <div class="critique-item">
-        <span class="severity high">重大</span>
-        主要CTAボタンが視覚的階層の3番目に埋もれている。ユーザーの目線はタイトル→入力欄→ボタンの順に流れるが、ボタンの存在感が薄すぎる。
+
+      <!-- 指摘2 -->
+      <div class="review-item" data-review="2" id="review2">
+        <div class="review-item-header">
+          <div class="review-number">2</div>
+          <div class="review-title">CTAの視覚的優先度が低い</div>
+          <span class="severity-tag critical">重大</span>
+        </div>
+        <div class="review-desc">
+          ログインボタンが入力欄と同じトーンで、主要アクションとして認識しにくい。視覚的階層でタイトルの次に目立つべき要素です。
+        </div>
+        <div class="review-fix">
+          <strong>💡 改善案:</strong> ボタンに高さ 48px、角丸 12px、影(0 2px 8px rgba(0,0,0,0.15))を追加。フォントウェイトを700に。
+        </div>
       </div>
-      <div class="critique-item">
-        <span class="severity mid">改善</span>
-        エラー状態が未定義。パスワードを間違えたとき、ユーザーは何が起きたか分からない。
+
+      <!-- 指摘3 -->
+      <div class="review-item" data-review="3" id="review3">
+        <div class="review-item-header">
+          <div class="review-number">3</div>
+          <div class="review-title">入力欄の余白が不均一</div>
+          <span class="severity-tag warning">改善</span>
+        </div>
+        <div class="review-desc">
+          メール欄とパスワード欄の間隔が12px。一般的なフォームデザインでは16〜20pxが推奨されます。窮屈な印象を与えています。
+        </div>
+        <div class="review-fix">
+          <strong>💡 改善案:</strong> form-group の margin-bottom を 12px → 20px に変更。フォーム全体の垂直リズムが改善されます。
+        </div>
       </div>
     </div>
 
-    <div class="emotion">
-      <div class="bubble">「うっ…でも確かにそうだ」</div>
-    </div>
-  </div>
-
-  <!-- Scene 3 -->
-  <div class="scene" data-scene="3">
-    <div class="scene-number">SCENE 3 / 5</div>
-    <div class="scene-title">具体的な処方箋</div>
-
-    <div class="ai-response">
-      <div class="who">CRITIC — 処方箋</div>
-
-      <div class="prescription">
-        <h4>CTA改善</h4>
-        <p>ボタンのフォントウェイトを 600→700 に変更。<br>
-        周囲に24px以上の余白を確保。<br>
-        背景色を #1a73e8 → コントラスト比 7.1:1 を確保。<br>
-        <strong>これだけで視覚的優先度が1段上がる。</strong></p>
+    <div class="score-bar">
+      <div class="score-label">
+        <span>UI/UXスコア</span>
+        <span class="score-value">42 / 100</span>
       </div>
-
-      <div class="prescription" style="margin-top: 12px;">
-        <h4>エラー状態</h4>
-        <p>入力欄の下に16pxの余白を確保し、エラーメッセージ用のスペースを予約。<br>
-        色は #d32f2f、フォントサイズ 13px。<br>
-        「メールアドレスまたはパスワードが正しくありません」の1文でOK。</p>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: 42%;"></div>
       </div>
     </div>
 
-    <div class="emotion">
-      <div class="bubble">「なるほど、具体的すぎて逆にありがたい」</div>
-    </div>
-  </div>
-
-  <!-- Scene 4 -->
-  <div class="scene" data-scene="4">
-    <div class="scene-number">SCENE 4 / 5</div>
-    <div class="scene-title">改善して再提出</div>
-
-    <div class="user-action">
-      <div class="who">あなた</div>
-      <p>処方箋をもとにCSSを修正。ボタンの色、余白、エラー表示を追加して再ペースト。</p>
-    </div>
-
-    <div class="comparison">
-      <div class="version">
-        <div class="version-label">BEFORE</div>
-        <div class="score before">58</div>
-      </div>
-      <div class="arrow">→</div>
-      <div class="version">
-        <div class="version-label">AFTER</div>
-        <div class="score after">74</div>
-      </div>
-    </div>
-
-    <div class="ai-response">
-      <div class="who">CRITIC</div>
-      <div class="critique-item">
-        CTAの存在感は改善。ただしフォーム全体の垂直リズムが崩れた。入力欄間の余白が16px・24px・16pxとバラバラ。すべて20pxに統一せよ。
-      </div>
-    </div>
-
-    <div class="emotion">
-      <div class="bubble">「まだ甘いのか…！でもまた具体的だ」</div>
+    <div class="panel-actions">
+      <button class="btn btn-secondary">HTMLを改善して再レビュー</button>
+      <button class="btn btn-primary">改善案を適用</button>
     </div>
   </div>
-
-  <!-- Scene 5 -->
-  <div class="scene" data-scene="5">
-    <div class="scene-number">SCENE 5 / 5</div>
-    <div class="scene-title">このサービスの核心</div>
-
-    <div class="final-message">
-      <h2>投げ込む → 打ちのめされる → 直す → また投げる</h2>
-      <p>周りに「いいんじゃない？」としか言ってくれる人がいないとき。<br>
-      忖度なしで「ここがダメ」と言い切り、<br>
-      「こう直せ」まで具体的に示してくれる存在。</p>
-
-      <div class="loop-visual">
-        <div class="loop-step">投げ込む</div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">指摘</div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">処方箋</div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">改善</div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">再提出</div>
-      </div>
-
-      <p style="margin-top: 24px; color: #ff4444; font-weight: 600;">
-        「悔しいけど的確」が、いちばん成長できる。
-      </p>
-    </div>
-  </div>
-
 </div>
 
-<div class="nav">
-  <button id="prev" disabled>← 戻る</button>
-  <span class="progress" id="progress">1 / 5</span>
-  <button id="next" class="primary">次へ →</button>
+<div class="concept-footer">
+  <h3>コンセプト: 赤ペンレビュー</h3>
+  <p>
+    画面の「どこ」が問題かを、マーカーで直接指し示す。<br>
+    デザイナーでなくても、場所がわかれば何を直すかわかる。<br>
+    学校の添削のように、馴染みのある「赤ペン」のメタファー。
+  </p>
 </div>
 
 <script>
-  const scenes = document.querySelectorAll('.scene');
-  const totalScenes = scenes.length;
-  let current = 1;
+  const markers = document.querySelectorAll('.marker');
+  const reviewItems = document.querySelectorAll('.review-item');
+  const highlights = {
+    '1': document.getElementById('hl1'),
+    '2': document.getElementById('hl2'),
+    '3': document.getElementById('hl3'),
+  };
 
-  function showScene(n) {
-    scenes.forEach(s => s.classList.remove('active'));
-    document.querySelector(`[data-scene="${n}"]`).classList.add('active');
-    document.getElementById('progress').textContent = `${n} / ${totalScenes}`;
-    document.getElementById('prev').disabled = n === 1;
-    document.getElementById('next').textContent = n === totalScenes ? '最初に戻る' : '次へ →';
+  function activate(n) {
+    // マーカー
+    markers.forEach(m => m.classList.toggle('active', m.dataset.review === n));
+    // レビュー項目
+    reviewItems.forEach(r => r.classList.toggle('active', r.dataset.review === n));
+    // ハイライト
+    Object.entries(highlights).forEach(([key, el]) => {
+      el.classList.toggle('active', key === n);
+    });
+    // スクロール
+    const target = document.getElementById('review' + n);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  document.getElementById('next').addEventListener('click', () => {
-    if (current === totalScenes) { current = 1; }
-    else { current++; }
-    showScene(current);
-  });
+  markers.forEach(m => m.addEventListener('click', () => activate(m.dataset.review)));
+  reviewItems.forEach(r => r.addEventListener('click', () => activate(r.dataset.review)));
 
-  document.getElementById('prev').addEventListener('click', () => {
-    if (current > 1) { current--; showScene(current); }
-  });
+  // 初期状態で1を選択
+  setTimeout(() => activate('1'), 600);
 </script>
 
 </body>
