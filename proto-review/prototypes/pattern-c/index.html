@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern C: 出荷OKライン</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ヘッダー */
+  .concept-header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    border-bottom: 1px solid #e0e4ea;
+  }
+  .concept-header .label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .concept-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a56db;
+    margin-bottom: 8px;
+  }
+  .concept-header p {
+    font-size: 15px;
+    color: #888;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ストーリーボード */
+  .storyboard {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 32px 20px 100px;
+  }
+
+  .scene {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .scene.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .scene-number {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #1a56db;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .scene-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1a1a2e;
+  }
+
+  /* カード */
+  .card {
+    background: #fff;
+    border: 1px solid #e0e4ea;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card-label {
+    font-size: 11px;
+    color: #1a56db;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  /* ゲージ */
+  .gauge-container {
+    text-align: center;
+    padding: 32px 20px;
+    background: #fff;
+    border: 1px solid #e0e4ea;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .gauge-score {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .gauge-max {
+    font-size: 16px;
+    color: #aaa;
+    margin-bottom: 16px;
+  }
+  .gauge-bar {
+    width: 100%;
+    height: 12px;
+    background: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .gauge-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.8s ease;
+  }
+  .gauge-threshold {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  .verdict {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 20px;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  .verdict.retry { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+  .verdict.pass { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+
+  /* チェックリスト */
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .check-icon.pass { background: #e8f5e9; color: #2e7d32; }
+  .check-icon.fail { background: #ffeef0; color: #d32f2f; }
+  .check-label { color: #555; }
+  .check-label strong { color: #333; }
+
+  /* 感情 */
+  .emotion {
+    text-align: center;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .emotion .bubble {
+    display: inline-block;
+    background: #fff;
+    border: 1px solid #e0e4ea;
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+  }
+
+  /* 改善後の比較 */
+  .before-after {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .ba-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 2px solid transparent;
+  }
+  .ba-card.before { border-color: #ffcc80; }
+  .ba-card.after { border-color: #a5d6a7; }
+  .ba-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .ba-score {
+    font-size: 40px;
+    font-weight: 800;
+  }
+  .ba-verdict {
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 4px;
+    padding: 2px 12px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .before .ba-score { color: #e65100; }
+  .before .ba-verdict { background: #fff3e0; color: #e65100; }
+  .after .ba-score { color: #2e7d32; }
+  .after .ba-verdict { background: #e8f5e9; color: #2e7d32; }
+
+  .arrow-between {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    color: #ccc;
+  }
+
+  /* バッジ */
+  .badge-card {
+    background: linear-gradient(135deg, #f0f7ff, #e8f5e9);
+    border: 2px solid #a5d6a7;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .badge-icon {
+    width: 72px;
+    height: 72px;
+    background: #fff;
+    border: 3px solid #4caf50;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #4caf50;
+    font-weight: 700;
+  }
+  .badge-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e7d32;
+    margin-bottom: 4px;
+  }
+  .badge-sub {
+    font-size: 13px;
+    color: #777;
+  }
+
+  /* 最終画面 */
+  .final-message {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .final-message h2 {
+    font-size: 22px;
+    color: #1a56db;
+    margin-bottom: 16px;
+  }
+  .final-message p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #888;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .gate-visual {
+    margin: 32px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .gate-step {
+    background: #fff;
+    border: 1px solid #e0e4ea;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: #555;
+  }
+  .gate-step.highlight {
+    border-color: #4caf50;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 600;
+  }
+  .gate-arrow { color: #ccc; font-size: 18px; }
+
+  /* ナビゲーション */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f5f7fa;
+    border-top: 1px solid #e0e4ea;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+  }
+  .nav button {
+    background: none;
+    border: 1px solid #d0d4da;
+    color: #666;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav button:hover { border-color: #1a56db; color: #1a56db; }
+  .nav button.primary {
+    background: #1a56db;
+    border-color: #1a56db;
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav button.primary:hover { background: #1444b0; }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+  .nav .progress {
+    font-size: 12px;
+    color: #aaa;
+    min-width: 48px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="concept-header">
+  <div class="label">Concept C</div>
+  <h1>出荷OKライン</h1>
+  <p>「これ、人に見せて大丈夫？」の不安を解消する品質ゲート</p>
+</div>
+
+<div class="storyboard">
+
+  <!-- Scene 1 -->
+  <div class="scene active" data-scene="1">
+    <div class="scene-number">SCENE 1 / 5</div>
+    <div class="scene-title">「これで大丈夫かな…」</div>
+
+    <div class="card">
+      <div class="card-label">あなた</div>
+      <p style="font-size: 14px; line-height: 1.7; color: #555;">
+        クライアントに見せるLPのプロトタイプができた。<br>
+        でも正直、これで良いのか自信がない。<br>
+        見せる前にチェックしておきたい。
+      </p>
+    </div>
+
+    <div style="text-align: center; padding: 24px;">
+      <div style="font-size: 14px; color: #aaa; margin-bottom: 12px;">プロトタイプを投入</div>
+      <div style="display: inline-block; background: #fff; border: 2px dashed #d0d4da; border-radius: 12px; padding: 40px 60px; color: #aaa; font-size: 14px;">
+        HTMLをペースト / ファイルをドロップ
+      </div>
+    </div>
+
+    <div class="emotion">
+      <div class="bubble">「見せる前に客観的なチェックが欲しい…」</div>
+    </div>
+  </div>
+
+  <!-- Scene 2 -->
+  <div class="scene" data-scene="2">
+    <div class="scene-number">SCENE 2 / 5</div>
+    <div class="scene-title">判定が出る</div>
+
+    <div class="gauge-container">
+      <div class="gauge-score" style="color: #e65100;">72</div>
+      <div class="gauge-max">/ 100</div>
+      <div class="gauge-bar">
+        <div class="gauge-fill" style="width: 72%; background: linear-gradient(90deg, #ffcc80, #e65100);"></div>
+      </div>
+      <div class="gauge-threshold">
+        <span>0</span>
+        <span style="color: #e65100;">← あなた</span>
+        <span style="color: #4caf50;">出荷OK: 80 →</span>
+        <span>100</span>
+      </div>
+      <div class="verdict retry">もう少し</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">チェック結果</div>
+      <ul class="checklist">
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>色のコントラスト</strong> — WCAG AA基準をクリア</div>
+        </li>
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>視覚的階層</strong> — CTAが適切に目立っている</div>
+        </li>
+        <li>
+          <div class="check-icon fail">&#10007;</div>
+          <div class="check-label"><strong>タップターゲット</strong> — ナビリンクが44px未満（現在: 32px）</div>
+        </li>
+        <li>
+          <div class="check-icon fail">&#10007;</div>
+          <div class="check-label"><strong>主要動線</strong> — CTAまで2クリック以上かかる（現在: 3クリック）</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="emotion">
+      <div class="bubble">「あと2つ直せばいいのか。明確！」</div>
+    </div>
+  </div>
+
+  <!-- Scene 3 -->
+  <div class="scene" data-scene="3">
+    <div class="scene-number">SCENE 3 / 5</div>
+    <div class="scene-title">指摘項目を潰す</div>
+
+    <div class="card">
+      <div class="card-label">あなた</div>
+      <p style="font-size: 14px; line-height: 1.7; color: #555;">
+        ナビリンクのサイズを 32px → 48px に修正。<br>
+        ファーストビューにCTAを配置して1クリックに短縮。<br>
+        再チェックに通す。
+      </p>
+    </div>
+
+    <div class="before-after">
+      <div class="ba-card before">
+        <div class="ba-label">BEFORE</div>
+        <div class="ba-score">72</div>
+        <div class="ba-verdict">もう少し</div>
+      </div>
+      <div class="arrow-between">→</div>
+      <div class="ba-card after">
+        <div class="ba-label">AFTER</div>
+        <div class="ba-score">88</div>
+        <div class="ba-verdict">出荷OK</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <ul class="checklist">
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>色のコントラスト</strong> — OK</div>
+        </li>
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>視覚的階層</strong> — OK</div>
+        </li>
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>タップターゲット</strong> — 48px OK</div>
+        </li>
+        <li>
+          <div class="check-icon pass">&#10003;</div>
+          <div class="check-label"><strong>主要動線</strong> — 1クリック OK</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="emotion">
+      <div class="bubble">「全部グリーン、気持ちいい！」</div>
+    </div>
+  </div>
+
+  <!-- Scene 4 -->
+  <div class="scene" data-scene="4">
+    <div class="scene-number">SCENE 4 / 5</div>
+    <div class="scene-title">自信を持って共有する</div>
+
+    <div class="badge-card">
+      <div class="badge-icon">&#10003;</div>
+      <div class="badge-text">Proto Review: Quality Passed</div>
+      <div class="badge-sub">LP プロトタイプ — 2024/12/12</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">共有時</div>
+      <p style="font-size: 14px; line-height: 1.7; color: #555;">
+        「プロトタイプです。品質チェック済みです。」<br>
+        と、客観的な裏付けとともにクライアントに共有。
+      </p>
+    </div>
+
+    <div class="emotion">
+      <div class="bubble">「チェック済みの安心感、全然違う」</div>
+    </div>
+  </div>
+
+  <!-- Scene 5 -->
+  <div class="scene" data-scene="5">
+    <div class="scene-number">SCENE 5 / 5</div>
+    <div class="scene-title">このサービスの核心</div>
+
+    <div class="final-message">
+      <h2>チェック → 修正 → 合格 → 安心して出す</h2>
+      <p>
+        「これで大丈夫かな…」の不安は、<br>
+        客観的なチェックが通れば消える。<br>
+        明確な基準とチェックリストで、<br>
+        自信を持ってプロトタイプを世に出せる。
+      </p>
+
+      <div class="gate-visual">
+        <div class="gate-step">プロトタイプ</div>
+        <div class="gate-arrow">→</div>
+        <div class="gate-step highlight">品質ゲート</div>
+        <div class="gate-arrow">→</div>
+        <div class="gate-step">安心して共有</div>
+      </div>
+
+      <p style="margin-top: 24px; color: #1a56db; font-weight: 600;">
+        「人に見せて大丈夫」の確信が、ここで手に入る。
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button id="prev" disabled>← 戻る</button>
+  <span class="progress" id="progress">1 / 5</span>
+  <button id="next" class="primary">次へ →</button>
+</div>
+
+<script>
+  const scenes = document.querySelectorAll('.scene');
+  const totalScenes = scenes.length;
+  let current = 1;
+
+  function showScene(n) {
+    scenes.forEach(s => s.classList.remove('active'));
+    document.querySelector(`[data-scene="${n}"]`).classList.add('active');
+    document.getElementById('progress').textContent = `${n} / ${totalScenes}`;
+    document.getElementById('prev').disabled = n === 1;
+    document.getElementById('next').textContent = n === totalScenes ? '最初に戻る' : '次へ →';
+  }
+
+  document.getElementById('next').addEventListener('click', () => {
+    if (current === totalScenes) { current = 1; }
+    else { current++; }
+    showScene(current);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => {
+    if (current > 1) { current--; showScene(current); }
+  });
+</script>
+
+</body>
+</html>
