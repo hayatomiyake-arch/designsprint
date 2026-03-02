@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コア体験 Pattern 1: 問いかけ型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+  }
+  .app-header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: #e63946; }
+  .logo span { color: #888; font-weight: 400; }
+  .badge { font-size: 11px; background: #e63946; color: #fff; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+
+  /* ステップナビ */
+  .step-nav {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: center;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: #aaa;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .step.active { color: #e63946; font-weight: 600; background: #fef2f2; }
+  .step.done { color: #2d9d3a; }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    background: #e8e8e8; color: #aaa;
+  }
+  .step.active .step-num { background: #e63946; color: #fff; }
+  .step.done .step-num { background: #2d9d3a; color: #fff; }
+  .step-connector { width: 32px; height: 1px; background: #ddd; }
+
+  /* 画面コンテナ */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* === Screen 1: 投入 === */
+  .upload-screen {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .upload-screen h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .upload-screen .sub { font-size: 14px; color: #888; margin-bottom: 32px; }
+  .upload-area {
+    border: 2px dashed #d0d0d0;
+    border-radius: 16px;
+    padding: 48px 24px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-bottom: 24px;
+  }
+  .upload-area:hover { border-color: #e63946; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-area p { font-size: 14px; color: #888; }
+  .upload-area .or { font-size: 12px; color: #bbb; margin: 12px 0; }
+  .paste-btn {
+    background: #e63946; color: #fff; border: none;
+    padding: 10px 24px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+
+  /* コンテキスト入力 */
+  .context-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  .context-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .context-section .hint { font-size: 12px; color: #888; margin-bottom: 16px; }
+  .context-row {
+    display: flex; gap: 12px; margin-bottom: 12px;
+  }
+  .context-field { flex: 1; }
+  .context-field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: #555; margin-bottom: 4px;
+  }
+  .context-field input, .context-field select {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+    border-radius: 8px; font-size: 13px; background: #fafafa;
+  }
+  .start-btn {
+    width: 100%; padding: 14px; background: #e63946; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* === Screen 2: レビュー（赤ペン + 問いかけ） === */
+  .review-screen {
+    display: none; /* overridden by .active */
+    height: calc(100vh - 97px);
+  }
+  .review-screen.active { display: flex; }
+
+  .preview-area {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #eaeaec;
+  }
+  .phone-frame {
+    width: 320px; height: 568px;
+    background: #fff; border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 48px 16px 32px; position: relative; overflow: hidden;
+  }
+  .phone-frame::before {
+    content: ''; position: absolute; top: 16px; left: 50%;
+    transform: translateX(-50%); width: 80px; height: 6px;
+    background: #e0e0e0; border-radius: 3px;
+  }
+  .sample-proto {
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: center; padding: 20px;
+  }
+  .sample-proto h2 { font-size: 22px; margin-bottom: 24px; color: #333; }
+  .sample-proto .fg { margin-bottom: 12px; }
+  .sample-proto input {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd;
+    border-radius: 6px; font-size: 14px; color: #999; background: #fafafa;
+  }
+  .sample-proto .lbtn {
+    width: 100%; padding: 12px; background: #ccc; color: #fff;
+    border: none; border-radius: 6px; font-size: 14px; margin-top: 8px;
+  }
+  .sample-proto .forgot { text-align: center; font-size: 12px; color: #bbb; margin-top: 16px; }
+  .marker {
+    position: absolute; width: 28px; height: 28px;
+    background: #e63946; color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(230,57,70,0.4);
+    transition: transform 0.2s; z-index: 10;
+  }
+  .marker:hover, .marker.active { transform: scale(1.2); box-shadow: 0 4px 16px rgba(230,57,70,0.6); }
+  .marker.ux-marker { background: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,0.4); }
+  .marker.ux-marker:hover, .marker.ux-marker.active { box-shadow: 0 4px 16px rgba(124,58,237,0.6); }
+  .hl-overlay {
+    position: absolute; border: 2px solid #e63946;
+    background: rgba(230,57,70,0.08); border-radius: 6px;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 4;
+  }
+  .hl-overlay.ux { border-color: #7c3aed; background: rgba(124,58,237,0.06); }
+  .hl-overlay.active { opacity: 1; }
+
+  /* 右パネル */
+  .review-panel {
+    width: 420px; background: #fff; border-left: 1px solid #e0e0e0;
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .panel-tabs {
+    display: flex; border-bottom: 1px solid #f0f0f0;
+  }
+  .panel-tab {
+    flex: 1; padding: 12px; text-align: center;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: #888; border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .panel-tab.active { color: #e63946; border-bottom-color: #e63946; }
+  .panel-tab .tab-count {
+    font-size: 10px; background: #f0f0f0; padding: 1px 6px;
+    border-radius: 8px; margin-left: 4px;
+  }
+  .panel-tab.active .tab-count { background: #fef2f2; color: #e63946; }
+
+  .review-list { flex: 1; padding: 0; }
+
+  .review-item {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .review-item:hover { background: #fafafa; }
+  .review-item.active { background: #fef2f2; border-left: 3px solid #e63946; }
+  .review-item.ux-item.active { background: #f5f3ff; border-left-color: #7c3aed; }
+
+  .ri-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ri-num {
+    width: 22px; height: 22px; background: #e63946; color: #fff;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .ux-item .ri-num { background: #7c3aed; }
+  .ri-title { font-size: 14px; font-weight: 600; }
+  .ri-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; margin-left: auto; flex-shrink: 0;
+  }
+  .ri-tag.critical { background: #fef2f2; color: #e63946; }
+  .ri-tag.warning { background: #fff8e1; color: #f57c00; }
+  .ri-tag.ux { background: #f5f3ff; color: #7c3aed; }
+
+  .ri-category {
+    font-size: 10px; color: #aaa; letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .ri-desc {
+    font-size: 13px; color: #666; line-height: 1.7; margin-bottom: 8px;
+  }
+
+  /* 問いかけボックス */
+  .ri-question {
+    display: none;
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 8px; padding: 12px; margin-top: 8px;
+  }
+  .review-item.active .ri-question { display: block; }
+  .ri-question .q-label {
+    font-size: 11px; font-weight: 700; color: #d97706;
+    margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .ri-question .q-text {
+    font-size: 13px; color: #92400e; line-height: 1.7; font-weight: 500;
+  }
+
+  /* ヒント（折りたたみ） */
+  .ri-hint {
+    display: none;
+    margin-top: 8px;
+  }
+  .ri-hint.show { display: block; }
+  .hint-toggle {
+    font-size: 12px; color: #e63946; cursor: pointer;
+    margin-top: 8px; font-weight: 500;
+    display: none;
+  }
+  .review-item.active .hint-toggle { display: block; }
+  .hint-content {
+    font-size: 12px; background: #f8f8f8; border-radius: 6px;
+    padding: 10px 12px; color: #444; line-height: 1.6; margin-top: 6px;
+  }
+
+  /* スコア */
+  .score-bar {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; background: #fafafa;
+  }
+  .score-row { display: flex; gap: 12px; margin-bottom: 8px; }
+  .score-item { flex: 1; }
+  .score-item .sl {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #888; margin-bottom: 4px;
+  }
+  .score-item .sv { font-weight: 700; color: #1d1d1f; }
+  .bar-track { height: 4px; background: #e8e8e8; border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; }
+
+  .panel-actions {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px;
+  }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; text-align: center; border: none;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #e63946; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  /* === Screen 3: 振り返り === */
+  .reflect-screen {
+    max-width: 640px; margin: 0 auto; padding: 48px 24px;
+  }
+  .reflect-screen h1 { font-size: 22px; font-weight: 700; margin-bottom: 24px; text-align: center; }
+
+  .reflect-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+  }
+  .reflect-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+  .learning-item {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: 13px; line-height: 1.7;
+  }
+  .learning-item:last-child { border-bottom: none; }
+  .learning-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+  .learning-icon.ui { background: #fef2f2; }
+  .learning-icon.ux { background: #f5f3ff; }
+
+  .next-action {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 12px; padding: 20px; text-align: center;
+    margin-top: 24px;
+  }
+  .next-action h3 { font-size: 14px; color: #059669; margin-bottom: 8px; }
+  .next-action p { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .next-action .btn {
+    display: inline-block; padding: 12px 32px; background: #059669; color: #fff;
+    border-radius: 10px; font-weight: 700; border: none; cursor: pointer;
+  }
+
+  /* コンセプト説明 */
+  .concept-footer {
+    background: #1d1d1f; color: #aaa; padding: 32px 24px; text-align: center;
+  }
+  .concept-footer h3 { color: #e63946; font-size: 14px; margin-bottom: 8px; }
+  .concept-footer p { font-size: 13px; line-height: 1.8; max-width: 520px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ 赤ペンレビュー</span></div>
+  <div class="badge">コア体験 1</div>
+</div>
+
+<div class="step-nav">
+  <div class="step active" data-step="1" onclick="goStep(1)">
+    <div class="step-num">1</div> プロト投入
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="2" onclick="goStep(2)">
+    <div class="step-num">2</div> 赤ペンレビュー
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="3" onclick="goStep(3)">
+    <div class="step-num">3</div> 振り返り
+  </div>
+</div>
+
+<!-- Screen 1: プロト投入 -->
+<div class="screen active" data-screen="1">
+  <div class="upload-screen">
+    <h1>プロトタイプを投げ込む</h1>
+    <p class="sub">Claude Codeで作ったHTMLをペースト or ファイルをドロップ</p>
+
+    <div class="upload-area" onclick="goStep(2)">
+      <div class="upload-icon">📄</div>
+      <p>HTMLファイルをドラッグ＆ドロップ</p>
+      <div class="or">または</div>
+      <button class="paste-btn">HTMLコードをペースト</button>
+    </div>
+
+    <div class="context-section">
+      <h3>レビューの精度を上げるコンテキスト</h3>
+      <div class="hint">（任意）入力すると、より的確な指摘が返ります</div>
+      <div class="context-row">
+        <div class="context-field">
+          <label>誰が使う？</label>
+          <input type="text" placeholder="例: 20代の新規ユーザー" value="社内の営業担当（ITリテラシー普通）">
+        </div>
+        <div class="context-field">
+          <label>何のための画面？</label>
+          <input type="text" placeholder="例: 日報を提出する" value="社内ツールにログインする">
+        </div>
+      </div>
+      <div class="context-row">
+        <div class="context-field">
+          <label>特に見てほしい観点</label>
+          <select>
+            <option>おまかせ（UI + UX両方）</option>
+            <option>UIデザイン重視</option>
+            <option>UX・ユーザビリティ重視</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="goStep(2)">レビューを開始する</button>
+  </div>
+</div>
+
+<!-- Screen 2: レビュー -->
+<div class="screen review-screen" data-screen="2">
+  <div class="preview-area">
+    <div class="phone-frame">
+      <div class="sample-proto">
+        <h2>ログイン</h2>
+        <div class="fg"><input type="text" value="メールアドレス" readonly></div>
+        <div class="fg"><input type="text" value="パスワード" readonly></div>
+        <button class="lbtn">ログイン</button>
+        <div class="forgot">パスワードをお忘れですか？</div>
+      </div>
+      <!-- UIマーカー（赤） -->
+      <div class="marker" data-r="1" style="top:268px;left:252px">1</div>
+      <div class="marker" data-r="2" style="top:340px;left:252px">2</div>
+      <!-- UXマーカー（紫） -->
+      <div class="marker ux-marker" data-r="3" style="top:195px;left:28px">3</div>
+      <div class="marker ux-marker" data-r="4" style="top:380px;left:252px">4</div>
+      <div class="marker ux-marker" data-r="5" style="top:340px;left:28px">5</div>
+
+      <div class="hl-overlay" data-hl="1" style="top:252px;left:36px;width:248px;height:40px"></div>
+      <div class="hl-overlay" data-hl="2" style="top:320px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay ux" data-hl="3" style="top:165px;left:36px;width:248px;height:82px"></div>
+      <div class="hl-overlay ux" data-hl="4" style="top:370px;left:36px;width:248px;height:24px"></div>
+      <div class="hl-overlay ux" data-hl="5" style="top:320px;left:36px;width:248px;height:42px"></div>
+    </div>
+  </div>
+
+  <div class="review-panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="switchTab('all')">すべて<span class="tab-count">5</span></div>
+      <div class="panel-tab" onclick="switchTab('ui')">UI表層<span class="tab-count">2</span></div>
+      <div class="panel-tab" onclick="switchTab('ux')">UX品質<span class="tab-count">3</span></div>
+    </div>
+
+    <div class="review-list">
+      <!-- UI指摘1 -->
+      <div class="review-item" data-r="1" data-type="ui">
+        <div class="ri-category">UI表層 — アクセシビリティ</div>
+        <div class="ri-header">
+          <div class="ri-num">1</div>
+          <div class="ri-title">ボタンのコントラスト不足</div>
+          <span class="ri-tag critical">重大</span>
+        </div>
+        <div class="ri-desc">ログインボタン（#ccc背景 + #fff文字）のコントラスト比は 1.4:1。基準4.5:1を大きく下回っています。</div>
+        <div class="ri-question">
+          <div class="q-label">考えてみよう</div>
+          <div class="q-text">このボタン、明るい画面で見たとき営業担当が「押せる場所」だと気づけるでしょうか？色だけでなく、形やサイズでも「押せる」ことを伝える方法はありますか？</div>
+        </div>
+        <div class="hint-toggle" onclick="toggleHint(event, this)">▶ ヒントを見る</div>
+        <div class="ri-hint">
+          <div class="hint-content">背景色を #1a73e8 に変更 → コントラスト比 4.6:1。加えて影やサイズ変更でアフォーダンスを強化すると効果的。</div>
+        </div>
+      </div>
+
+      <!-- UI指摘2 -->
+      <div class="review-item" data-r="2" data-type="ui">
+        <div class="ri-category">UI表層 — 視覚的階層</div>
+        <div class="ri-header">
+          <div class="ri-num">2</div>
+          <div class="ri-title">CTAの優先度が入力欄と同じ</div>
+          <span class="ri-tag warning">改善</span>
+        </div>
+        <div class="ri-desc">ログインボタンが入力欄と同じトーンに埋もれている。ユーザーの目はタイトル→入力欄で止まり、ボタンに到達しにくい。</div>
+        <div class="ri-question">
+          <div class="q-label">考えてみよう</div>
+          <div class="q-text">この画面で一番大事なアクションは何ですか？その要素は、画面を1秒見ただけで見つかりますか？</div>
+        </div>
+        <div class="hint-toggle" onclick="toggleHint(event, this)">▶ ヒントを見る</div>
+        <div class="ri-hint">
+          <div class="hint-content">ボタンの高さ48px、角丸12px、影を追加。フォントウェイト700。周囲との余白を24px以上確保。</div>
+        </div>
+      </div>
+
+      <!-- UX指摘3 -->
+      <div class="review-item ux-item" data-r="3" data-type="ux">
+        <div class="ri-category">UX品質 — コンテンツ・コピーライティング</div>
+        <div class="ri-header">
+          <div class="ri-num">3</div>
+          <div class="ri-title">ユーザーの目的に寄り添えていない</div>
+          <span class="ri-tag ux">UX</span>
+        </div>
+        <div class="ri-desc">タイトルが「ログイン」— 機能名をそのまま表示しているだけ。営業担当が社内ツールを開いた瞬間、「ここで何ができるか」が伝わりません。</div>
+        <div class="ri-question">
+          <div class="q-label">考えてみよう</div>
+          <div class="q-text">ユーザーはこの画面に「ログインしたい」のではなく、「日報を出したい」「案件を確認したい」のでは？<br>画面のタイトルやサブテキストで、<strong>ユーザーの本来の目的</strong>に触れると心理的な摩擦が減ります。何と書きますか？</div>
+        </div>
+        <div class="hint-toggle" onclick="toggleHint(event, this)">▶ ヒントを見る</div>
+        <div class="ri-hint">
+          <div class="hint-content">例: 「おかえりなさい — 今日の案件をチェック」。ユーザーの目的を先に示すことで、ログインを"手段"として自然に受け入れられる。</div>
+        </div>
+      </div>
+
+      <!-- UX指摘4 -->
+      <div class="review-item ux-item" data-r="4" data-type="ux">
+        <div class="ri-category">UX品質 — エラー防止と回復</div>
+        <div class="ri-header">
+          <div class="ri-num">4</div>
+          <div class="ri-title">失敗したときの体験が設計されていない</div>
+          <span class="ri-tag ux">UX</span>
+        </div>
+        <div class="ri-desc">パスワードを間違えたとき、何が起きますか？「パスワードをお忘れですか？」のリンクはあるが、エラーメッセージの表示場所やスタイルが未定義です。</div>
+        <div class="ri-question">
+          <div class="q-label">考えてみよう</div>
+          <div class="q-text">営業担当が急いでいるときにパスワードを間違えたとします。<br>①何が起きたか即座にわかる、②次に何をすべきかわかる、③焦らせない — この3つを満たすには、どんな表示が必要ですか？</div>
+        </div>
+        <div class="hint-toggle" onclick="toggleHint(event, this)">▶ ヒントを見る</div>
+        <div class="ri-hint">
+          <div class="hint-content">入力欄の下にエラーメッセージ領域を確保。色は赤(#d32f2f)、文言は「メールアドレスまたはパスワードが正しくありません」。ボタンが無効化された場合はローディング→エラー→再入力可の流れを用意。</div>
+        </div>
+      </div>
+
+      <!-- UX指摘5 -->
+      <div class="review-item ux-item" data-r="5" data-type="ux">
+        <div class="ri-category">UX品質 — 認知負荷・信頼</div>
+        <div class="ri-header">
+          <div class="ri-num">5</div>
+          <div class="ri-title">ボタンを押した後の期待値が不明</div>
+          <span class="ri-tag ux">UX</span>
+        </div>
+        <div class="ri-desc">「ログイン」ボタンを押すと何が起きるのか？ダッシュボードに飛ぶ？読み込みが始まる？ユーザーが次に何が起きるか予測できない状態は不安を生みます。</div>
+        <div class="ri-question">
+          <div class="q-label">考えてみよう</div>
+          <div class="q-text">ボタンを押した瞬間に「受け付けました」と伝える手段はありますか？<br>ローディング表示、ボタンの状態変化、画面遷移のアニメーションなど — <strong>操作→フィードバック→結果</strong>の流れを設計してみてください。</div>
+        </div>
+        <div class="hint-toggle" onclick="toggleHint(event, this)">▶ ヒントを見る</div>
+        <div class="ri-hint">
+          <div class="hint-content">ボタン押下→テキストを「ログイン中...」に変更＋スピナー表示→成功時にダッシュボードへ遷移。失敗時はボタンを元に戻してエラーを表示。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-bar">
+      <div class="score-row">
+        <div class="score-item">
+          <div class="sl"><span>UI表層</span><span class="sv">48 / 100</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:48%;background:#e63946"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="sl"><span>UX品質</span><span class="sv">32 / 100</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:32%;background:#7c3aed"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-secondary" onclick="goStep(1)">別のプロトを見る</button>
+      <button class="btn btn-primary" onclick="goStep(3)">振り返りへ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 3: 振り返り -->
+<div class="screen" data-screen="3">
+  <div class="reflect-screen">
+    <h1>今回の学び</h1>
+
+    <div class="reflect-card">
+      <h3>問いかけから見えたこと</h3>
+      <div class="learning-item">
+        <div class="learning-icon ui">🎨</div>
+        <div>「押せる場所に見えるか」は色だけの問題ではない — サイズ、影、余白の組み合わせで<strong>アフォーダンス</strong>を作る</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-icon ux">👤</div>
+        <div>ユーザーは「ログインしたい」のではなく「仕事を始めたい」— <strong>画面のタイトルは機能名ではなくユーザーの目的</strong>を反映する</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-icon ux">👤</div>
+        <div>「正常系」だけでは半分 — <strong>失敗したときの体験</strong>がユーザーの信頼を決める</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-icon ux">👤</div>
+        <div>ボタンを押してから結果が見えるまでの<strong>操作→フィードバック→結果</strong>の流れが途切れると不安を生む</div>
+      </div>
+    </div>
+
+    <div class="reflect-card">
+      <h3>今回の指摘パターン</h3>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <div style="flex:1;text-align:center;padding:16px;background:#fef2f2;border-radius:8px">
+          <div style="font-size:24px;font-weight:700;color:#e63946">2</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">UI表層の指摘</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:16px;background:#f5f3ff;border-radius:8px">
+          <div style="font-size:24px;font-weight:700;color:#7c3aed">3</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">UX品質の指摘</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-action">
+      <h3>次のアクション</h3>
+      <p>問いかけを踏まえてプロトタイプを改善し、再レビューしてみましょう</p>
+      <button class="btn" onclick="goStep(1)">改善版をレビューする</button>
+    </div>
+  </div>
+</div>
+
+<div class="concept-footer">
+  <h3>コア体験 Pattern 1: 問いかけ型</h3>
+  <p>
+    指摘のあとに「考えてみよう」を挟む。答えをすぐ見せず、まず自分で考える。<br>
+    UIの表層だけでなく、UX品質（コピー、エラー設計、フィードバック）まで踏み込む。<br>
+    「ヒント」は折りたたみ — 見たい人だけ開く。考えるプロセスを邪魔しない。
+  </p>
+</div>
+
+<script>
+  function goStep(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector(`[data-screen="${n}"]`).classList.add('active');
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i + 1 === n) s.classList.add('active');
+      else if (i + 1 < n) s.classList.add('done');
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // マーカー↔レビュー連動
+  function activate(n) {
+    document.querySelectorAll('.marker').forEach(m => m.classList.toggle('active', m.dataset.r === n));
+    document.querySelectorAll('.review-item').forEach(r => r.classList.toggle('active', r.dataset.r === n));
+    document.querySelectorAll('.hl-overlay').forEach(h => h.classList.toggle('active', h.dataset.hl === n));
+    const target = document.querySelector(`.review-item[data-r="${n}"]`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.querySelectorAll('.marker').forEach(m => m.addEventListener('click', () => activate(m.dataset.r)));
+  document.querySelectorAll('.review-item').forEach(r => r.addEventListener('click', () => activate(r.dataset.r)));
+
+  // タブ切り替え
+  function switchTab(type) {
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    event.target.closest('.panel-tab').classList.add('active');
+    document.querySelectorAll('.review-item').forEach(r => {
+      if (type === 'all') r.style.display = '';
+      else r.style.display = r.dataset.type === type ? '' : 'none';
+    });
+  }
+
+  // ヒント開閉
+  function toggleHint(e, el) {
+    e.stopPropagation();
+    const hint = el.nextElementSibling;
+    hint.classList.toggle('show');
+    el.textContent = hint.classList.contains('show') ? '▼ ヒントを閉じる' : '▶ ヒントを見る';
+  }
+</script>
+</body>
+</html>
