@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Review レポート — Pattern 1: 問いかけ型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7; color: #1d1d1f; min-height: 100vh;
+  }
+  .app-header {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: #e63946; }
+  .logo span { color: #888; font-weight: 400; }
+  .badge { font-size: 11px; background: #059669; color: #fff; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+
+  .step-nav {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px; display: flex; align-items: center; gap: 0; justify-content: center;
+  }
+  .step {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; font-size: 13px; color: #aaa;
+    cursor: pointer; border-radius: 6px; transition: all 0.2s;
+  }
+  .step.active { color: #e63946; font-weight: 600; background: #fef2f2; }
+  .step.done { color: #2d9d3a; }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; background: #e8e8e8; color: #aaa;
+  }
+  .step.active .step-num { background: #e63946; color: #fff; }
+  .step.done .step-num { background: #2d9d3a; color: #fff; }
+  .step-connector { width: 32px; height: 1px; background: #ddd; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* === Screen 1: 概要 === */
+  .overview-screen { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+  .overview-screen h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .overview-screen .sub { font-size: 14px; color: #888; margin-bottom: 32px; }
+
+  .overview-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+  }
+  .overview-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+  .meta-row { display: flex; gap: 12px; margin-bottom: 10px; }
+  .meta-item {
+    flex: 1; padding: 12px; background: #fafafa; border-radius: 8px;
+    font-size: 13px; line-height: 1.6;
+  }
+  .meta-item .label { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 4px; }
+
+  .persona-avatar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px; background: #f5f3ff; border-radius: 10px; margin-bottom: 12px;
+  }
+  .avatar-icon {
+    width: 44px; height: 44px; background: #7c3aed; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff;
+  }
+  .avatar-info .name { font-size: 14px; font-weight: 700; }
+  .avatar-info .desc { font-size: 12px; color: #888; margin-top: 2px; }
+
+  .criteria-list { list-style: none; }
+  .criteria-list li {
+    padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+    font-size: 13px; display: flex; align-items: center; gap: 8px;
+  }
+  .criteria-list li:last-child { border-bottom: none; }
+  .criteria-num {
+    width: 20px; height: 20px; background: #f0f0f0; color: #555;
+    border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+
+  .start-btn {
+    width: 100%; padding: 14px; background: #e63946; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 8px;
+  }
+
+  /* === Screen 2: レビュー === */
+  .review-screen { display: none; height: calc(100vh - 97px); }
+  .review-screen.active { display: flex; }
+
+  .preview-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #eaeaec; position: relative;
+  }
+  .device-frame {
+    width: 780px; height: 520px; background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12); position: relative; overflow: hidden;
+  }
+  .device-frame .frame-header {
+    height: 32px; background: #f0f0f0; display: flex; align-items: center;
+    padding: 0 12px; gap: 6px; border-bottom: 1px solid #ddd;
+  }
+  .frame-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .frame-dot.r { background: #ff5f57; }
+  .frame-dot.y { background: #ffbd2e; }
+  .frame-dot.g { background: #28c840; }
+  .frame-url {
+    flex: 1; text-align: center; font-size: 11px; color: #999;
+    background: #fff; border-radius: 4px; padding: 3px 8px; margin: 0 40px;
+  }
+
+  /* プロトタイプのレビュー画面を再現 */
+  .proto-preview {
+    height: calc(100% - 32px); display: flex; background: #eaeaec;
+  }
+  .proto-left {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .mini-phone {
+    width: 180px; height: 320px; background: #fff; border-radius: 18px;
+    padding: 28px 10px 18px; position: relative; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .mini-phone::before {
+    content: ''; position: absolute; top: 10px; left: 50%;
+    transform: translateX(-50%); width: 44px; height: 4px;
+    background: #e0e0e0; border-radius: 2px;
+  }
+  .mini-proto h3 { font-size: 12px; margin-bottom: 12px; color: #333; text-align: center; }
+  .mini-input {
+    width: 100%; padding: 6px 8px; border: 1px solid #ddd;
+    border-radius: 4px; font-size: 9px; color: #aaa; background: #fafafa;
+    margin-bottom: 6px;
+  }
+  .mini-btn {
+    width: 100%; padding: 6px; background: #ccc; color: #fff;
+    border: none; border-radius: 4px; font-size: 9px; margin-top: 4px;
+  }
+  .mini-link { text-align: center; font-size: 8px; color: #bbb; margin-top: 8px; }
+
+  .proto-right {
+    width: 240px; background: #fff; border-left: 1px solid #e0e0e0;
+    padding: 10px; overflow-y: auto;
+  }
+  .proto-right .pr-tab {
+    font-size: 9px; color: #e63946; font-weight: 600; padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0; margin-bottom: 6px;
+  }
+  .proto-right .pr-item {
+    padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 9px;
+  }
+  .proto-right .pr-item .pr-title { font-weight: 600; color: #333; }
+  .proto-right .pr-item .pr-desc { color: #888; margin-top: 2px; line-height: 1.5; }
+  .proto-right .pr-q {
+    background: #fffbeb; border-radius: 4px; padding: 4px 6px;
+    margin-top: 4px; font-size: 8px; color: #92400e;
+  }
+
+  /* マーカー */
+  .marker {
+    position: absolute; width: 24px; height: 24px;
+    background: #e63946; color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(230,57,70,0.4);
+    transition: transform 0.2s; z-index: 10;
+  }
+  .marker:hover, .marker.active { transform: scale(1.2); box-shadow: 0 4px 16px rgba(230,57,70,0.6); }
+  .marker.good { background: #059669; box-shadow: 0 2px 8px rgba(5,150,105,0.4); }
+  .marker.good:hover, .marker.good.active { box-shadow: 0 4px 16px rgba(5,150,105,0.6); }
+
+  .hl-overlay {
+    position: absolute; border: 2px solid #e63946;
+    background: rgba(230,57,70,0.08); border-radius: 4px;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 4;
+  }
+  .hl-overlay.good { border-color: #059669; background: rgba(5,150,105,0.08); }
+  .hl-overlay.active { opacity: 1; }
+
+  .scenario-overlay {
+    position: absolute; bottom: 16px; left: 16px; right: 16px;
+    background: rgba(124,58,237,0.92); color: #fff;
+    border-radius: 10px; padding: 10px 12px;
+    font-size: 11px; line-height: 1.5; z-index: 20;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .scenario-overlay .avatar-sm {
+    width: 24px; height: 24px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; flex-shrink: 0;
+  }
+
+  /* 右パネル */
+  .review-panel {
+    width: 440px; background: #fff; border-left: 1px solid #e0e0e0;
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .panel-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
+  .panel-tab {
+    flex: 1; padding: 12px; text-align: center;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: #888; border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .panel-tab.active { color: #e63946; border-bottom-color: #e63946; }
+  .panel-tab .tab-count {
+    font-size: 10px; background: #f0f0f0; padding: 1px 6px;
+    border-radius: 8px; margin-left: 4px;
+  }
+  .panel-tab.active .tab-count { background: #fef2f2; color: #e63946; }
+
+  .review-list { flex: 1; padding: 0; }
+
+  .review-item {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .review-item:hover { background: #fafafa; }
+  .review-item.active { background: #fef8f8; border-left: 3px solid #e63946; }
+  .review-item.good-item.active { background: #f0fdf4; border-left-color: #059669; }
+
+  .ri-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .ri-num {
+    width: 22px; height: 22px; background: #e63946; color: #fff;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .good-item .ri-num { background: #059669; }
+  .ri-title { font-size: 14px; font-weight: 600; }
+  .ri-severity {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; margin-left: auto; flex-shrink: 0;
+  }
+  .ri-severity.critical { background: #fef2f2; color: #e63946; }
+  .ri-severity.major { background: #fff8e1; color: #f57c00; }
+  .ri-severity.minor { background: #e8f5e9; color: #388e3c; }
+  .ri-severity.good { background: #f0fdf4; color: #059669; }
+
+  .ri-principle {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; color: #555; background: #f0f0f0;
+    padding: 3px 8px; border-radius: 4px; margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .ri-principle .p-num {
+    background: #555; color: #fff; width: 14px; height: 14px;
+    border-radius: 3px; display: flex; align-items: center;
+    justify-content: center; font-size: 9px;
+  }
+
+  .ri-walkthrough {
+    background: #f5f3ff; border-radius: 10px 10px 10px 0;
+    padding: 10px 12px; margin-bottom: 8px;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .good-item .ri-walkthrough { background: #f0fdf4; }
+  .wt-avatar {
+    width: 24px; height: 24px; background: #7c3aed; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+  .good-item .wt-avatar { background: #059669; }
+  .wt-content { flex: 1; }
+  .wt-label { font-size: 10px; font-weight: 700; color: #7c3aed; margin-bottom: 2px; }
+  .good-item .wt-label { color: #059669; }
+  .wt-think { font-size: 13px; color: #4c1d95; line-height: 1.7; font-style: italic; }
+  .good-item .wt-think { color: #166534; }
+  .wt-action { font-size: 11px; color: #6d28d9; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(124,58,237,0.15); }
+  .good-item .wt-action { color: #059669; border-top-color: rgba(5,150,105,0.15); }
+  .wt-action strong { font-style: normal; }
+  .emotion-tag {
+    display: inline-block; font-size: 10px; padding: 2px 6px;
+    border-radius: 4px; font-weight: 600; margin-top: 4px;
+  }
+  .emotion-tag.confused { background: #fef3c7; color: #d97706; }
+  .emotion-tag.anxious { background: #fef2f2; color: #e63946; }
+  .emotion-tag.frustrated { background: #fee2e2; color: #dc2626; }
+  .emotion-tag.lost { background: #e0f2fe; color: #0284c7; }
+  .emotion-tag.positive { background: #f0fdf4; color: #059669; }
+
+  .ri-detail { display: none; }
+  .review-item.active .ri-detail { display: block; }
+  .ri-heuristic { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 6px; }
+
+  .ri-suggestion { display: none; margin-top: 8px; }
+  .ri-suggestion.show { display: block; }
+  .suggestion-toggle {
+    font-size: 12px; color: #e63946; cursor: pointer;
+    margin-top: 6px; font-weight: 500; display: none;
+  }
+  .review-item.active .suggestion-toggle { display: block; }
+  .suggestion-content {
+    font-size: 12px; background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 8px; padding: 10px 12px; color: #166534; line-height: 1.7; margin-top: 6px;
+  }
+  .suggestion-content .s-label {
+    font-size: 10px; font-weight: 700; color: #059669;
+    margin-bottom: 4px; letter-spacing: 0.5px;
+  }
+
+  /* スコア */
+  .score-section {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; background: #fafafa;
+  }
+  .score-section h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+  .score-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .score-chip {
+    flex: 1 1 calc(50% - 4px); min-width: 0;
+    padding: 8px 10px; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;
+  }
+  .score-chip .sc-label { font-size: 10px; color: #888; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-bar { height: 4px; background: #e8e8e8; border-radius: 2px; overflow: hidden; }
+  .sc-fill { height: 100%; border-radius: 2px; }
+  .sc-val { font-size: 11px; font-weight: 700; color: #1d1d1f; margin-top: 2px; }
+
+  .journey-bar {
+    padding: 12px 20px; border-top: 1px solid #f0f0f0; background: #fafafa;
+  }
+  .journey-bar h4 { font-size: 11px; font-weight: 700; color: #7c3aed; margin-bottom: 8px; }
+  .journey-steps { display: flex; align-items: center; gap: 4px; }
+  .j-step {
+    flex: 1; text-align: center; font-size: 9px; color: #888;
+    padding: 5px 2px; border-radius: 6px; cursor: pointer; transition: background 0.2s;
+  }
+  .j-step.negative { background: #fef2f2; color: #e63946; }
+  .j-step.positive { background: #f0fdf4; color: #059669; }
+  .j-step.neutral { background: #f5f5f5; }
+  .j-step .j-emotion { font-size: 14px; display: block; margin-bottom: 1px; }
+
+  .panel-actions {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px;
+  }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; text-align: center; border: none;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #e63946; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  /* === Screen 3: 評価レポート === */
+  .report-screen { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+  .report-screen h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .report-screen .report-sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 32px; }
+
+  .report-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+  }
+  .report-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+
+  .heuristic-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+  }
+  .heuristic-row:last-child { border-bottom: none; }
+  .h-num {
+    width: 22px; height: 22px; background: #f0f0f0; color: #555;
+    border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .h-name { flex: 1; font-size: 13px; }
+  .h-score-bar { width: 80px; height: 4px; background: #e8e8e8; border-radius: 2px; overflow: hidden; }
+  .h-fill { height: 100%; border-radius: 2px; }
+  .h-val { font-size: 12px; font-weight: 700; width: 32px; text-align: right; }
+
+  .wt-summary-item {
+    display: flex; gap: 10px; padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: 13px; line-height: 1.7;
+  }
+  .wt-summary-item:last-child { border-bottom: none; }
+  .wt-summary-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+
+  .action-item {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: 13px; line-height: 1.7;
+    align-items: flex-start;
+  }
+  .action-item:last-child { border-bottom: none; }
+  .action-priority {
+    font-size: 10px; padding: 3px 8px; border-radius: 4px;
+    font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .action-priority.high { background: #fef2f2; color: #e63946; }
+  .action-priority.medium { background: #fff8e1; color: #f57c00; }
+
+  .next-action {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 12px; padding: 20px; text-align: center; margin-top: 24px;
+  }
+  .next-action h3 { font-size: 14px; color: #059669; margin-bottom: 8px; }
+  .next-action p { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .next-action .btn {
+    display: inline-block; padding: 12px 32px; background: #059669; color: #fff;
+    border-radius: 10px; font-weight: 700; border: none; cursor: pointer;
+  }
+
+  .concept-footer {
+    background: #1d1d1f; color: #aaa; padding: 32px 24px; text-align: center;
+  }
+  .concept-footer h3 { color: #e63946; font-size: 14px; margin-bottom: 8px; }
+  .concept-footer p { font-size: 13px; line-height: 1.8; max-width: 560px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ レビューレポート</span></div>
+  <div class="badge">自動生成</div>
+</div>
+
+<div class="step-nav">
+  <div class="step active" data-step="1" onclick="goStep(1)">
+    <div class="step-num">1</div> 概要
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="2" onclick="goStep(2)">
+    <div class="step-num">2</div> レビュー
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="3" onclick="goStep(3)">
+    <div class="step-num">3</div> 評価レポート
+  </div>
+</div>
+
+<!-- ==================== Screen 1: 概要 ==================== -->
+<div class="screen active" data-screen="1">
+  <div class="overview-screen">
+    <h1>レビュー結果</h1>
+    <p class="sub">Pattern 1: 問いかけ型 — 認知的ウォークスルー × ヒューリスティック評価</p>
+
+    <div class="overview-card">
+      <h3>対象</h3>
+      <div class="meta-row">
+        <div class="meta-item">
+          <div class="label">ファイル</div>
+          pattern-1-question.html
+        </div>
+        <div class="meta-item">
+          <div class="label">種類</div>
+          Proto Reviewサービスのプロトタイプ（コア体験パターン1）
+        </div>
+      </div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <div class="label">画面構成</div>
+          3ステップ: プロト投入 → 赤ペンレビュー → 振り返り
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <h3>ペルソナ</h3>
+      <div class="persona-avatar">
+        <div class="avatar-icon">👨</div>
+        <div class="avatar-info">
+          <div class="name">鈴木さん（プロダクトマネージャー）</div>
+          <div class="desc">28歳 / UI/UX知識は初級〜中級 / Claude Codeでプロトタイプを作っている</div>
+        </div>
+      </div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <div class="label">目的</div>
+          自分のプロトタイプをレビューに出して、具体的な改善点を知りたい
+        </div>
+        <div class="meta-item">
+          <div class="label">利用環境</div>
+          デスクトップ、ブラウザで操作
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <h3>評価基準（ニールセンの10原則から該当するもの）</h3>
+      <ul class="criteria-list">
+        <li><span class="criteria-num">1</span> システム状態の視認性</li>
+        <li><span class="criteria-num">3</span> ユーザーの制御と自由</li>
+        <li><span class="criteria-num">5</span> エラーの防止</li>
+        <li><span class="criteria-num">6</span> 記憶より認識</li>
+        <li><span class="criteria-num">8</span> 美的で最小限のデザイン</li>
+      </ul>
+    </div>
+
+    <button class="start-btn" onclick="goStep(2)">レビューを見る</button>
+  </div>
+</div>
+
+<!-- ==================== Screen 2: レビュー ==================== -->
+<div class="screen review-screen" data-screen="2">
+  <div class="preview-area">
+    <div class="device-frame">
+      <div class="frame-header">
+        <div class="frame-dot r"></div>
+        <div class="frame-dot y"></div>
+        <div class="frame-dot g"></div>
+        <div class="frame-url">pattern-1-question.html — Step 2: 赤ペンレビュー</div>
+      </div>
+      <div class="proto-preview">
+        <div class="proto-left">
+          <div class="mini-phone">
+            <div class="mini-proto">
+              <h3>ログイン</h3>
+              <input class="mini-input" value="メールアドレス" readonly>
+              <input class="mini-input" value="パスワード" readonly>
+              <button class="mini-btn">ログイン</button>
+              <div class="mini-link">パスワードをお忘れですか？</div>
+            </div>
+          </div>
+
+          <!-- マーカー -->
+          <div class="marker good" data-r="G1" style="top:60px;left:60px">G</div>
+          <div class="marker good" data-r="G2" style="top:60px;right:280px">G</div>
+          <div class="marker" data-r="1" style="top:120px;left:60px">1</div>
+          <div class="marker" data-r="2" style="top:200px;right:280px">2</div>
+          <div class="marker" data-r="3" style="top:280px;left:60px">3</div>
+          <div class="marker" data-r="4" style="top:360px;right:280px">4</div>
+          <div class="marker" data-r="5" style="top:360px;left:60px">5</div>
+
+          <div class="hl-overlay good" data-hl="G1" style="top:40px;left:40px;width:200px;height:60px"></div>
+          <div class="hl-overlay good" data-hl="G2" style="top:40px;right:260px;width:200px;height:60px"></div>
+          <div class="hl-overlay" data-hl="1" style="top:100px;left:40px;width:200px;height:60px"></div>
+          <div class="hl-overlay" data-hl="2" style="top:180px;right:260px;width:200px;height:60px"></div>
+          <div class="hl-overlay" data-hl="3" style="top:260px;left:40px;width:200px;height:60px"></div>
+          <div class="hl-overlay" data-hl="4" style="top:340px;right:260px;width:200px;height:60px"></div>
+          <div class="hl-overlay" data-hl="5" style="top:340px;left:40px;width:200px;height:60px"></div>
+        </div>
+
+        <div class="proto-right">
+          <div class="pr-tab">すべて — 5件の指摘 + 2件のGood</div>
+          <div class="pr-item">
+            <div class="pr-title">1. ボタンのコントラスト不足</div>
+            <div class="pr-desc">コントラスト比 1.4:1</div>
+            <div class="pr-q">考えてみよう: 押せる場所だと気づけますか？</div>
+          </div>
+          <div class="pr-item">
+            <div class="pr-title">2. CTAの優先度が不明</div>
+            <div class="pr-desc">入力欄と同じトーン</div>
+          </div>
+          <div class="pr-item">
+            <div class="pr-title">3. ユーザー目的と不一致</div>
+            <div class="pr-desc">「ログイン」— 機能名のまま</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario-overlay">
+      <div class="avatar-sm">👨</div>
+      <div>鈴木さんはClaude Codeで作ったログイン画面のプロトタイプをProto Reviewに投入。具体的な改善ポイントを知りたいと思っています。</div>
+    </div>
+  </div>
+
+  <div class="review-panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="switchTab('all')">すべて<span class="tab-count">7</span></div>
+      <div class="panel-tab" onclick="switchTab('good')">Good<span class="tab-count">2</span></div>
+      <div class="panel-tab" onclick="switchTab('issue')">改善点<span class="tab-count">5</span></div>
+    </div>
+
+    <div class="review-list">
+
+      <!-- === Good 1 === -->
+      <div class="review-item good-item" data-r="G1" data-type="good">
+        <div class="ri-header">
+          <div class="ri-num">G</div>
+          <div class="ri-title">「考えてみよう」が学びを促進する</div>
+          <span class="ri-severity good">Good</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">6</span> 記憶より認識</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">お、指摘のあとに「考えてみよう」がある。ただ答えを見せるんじゃなくて、自分で考えさせてくれるのか。これ、いいな。答えを先に見ちゃうより頭に残る気がする。</div>
+            <div class="wt-action"><strong>行動:</strong> 問いかけを読み、少し考えてからヒントを開く</div>
+            <span class="emotion-tag positive">😊 納得</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            「指摘 → 問いかけ → ヒント」の3段階は認知的負荷を段階的にコントロールしている。ユーザーが自分のペースで理解を深められる設計。学習効果を高めるアクティブリコールの仕組み。
+          </div>
+        </div>
+      </div>
+
+      <!-- === Good 2 === -->
+      <div class="review-item good-item" data-r="G2" data-type="good">
+        <div class="ri-header">
+          <div class="ri-num">G</div>
+          <div class="ri-title">UI/UXの二軸で整理されている</div>
+          <span class="ri-severity good">Good</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">8</span> 美的で最小限のデザイン</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">タブで「UI表層」と「UX品質」に分かれてる。なるほど、見た目の問題と使い勝手の問題は違うものなのか。整理されてて見やすい。</div>
+            <div class="wt-action"><strong>行動:</strong> タブを切り替えて、カテゴリごとに指摘を確認</div>
+            <span class="emotion-tag positive">😊 理解</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            UI表層（視覚的問題）とUX品質（体験的問題）を明確に分離している。色分け（赤/紫）とタブでフィルタリングできる。情報の整理が適切で認知負荷が低い。
+          </div>
+        </div>
+      </div>
+
+      <!-- === 指摘1: 原則#5 エラーの防止 === -->
+      <div class="review-item" data-r="1" data-type="issue">
+        <div class="ri-header">
+          <div class="ri-num">1</div>
+          <div class="ri-title">アップロード領域がダミー動作</div>
+          <span class="ri-severity critical">重大</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">5</span> エラーの防止</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">HTMLをペーストしたいんだけど…「HTMLコードをペースト」ボタンを押したら、いきなりレビュー画面に飛んだ。え、自分のHTMLどこに貼るの？ サンプルのログイン画面が出てきたけど、これ僕のプロトじゃないんだけど…</div>
+            <div class="wt-action"><strong>行動:</strong> ペーストボタンを押す → 期待と異なるサンプル画面が表示される → 戸惑って「別のプロトを見る」で戻る</div>
+            <span class="emotion-tag confused">😕 困惑</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            「ペースト」ボタンがアップロード機能ではなく単なるステップ遷移になっている。ユーザーの期待（自分のHTMLを投入する）とシステムの動作（固定サンプルを表示する）が完全にズレている。プロトタイプとはいえ、コア体験の入口で信頼を損なう。
+          </div>
+          <div class="suggestion-toggle" onclick="toggleSuggestion(event, this)">▶ 改善提案を見る</div>
+          <div class="ri-suggestion">
+            <div class="suggestion-content">
+              <div class="s-label">改善提案</div>
+              プロトタイプ段階でも「これはデモ用のサンプルです」と明示する。ボタンラベルを「サンプルでレビューを体験する」に変更し、期待値を正しく設定する。可能なら textarea を出してHTMLを貼れるようにする。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 指摘2: 原則#3 ユーザーの制御と自由 === -->
+      <div class="review-item" data-r="2" data-type="issue">
+        <div class="ri-header">
+          <div class="ri-num">2</div>
+          <div class="ri-title">ステップを自由に行き来できない</div>
+          <span class="ri-severity major">重要</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">3</span> ユーザーの制御と自由</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">振り返り画面を見てるんだけど、さっきの指摘2番の詳細をもう一度見たいな…ステップ2をクリックしたら戻れたけど、どの指摘を見てたか忘れちゃった。前の状態が保存されてない。</div>
+            <div class="wt-action"><strong>行動:</strong> ステップ2に戻る → レビューリストが初期状態にリセットされている → 目当ての指摘を探し直す</div>
+            <span class="emotion-tag frustrated">😤 ストレス</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            ステップ間を移動すると選択状態がリセットされる。レビュー画面で開いていたヒントや選択していた指摘が保持されない。ユーザーは自分の作業位置を見失う。
+          </div>
+          <div class="suggestion-toggle" onclick="toggleSuggestion(event, this)">▶ 改善提案を見る</div>
+          <div class="ri-suggestion">
+            <div class="suggestion-content">
+              <div class="s-label">改善提案</div>
+              ステップ遷移時にアクティブな指摘番号・ヒント開閉状態を保持する。振り返り画面の各学びに対応する指摘番号へのリンクを設け、ワンクリックで該当箇所に戻れるようにする。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 指摘3: 原則#1 システム状態の視認性 === -->
+      <div class="review-item" data-r="3" data-type="issue">
+        <div class="ri-header">
+          <div class="ri-num">3</div>
+          <div class="ri-title">スコアの意味と根拠が不明</div>
+          <span class="ri-severity major">重要</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">1</span> システム状態の視認性</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">UI表層 48/100、UX品質 32/100…この数字ってどういう基準で出てるんだろう？ 何を直したらスコアが上がるのか分からない。100点満点の48点って良いの？悪いの？</div>
+            <div class="wt-action"><strong>行動:</strong> スコアバーを見つめるが、クリックしても何も起きない。解説を探すがない</div>
+            <span class="emotion-tag lost">🤔 迷い</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            スコアが表示されているが、算出根拠・基準・改善との紐づけが不明。数値だけでは「何をどうすれば良くなるか」のアクションに繋がらない。ユーザーはスコアを見ても次のステップがわからない。
+          </div>
+          <div class="suggestion-toggle" onclick="toggleSuggestion(event, this)">▶ 改善提案を見る</div>
+          <div class="ri-suggestion">
+            <div class="suggestion-content">
+              <div class="s-label">改善提案</div>
+              スコアの横に「このスコアは○件の指摘に基づきます」と根拠を表示。各指摘の重大度がスコアにどう影響するかの説明を追加。スコアバーをクリックすると関連指摘にフィルタリングされる導線を作る。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 指摘4: 原則#6 記憶より認識 === -->
+      <div class="review-item" data-r="4" data-type="issue">
+        <div class="ri-header">
+          <div class="ri-num">4</div>
+          <div class="ri-title">ヒントの存在に気づきにくい</div>
+          <span class="ri-severity minor">軽微</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">6</span> 記憶より認識</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">「考えてみよう」の質問は面白いけど、答えがわからない…あ、下に小さく「ヒントを見る」って書いてある。最初の2つは気づかずにスルーしてたな。</div>
+            <div class="wt-action"><strong>行動:</strong> 指摘1, 2のヒントに気づかず通過 → 指摘3で偶然発見 → 戻って1, 2のヒントも開く</div>
+            <span class="emotion-tag confused">😕 困惑</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            「ヒントを見る」のテキストリンクが12pxと小さく、展開済みの項目を選択しないと表示されない。ユーザーが指摘を読み終わった段階で自然にヒントの存在に気づける設計が必要。
+          </div>
+          <div class="suggestion-toggle" onclick="toggleSuggestion(event, this)">▶ 改善提案を見る</div>
+          <div class="ri-suggestion">
+            <div class="suggestion-content">
+              <div class="s-label">改善提案</div>
+              ヒントトグルをボタン風デザインに変更（背景色付き、padding増）。「考えてみよう」ボックスの直下に配置し、視覚的な流れで自然に目に入るようにする。初回は「ヒントがあります」のパルスアニメーションで存在を知らせる。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 指摘5: 原則#8 美的で最小限のデザイン === -->
+      <div class="review-item" data-r="5" data-type="issue">
+        <div class="ri-header">
+          <div class="ri-num">5</div>
+          <div class="ri-title">振り返り画面がレビューと断絶している</div>
+          <span class="ri-severity major">重要</span>
+        </div>
+        <div class="ri-principle"><span class="p-num">8</span> 美的で最小限のデザイン</div>
+        <div class="ri-walkthrough">
+          <div class="wt-avatar">👨</div>
+          <div class="wt-content">
+            <div class="wt-label">鈴木さんの思考発話</div>
+            <div class="wt-think">振り返り画面、学びのまとめはいいんだけど…これ、さっきのどの指摘に対応してるんだっけ？ 「アフォーダンス」とか急に専門用語が出てきて、レビュー画面でそんな言葉使ってたっけ？</div>
+            <div class="wt-action"><strong>行動:</strong> 振り返りの学びを読む → レビュー画面と照合したいが行き来が面倒 → 読み流して終了</div>
+            <span class="emotion-tag lost">🤔 迷い</span>
+          </div>
+        </div>
+        <div class="ri-detail">
+          <div class="ri-heuristic">
+            振り返り画面の「学び」がレビュー画面の指摘と紐づいていない。抽象化された学びと具体的な指摘の間にギャップがある。ユーザーは「でも具体的にどうすれば？」に戻れない。
+          </div>
+          <div class="suggestion-toggle" onclick="toggleSuggestion(event, this)">▶ 改善提案を見る</div>
+          <div class="ri-suggestion">
+            <div class="suggestion-content">
+              <div class="s-label">改善提案</div>
+              各学びに「指摘 #1, #2 より」のようにソースを明記。クリックでレビュー画面の該当指摘にジャンプ。学びの文言もレビューで使った表現と統一し、認知的な断絶をなくす。
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- スコア -->
+    <div class="score-section">
+      <h4>ヒューリスティック評価スコア</h4>
+      <div class="score-grid">
+        <div class="score-chip">
+          <div class="sc-label">#1 システム状態の視認性</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:45%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">45</div>
+        </div>
+        <div class="score-chip">
+          <div class="sc-label">#3 ユーザーの制御と自由</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:40%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">40</div>
+        </div>
+        <div class="score-chip">
+          <div class="sc-label">#5 エラーの防止</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:25%;background:#e63946"></div></div>
+          <div class="sc-val" style="color:#e63946">25</div>
+        </div>
+        <div class="score-chip">
+          <div class="sc-label">#6 記憶より認識</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:60%;background:#059669"></div></div>
+          <div class="sc-val" style="color:#059669">60</div>
+        </div>
+        <div class="score-chip">
+          <div class="sc-label">#8 美的で最小限のデザイン</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:55%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">55</div>
+        </div>
+        <div class="score-chip">
+          <div class="sc-label">総合</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:45%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">45 / 100</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="journey-bar">
+      <h4>👨 鈴木さんの感情ジャーニー</h4>
+      <div class="journey-steps">
+        <div class="j-step positive" onclick="activate('G1')"><span class="j-emotion">😊</span>発見</div>
+        <div class="j-step negative" onclick="activate('1')"><span class="j-emotion">😕</span>投入</div>
+        <div class="j-step positive" onclick="activate('G2')"><span class="j-emotion">😊</span>整理</div>
+        <div class="j-step negative" onclick="activate('3')"><span class="j-emotion">🤔</span>スコア</div>
+        <div class="j-step negative" onclick="activate('4')"><span class="j-emotion">😕</span>ヒント</div>
+        <div class="j-step negative" onclick="activate('5')"><span class="j-emotion">🤔</span>振返り</div>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-secondary" onclick="goStep(1)">概要に戻る</button>
+      <button class="btn btn-primary" onclick="goStep(3)">評価レポートへ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Screen 3: 評価レポート ==================== -->
+<div class="screen" data-screen="3">
+  <div class="report-screen">
+    <h1>評価レポート</h1>
+    <p class="report-sub">Pattern 1: 問いかけ型 — 鈴木さん（PM）の視点による評価</p>
+
+    <!-- Good Points -->
+    <div class="report-card">
+      <h3 style="color:#059669">Good Points</h3>
+      <div class="wt-summary-item">
+        <div class="wt-summary-icon" style="background:#f0fdf4">💡</div>
+        <div>
+          <strong>「考えてみよう」の学習設計が秀逸</strong><br>
+          指摘→問いかけ→ヒントの3段階で、ユーザーが自分のペースで理解を深められる。アクティブリコールの仕組みが学習効果を高めている。
+        </div>
+      </div>
+      <div class="wt-summary-item">
+        <div class="wt-summary-icon" style="background:#f0fdf4">📊</div>
+        <div>
+          <strong>UI/UX二軸の整理が明快</strong><br>
+          表層的な問題と構造的な問題をタブ＋色で視覚的に分離。情報の優先度付けが適切。
+        </div>
+      </div>
+    </div>
+
+    <!-- ヒューリスティック -->
+    <div class="report-card">
+      <h3>ヒューリスティック評価サマリー</h3>
+      <div class="heuristic-row">
+        <div class="h-num">1</div>
+        <div class="h-name">システム状態の視認性</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:45%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">45</div>
+      </div>
+      <div class="heuristic-row">
+        <div class="h-num">3</div>
+        <div class="h-name">ユーザーの制御と自由</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:40%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">40</div>
+      </div>
+      <div class="heuristic-row">
+        <div class="h-num">5</div>
+        <div class="h-name">エラーの防止</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:25%;background:#e63946"></div></div>
+        <div class="h-val" style="color:#e63946">25</div>
+      </div>
+      <div class="heuristic-row">
+        <div class="h-num">6</div>
+        <div class="h-name">記憶より認識</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:60%;background:#059669"></div></div>
+        <div class="h-val" style="color:#059669">60</div>
+      </div>
+      <div class="heuristic-row">
+        <div class="h-num">8</div>
+        <div class="h-name">美的で最小限のデザイン</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:55%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">55</div>
+      </div>
+    </div>
+
+    <!-- ウォークスルーインサイト -->
+    <div class="report-card">
+      <h3>認知的ウォークスルーで見えたこと</h3>
+      <div class="wt-summary-item">
+        <div class="wt-summary-icon" style="background:#fef2f2">🚪</div>
+        <div>
+          <strong>コア体験の入口で期待が裏切られる</strong><br>
+          「自分のHTMLをレビューしてもらえる」と思って来たのに、固定サンプルが表示される。サービスの最も重要な約束が最初のタッチポイントで破られている。
+        </div>
+      </div>
+      <div class="wt-summary-item">
+        <div class="wt-summary-icon" style="background:#fef3c7">🔗</div>
+        <div>
+          <strong>3ステップの画面間で文脈が途切れる</strong><br>
+          レビュー画面で見た指摘と振り返り画面の学びが紐づいておらず、行き来すると状態がリセットされる。「流れ」はあるが「つながり」がない。
+        </div>
+      </div>
+      <div class="wt-summary-item">
+        <div class="wt-summary-icon" style="background:#e0f2fe">📏</div>
+        <div>
+          <strong>スコアが「結果」であって「ガイド」になっていない</strong><br>
+          数値は出るが、何を直せばスコアが上がるかの導線がない。評価結果がアクションに変換できない。
+        </div>
+      </div>
+    </div>
+
+    <!-- 優先アクション -->
+    <div class="report-card">
+      <h3>優先改善アクション</h3>
+      <div class="action-item">
+        <span class="action-priority high">P1</span>
+        <div>
+          <strong>プロト投入画面の期待値を正しく設定する</strong><br>
+          「サンプルで体験する」と明示、もしくは実際にHTML入力できるtextareaを設ける。原則#5違反の解消。
+        </div>
+      </div>
+      <div class="action-item">
+        <span class="action-priority high">P1</span>
+        <div>
+          <strong>スコアと指摘の紐づけを明示する</strong><br>
+          各スコアに「○件の指摘に基づく」の根拠を表示。スコアから指摘へのリンク導線を追加。原則#1違反の解消。
+        </div>
+      </div>
+      <div class="action-item">
+        <span class="action-priority medium">P2</span>
+        <div>
+          <strong>ステップ間の状態を保持する</strong><br>
+          画面遷移時にアクティブ指摘・ヒント開閉状態を維持。振り返りから指摘へのジャンプリンク。原則#3違反の解消。
+        </div>
+      </div>
+      <div class="action-item">
+        <span class="action-priority medium">P2</span>
+        <div>
+          <strong>ヒントの発見性を向上させる</strong><br>
+          トグルをボタン風に変更、初回パルスアニメーション追加。原則#6のさらなる強化。
+        </div>
+      </div>
+      <div class="action-item">
+        <span class="action-priority medium">P2</span>
+        <div>
+          <strong>振り返りとレビューの文脈をつなげる</strong><br>
+          学びに指摘番号を明記、クリックで該当箇所にジャンプ。原則#8違反の解消。
+        </div>
+      </div>
+    </div>
+
+    <div class="next-action">
+      <h3>次のアクション</h3>
+      <p>P1の改善を反映して、再度レビューしてみましょう</p>
+      <button class="btn" onclick="goStep(1)">改善版をレビューする</button>
+    </div>
+  </div>
+</div>
+
+<div class="concept-footer">
+  <h3>Proto Review — 自動生成レビューレポート</h3>
+  <p>
+    このレポートは proto-review/prompts/proto-review.md のプロンプトに基づき、<br>
+    Claude が認知的ウォークスルーとヒューリスティック評価を実施して自動生成しました。<br>
+    あなたのClaude Code / Cowork環境でも同じプロンプトで生成できます。
+  </p>
+</div>
+
+<script>
+  function goStep(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector(`[data-screen="${n}"]`).classList.add('active');
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i + 1 === n) s.classList.add('active');
+      else if (i + 1 < n) s.classList.add('done');
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function activate(n) {
+    document.querySelectorAll('.marker').forEach(m => m.classList.toggle('active', m.dataset.r === n));
+    document.querySelectorAll('.review-item').forEach(r => r.classList.toggle('active', r.dataset.r === n));
+    document.querySelectorAll('.hl-overlay').forEach(h => h.classList.toggle('active', h.dataset.hl === n));
+    const target = document.querySelector(`.review-item[data-r="${n}"]`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.querySelectorAll('.marker').forEach(m => m.addEventListener('click', () => activate(m.dataset.r)));
+  document.querySelectorAll('.review-item').forEach(r => r.addEventListener('click', () => activate(r.dataset.r)));
+
+  function switchTab(type) {
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    event.target.closest('.panel-tab').classList.add('active');
+    document.querySelectorAll('.review-item').forEach(r => {
+      if (type === 'all') r.style.display = '';
+      else if (type === 'good') r.style.display = r.dataset.type === 'good' ? '' : 'none';
+      else if (type === 'issue') r.style.display = r.dataset.type === 'issue' ? '' : 'none';
+    });
+  }
+
+  function toggleSuggestion(e, el) {
+    e.stopPropagation();
+    const suggestion = el.nextElementSibling;
+    suggestion.classList.toggle('show');
+    el.textContent = suggestion.classList.contains('show') ? '▼ 改善提案を閉じる' : '▶ 改善提案を見る';
+  }
+</script>
+</body>
+</html>
