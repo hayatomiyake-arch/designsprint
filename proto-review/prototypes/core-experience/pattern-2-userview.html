@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コア体験 Pattern 2: ユーザー視点型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7; color: #1d1d1f; min-height: 100vh;
+  }
+  .app-header {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: #e63946; }
+  .logo span { color: #888; font-weight: 400; }
+  .badge { font-size: 11px; background: #7c3aed; color: #fff; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+
+  /* ステップナビ */
+  .step-nav {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px; display: flex; align-items: center; gap: 0; justify-content: center;
+  }
+  .step {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; font-size: 13px; color: #aaa;
+    cursor: pointer; border-radius: 6px; transition: all 0.2s;
+  }
+  .step.active { color: #7c3aed; font-weight: 600; background: #f5f3ff; }
+  .step.done { color: #2d9d3a; }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; background: #e8e8e8; color: #aaa;
+  }
+  .step.active .step-num { background: #7c3aed; color: #fff; }
+  .step.done .step-num { background: #2d9d3a; color: #fff; }
+  .step-connector { width: 32px; height: 1px; background: #ddd; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* === Screen 1: ペルソナ設定 === */
+  .setup-screen { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+  .setup-screen h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .setup-screen .sub { font-size: 14px; color: #888; margin-bottom: 32px; }
+
+  .persona-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px;
+  }
+  .persona-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+  .persona-avatar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px; background: #f5f3ff; border-radius: 10px; margin-bottom: 16px;
+  }
+  .avatar-icon {
+    width: 48px; height: 48px; background: #7c3aed; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff;
+  }
+  .avatar-info .name { font-size: 15px; font-weight: 700; }
+  .avatar-info .desc { font-size: 12px; color: #888; margin-top: 2px; }
+
+  .field-row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .field { flex: 1; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+    border-radius: 8px; font-size: 13px; background: #fafafa;
+  }
+
+  .upload-mini {
+    border: 2px dashed #d0d0d0; border-radius: 12px; padding: 32px;
+    text-align: center; cursor: pointer; margin-bottom: 20px; background: #fff;
+  }
+  .upload-mini:hover { border-color: #7c3aed; }
+  .upload-mini p { font-size: 13px; color: #888; }
+
+  .start-btn {
+    width: 100%; padding: 14px; background: #7c3aed; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+
+  /* === Screen 2: ユーザー視点レビュー === */
+  .review-screen { display: none; height: calc(100vh - 97px); }
+  .review-screen.active { display: flex; }
+
+  .preview-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #eaeaec; position: relative;
+  }
+  .phone-frame {
+    width: 320px; height: 568px; background: #fff; border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 48px 16px 32px; position: relative; overflow: hidden;
+  }
+  .phone-frame::before {
+    content: ''; position: absolute; top: 16px; left: 50%;
+    transform: translateX(-50%); width: 80px; height: 6px;
+    background: #e0e0e0; border-radius: 3px;
+  }
+  .sample-proto {
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: center; padding: 20px;
+  }
+  .sample-proto h2 { font-size: 22px; margin-bottom: 24px; color: #333; }
+  .sample-proto .fg { margin-bottom: 12px; }
+  .sample-proto input {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd;
+    border-radius: 6px; font-size: 14px; color: #999; background: #fafafa;
+  }
+  .sample-proto .lbtn {
+    width: 100%; padding: 12px; background: #ccc; color: #fff;
+    border: none; border-radius: 6px; font-size: 14px; margin-top: 8px;
+  }
+  .sample-proto .forgot { text-align: center; font-size: 12px; color: #bbb; margin-top: 16px; }
+
+  .marker {
+    position: absolute; width: 28px; height: 28px;
+    background: #7c3aed; color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.4);
+    transition: transform 0.2s; z-index: 10;
+  }
+  .marker:hover, .marker.active { transform: scale(1.2); box-shadow: 0 4px 16px rgba(124,58,237,0.6); }
+  .hl-overlay {
+    position: absolute; border: 2px solid #7c3aed;
+    background: rgba(124,58,237,0.06); border-radius: 6px;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 4;
+  }
+  .hl-overlay.active { opacity: 1; }
+
+  /* ユーザーの行動シナリオ（左下オーバーレイ） */
+  .scenario-overlay {
+    position: absolute; bottom: 24px; left: 24px; right: 24px;
+    background: rgba(124,58,237,0.95); color: #fff;
+    border-radius: 12px; padding: 14px 16px;
+    font-size: 13px; line-height: 1.6; z-index: 20;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .scenario-overlay .avatar-sm {
+    width: 32px; height: 32px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+
+  /* 右パネル */
+  .review-panel {
+    width: 420px; background: #fff; border-left: 1px solid #e0e0e0;
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .panel-header {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .panel-avatar {
+    width: 36px; height: 36px; background: #7c3aed; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff;
+  }
+  .panel-header-text h2 { font-size: 15px; font-weight: 700; }
+  .panel-header-text p { font-size: 11px; color: #888; }
+
+  .review-list { flex: 1; padding: 0; }
+
+  .review-item {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .review-item:hover { background: #fafafa; }
+  .review-item.active { background: #f5f3ff; border-left: 3px solid #7c3aed; }
+
+  .ri-moment {
+    font-size: 10px; color: #7c3aed; font-weight: 700;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+
+  /* ユーザーの声（吹き出し） */
+  .user-voice {
+    background: #f5f3ff; border-radius: 12px 12px 12px 0;
+    padding: 12px 14px; margin-bottom: 8px;
+    font-size: 14px; line-height: 1.7; color: #4c1d95;
+    position: relative;
+  }
+
+  /* 専門家の解説 */
+  .expert-note {
+    display: none; font-size: 12px; color: #666; line-height: 1.7;
+    background: #f8f8f8; border-radius: 8px; padding: 10px 12px;
+  }
+  .review-item.active .expert-note { display: block; }
+  .expert-note .label {
+    font-size: 10px; font-weight: 700; color: #e63946;
+    margin-bottom: 4px; letter-spacing: 0.5px;
+  }
+
+  .emotion-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; display: inline-block; margin-top: 6px;
+  }
+  .emotion-tag.confused { background: #fef3c7; color: #d97706; }
+  .emotion-tag.anxious { background: #fef2f2; color: #e63946; }
+  .emotion-tag.frustrated { background: #fee2e2; color: #dc2626; }
+  .emotion-tag.lost { background: #e0f2fe; color: #0284c7; }
+
+  /* 感情ジャーニー */
+  .journey-bar {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; background: #fafafa;
+  }
+  .journey-bar h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+  .journey-steps {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .j-step {
+    flex: 1; text-align: center; font-size: 10px; color: #888;
+    padding: 6px 2px; border-radius: 6px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .j-step.negative { background: #fef2f2; color: #e63946; }
+  .j-step.neutral { background: #f5f5f5; color: #888; }
+  .j-step.positive { background: #f0fdf4; color: #059669; }
+  .j-step .j-emotion { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  .panel-actions {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px;
+  }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; text-align: center; border: none;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #7c3aed; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  /* === Screen 3: インサイト === */
+  .insight-screen { max-width: 640px; margin: 0 auto; padding: 48px 24px; }
+  .insight-screen h1 { font-size: 22px; font-weight: 700; margin-bottom: 24px; text-align: center; }
+
+  .insight-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+  }
+  .insight-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+  .insight-item {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: 13px; line-height: 1.7;
+  }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+
+  .next-action {
+    background: #f5f3ff; border: 1px solid #ddd6fe;
+    border-radius: 12px; padding: 20px; text-align: center; margin-top: 24px;
+  }
+  .next-action h3 { font-size: 14px; color: #7c3aed; margin-bottom: 8px; }
+  .next-action p { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .next-action .btn {
+    display: inline-block; padding: 12px 32px; background: #7c3aed; color: #fff;
+    border-radius: 10px; font-weight: 700; border: none; cursor: pointer;
+  }
+
+  .concept-footer {
+    background: #1d1d1f; color: #aaa; padding: 32px 24px; text-align: center;
+  }
+  .concept-footer h3 { color: #7c3aed; font-size: 14px; margin-bottom: 8px; }
+  .concept-footer p { font-size: 13px; line-height: 1.8; max-width: 520px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ 赤ペンレビュー</span></div>
+  <div class="badge">コア体験 2</div>
+</div>
+
+<div class="step-nav">
+  <div class="step active" data-step="1" onclick="goStep(1)">
+    <div class="step-num">1</div> ペルソナ設定
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="2" onclick="goStep(2)">
+    <div class="step-num">2</div> ユーザーの声
+  </div>
+  <div class="step-connector"></div>
+  <div class="step" data-step="3" onclick="goStep(3)">
+    <div class="step-num">3</div> インサイト
+  </div>
+</div>
+
+<!-- Screen 1 -->
+<div class="screen active" data-screen="1">
+  <div class="setup-screen">
+    <h1>誰がこの画面を使う？</h1>
+    <p class="sub">ペルソナを設定すると、その人の視点でプロトタイプを体験レビューします</p>
+
+    <div class="persona-card">
+      <h3>ペルソナ</h3>
+      <div class="persona-avatar">
+        <div class="avatar-icon">👩</div>
+        <div class="avatar-info">
+          <div class="name">田中さん（営業部）</div>
+          <div class="desc">32歳 / ITリテラシー普通 / いつも忙しい</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>この画面で何をしたい？</label>
+          <input type="text" value="朝イチで案件状況を確認したい">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>どんな状況で使う？</label>
+          <input type="text" value="通勤電車の中、片手でスマホ操作">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>ITスキル</label>
+          <select><option>普通（日常的にスマホは使う）</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-mini" onclick="goStep(2)">
+      <p>📄 プロトタイプのHTMLをペースト or ドロップ</p>
+    </div>
+
+    <button class="start-btn" onclick="goStep(2)">田中さんの視点でレビュー開始</button>
+  </div>
+</div>
+
+<!-- Screen 2 -->
+<div class="screen review-screen" data-screen="2">
+  <div class="preview-area">
+    <div class="phone-frame">
+      <div class="sample-proto">
+        <h2>ログイン</h2>
+        <div class="fg"><input type="text" value="メールアドレス" readonly></div>
+        <div class="fg"><input type="text" value="パスワード" readonly></div>
+        <button class="lbtn">ログイン</button>
+        <div class="forgot">パスワードをお忘れですか？</div>
+      </div>
+
+      <div class="marker" data-r="1" style="top:195px;left:28px">1</div>
+      <div class="marker" data-r="2" style="top:268px;left:252px">2</div>
+      <div class="marker" data-r="3" style="top:340px;left:252px">3</div>
+      <div class="marker" data-r="4" style="top:340px;left:28px">4</div>
+
+      <div class="hl-overlay" data-hl="1" style="top:165px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay" data-hl="2" style="top:252px;left:36px;width:248px;height:40px"></div>
+      <div class="hl-overlay" data-hl="3" style="top:320px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay" data-hl="4" style="top:320px;left:36px;width:248px;height:42px"></div>
+    </div>
+    <div class="scenario-overlay">
+      <div class="avatar-sm">👩</div>
+      <div>田中さんは通勤電車の中。片手でスマホを持ち、朝イチで案件状況を確認しようとしています。</div>
+    </div>
+  </div>
+
+  <div class="review-panel">
+    <div class="panel-header">
+      <div class="panel-avatar">👩</div>
+      <div class="panel-header-text">
+        <h2>田中さんの体験</h2>
+        <p>この画面を使ったときの正直な感想</p>
+      </div>
+    </div>
+
+    <div class="review-list">
+      <div class="review-item" data-r="1">
+        <div class="ri-moment">画面を開いた瞬間</div>
+        <div class="user-voice">
+          「ログイン」…って、私は案件を見に来たんだけど。ここで何ができるのか、パッと見でわからない。
+        </div>
+        <span class="emotion-tag lost">🤔 迷い</span>
+        <div class="expert-note">
+          <div class="label">デザインの観点</div>
+          画面タイトルがシステムの機能名（ログイン）になっている。ユーザーの目的（案件確認）とのギャップが心理的摩擦を生んでいる。「おかえりなさい — 今日の案件をチェック」のようにゴールを先に示す方法がある。
+        </div>
+      </div>
+
+      <div class="review-item" data-r="2">
+        <div class="ri-moment">メールアドレスを入力しようとしたとき</div>
+        <div class="user-voice">
+          入力欄、ちょっと小さくない？電車で揺れてるし、片手だと押しにくい。あと、会社のメアド長いんだけどちゃんと見える？
+        </div>
+        <span class="emotion-tag frustrated">😤 ストレス</span>
+        <div class="expert-note">
+          <div class="label">デザインの観点</div>
+          タップ領域が40pxで推奨44pxを下回る。片手操作を想定するなら48px以上が望ましい。また、長いメールアドレスが入力欄から溢れた場合のスクロール/表示を確認する必要がある。
+        </div>
+      </div>
+
+      <div class="review-item" data-r="3">
+        <div class="ri-moment">ログインボタンを探したとき</div>
+        <div class="user-voice">
+          え、これボタンなの？入力欄と同じ色でわからなかった。グレーだし、無効になってるのかと思った。
+        </div>
+        <span class="emotion-tag confused">😕 困惑</span>
+        <div class="expert-note">
+          <div class="label">デザインの観点</div>
+          CTA（主要アクションボタン）のコントラスト比が1.4:1で、背景と区別がつかない。さらに#cccは一般的に「無効状態」を連想させる色。ユーザーは「押せない」と誤解する可能性がある。
+        </div>
+      </div>
+
+      <div class="review-item" data-r="4">
+        <div class="ri-moment">ボタンを押した後</div>
+        <div class="user-voice">
+          押した…けど、何も変わらない。読み込み中？エラー？もう一回押した方がいい？…もう一回押しちゃった。
+        </div>
+        <span class="emotion-tag anxious">😰 不安</span>
+        <div class="expert-note">
+          <div class="label">デザインの観点</div>
+          操作後のフィードバックが未設計。「ローディング → 成功/失敗」の流れがないと、ユーザーは二重送信したり離脱したりする。ボタンの状態変化（テキスト変更、スピナー表示、disable化）を設計する必要がある。
+        </div>
+      </div>
+    </div>
+
+    <div class="journey-bar">
+      <h4>田中さんの感情ジャーニー</h4>
+      <div class="journey-steps">
+        <div class="j-step negative" onclick="activate('1')"><span class="j-emotion">🤔</span>開く</div>
+        <div class="j-step negative" onclick="activate('2')"><span class="j-emotion">😤</span>入力</div>
+        <div class="j-step negative" onclick="activate('3')"><span class="j-emotion">😕</span>探す</div>
+        <div class="j-step negative" onclick="activate('4')"><span class="j-emotion">😰</span>押す</div>
+        <div class="j-step neutral"><span class="j-emotion">❓</span>待つ</div>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-secondary" onclick="goStep(1)">ペルソナを変更</button>
+      <button class="btn btn-primary" onclick="goStep(3)">インサイトを見る</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 3 -->
+<div class="screen" data-screen="3">
+  <div class="insight-screen">
+    <h1>田中さんの体験からわかったこと</h1>
+
+    <div class="insight-card">
+      <h3>インサイト</h3>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:#fef3c7">🎯</div>
+        <div><strong>画面の目的とユーザーの目的がズレている</strong><br>田中さんは「案件を見たい」のに、画面は「ログインしろ」と言っている。最初の印象でモチベーションが下がる。</div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:#fef2f2">📱</div>
+        <div><strong>利用状況の想定が足りない</strong><br>片手操作・移動中という制約を考慮すると、タップ領域や入力のしやすさがクリティカルになる。デスクトップ前提で作ると使えない。</div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:#fee2e2">🔘</div>
+        <div><strong>「無効に見える」は「存在しない」と同じ</strong><br>グレーのボタン = 押せないと思う。色の問題は美しさではなく、機能が伝わるかの問題。</div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:#e0f2fe">⏳</div>
+        <div><strong>操作→フィードバックの断絶が不信を生む</strong><br>「押した→何も起きない」は最もストレスの高い体験。結果が返る前にも「受け付けた」と伝える必要がある。</div>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <h3>感情のボトルネック</h3>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <div style="flex:1;text-align:center;padding:16px;background:#fee2e2;border-radius:8px">
+          <div style="font-size:28px">😰</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">ボタン押下後</div>
+          <div style="font-size:11px;color:#dc2626;margin-top:2px">最大のストレス</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:16px;background:#fef3c7;border-radius:8px">
+          <div style="font-size:28px">🤔</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">画面オープン</div>
+          <div style="font-size:11px;color:#d97706;margin-top:2px">最初の離脱リスク</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-action">
+      <h3>田中さんが笑顔になるために</h3>
+      <p>感情のボトルネックを解消する改善を加えて、もう一度田中さんに使ってもらいましょう</p>
+      <button class="btn" onclick="goStep(1)">改善版をレビューする</button>
+    </div>
+  </div>
+</div>
+
+<div class="concept-footer">
+  <h3>コア体験 Pattern 2: ユーザー視点型</h3>
+  <p>
+    レビューを「指摘」ではなく「ユーザーの声」として伝える。<br>
+    「コントラスト比が低い」ではなく「これボタンなの？」と言われると、腹落ちする。<br>
+    ペルソナの感情ジャーニーを通じて、どこが一番痛いかがわかる。
+  </p>
+</div>
+
+<script>
+  function goStep(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector(`[data-screen="${n}"]`).classList.add('active');
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i + 1 === n) s.classList.add('active');
+      else if (i + 1 < n) s.classList.add('done');
+    });
+    window.scrollTo(0, 0);
+  }
+  function activate(n) {
+    document.querySelectorAll('.marker').forEach(m => m.classList.toggle('active', m.dataset.r === n));
+    document.querySelectorAll('.review-item').forEach(r => r.classList.toggle('active', r.dataset.r === n));
+    document.querySelectorAll('.hl-overlay').forEach(h => h.classList.toggle('active', h.dataset.hl === n));
+    const t = document.querySelector(`.review-item[data-r="${n}"]`);
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.querySelectorAll('.marker').forEach(m => m.addEventListener('click', () => activate(m.dataset.r)));
+  document.querySelectorAll('.review-item').forEach(r => r.addEventListener('click', () => activate(r.dataset.r)));
+</script>
+</body>
+</html>

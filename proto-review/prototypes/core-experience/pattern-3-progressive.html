@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コア体験 Pattern 3: 段階深堀り型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: #f5f5f7; color: #1d1d1f; min-height: 100vh;
+  }
+  .app-header {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: #e63946; }
+  .logo span { color: #888; font-weight: 400; }
+  .badge { font-size: 11px; background: #059669; color: #fff; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+
+  /* メインレイアウト */
+  .main { display: flex; height: calc(100vh - 49px); }
+
+  /* 左: プロトタイプ */
+  .preview-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #eaeaec; position: relative;
+  }
+  .phone-frame {
+    width: 320px; height: 568px; background: #fff; border-radius: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 48px 16px 32px; position: relative; overflow: hidden;
+  }
+  .phone-frame::before {
+    content: ''; position: absolute; top: 16px; left: 50%;
+    transform: translateX(-50%); width: 80px; height: 6px;
+    background: #e0e0e0; border-radius: 3px;
+  }
+  .sample-proto {
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: center; padding: 20px;
+  }
+  .sample-proto h2 { font-size: 22px; margin-bottom: 24px; color: #333; }
+  .sample-proto .fg { margin-bottom: 12px; }
+  .sample-proto input {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd;
+    border-radius: 6px; font-size: 14px; color: #999; background: #fafafa;
+  }
+  .sample-proto .lbtn {
+    width: 100%; padding: 12px; background: #ccc; color: #fff;
+    border: none; border-radius: 6px; font-size: 14px; margin-top: 8px;
+  }
+  .sample-proto .forgot { text-align: center; font-size: 12px; color: #bbb; margin-top: 16px; }
+
+  /* マーカー */
+  .marker {
+    position: absolute; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: transform 0.2s, opacity 0.3s; z-index: 10;
+    color: #fff; opacity: 0;
+  }
+  .marker.visible { opacity: 1; }
+  .marker:hover, .marker.active { transform: scale(1.2); }
+  .marker.l1 { background: #e63946; box-shadow: 0 2px 8px rgba(230,57,70,0.4); }
+  .marker.l2 { background: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.4); }
+  .marker.l3 { background: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,0.4); }
+
+  .hl-overlay {
+    position: absolute; border-radius: 6px;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 4;
+  }
+  .hl-overlay.active { opacity: 1; }
+  .hl-overlay.l1 { border: 2px solid #e63946; background: rgba(230,57,70,0.06); }
+  .hl-overlay.l2 { border: 2px solid #2563eb; background: rgba(37,99,235,0.06); }
+  .hl-overlay.l3 { border: 2px solid #7c3aed; background: rgba(124,58,237,0.06); }
+
+  /* 右パネル */
+  .review-panel {
+    width: 420px; background: #fff; border-left: 1px solid #e0e0e0;
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+
+  /* レベルナビ */
+  .level-nav {
+    display: flex; padding: 0; border-bottom: 1px solid #f0f0f0;
+  }
+  .level-tab {
+    flex: 1; padding: 14px 8px; text-align: center;
+    cursor: pointer; border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .level-tab .lvl-num {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .level-tab .lvl-name { font-size: 12px; font-weight: 600; }
+  .level-tab .lvl-count { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+  .level-tab.l1 { color: #aaa; }
+  .level-tab.l1.active { color: #e63946; border-bottom-color: #e63946; background: #fef2f2; }
+  .level-tab.l2 { color: #aaa; }
+  .level-tab.l2.active { color: #2563eb; border-bottom-color: #2563eb; background: #eff6ff; }
+  .level-tab.l2.locked { color: #ccc; cursor: default; }
+  .level-tab.l3 { color: #aaa; }
+  .level-tab.l3.active { color: #7c3aed; border-bottom-color: #7c3aed; background: #f5f3ff; }
+  .level-tab.l3.locked { color: #ccc; cursor: default; }
+
+  .lock-icon { font-size: 12px; }
+
+  /* レベル説明 */
+  .level-desc {
+    padding: 12px 20px; background: #fafafa; border-bottom: 1px solid #f0f0f0;
+    font-size: 12px; color: #888; line-height: 1.6;
+    display: none;
+  }
+  .level-desc.active { display: block; }
+  .level-desc strong { color: #555; }
+
+  /* レビューリスト */
+  .review-group { display: none; }
+  .review-group.active { display: block; }
+
+  .review-item {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .review-item:hover { background: #fafafa; }
+  .review-item.active.l1-item { background: #fef2f2; border-left: 3px solid #e63946; }
+  .review-item.active.l2-item { background: #eff6ff; border-left: 3px solid #2563eb; }
+  .review-item.active.l3-item { background: #f5f3ff; border-left: 3px solid #7c3aed; }
+
+  .ri-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ri-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .ri-num.l1 { background: #e63946; }
+  .ri-num.l2 { background: #2563eb; }
+  .ri-num.l3 { background: #7c3aed; }
+  .ri-title { font-size: 14px; font-weight: 600; }
+  .ri-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 600; margin-left: auto; flex-shrink: 0;
+  }
+  .ri-tag.critical { background: #fef2f2; color: #e63946; }
+  .ri-tag.warning { background: #fff8e1; color: #f57c00; }
+  .ri-tag.info { background: #eff6ff; color: #2563eb; }
+  .ri-tag.deep { background: #f5f3ff; color: #7c3aed; }
+
+  .ri-desc { font-size: 13px; color: #666; line-height: 1.7; margin-bottom: 8px; }
+
+  .ri-detail {
+    display: none; font-size: 12px; background: #f8f8f8;
+    border-radius: 6px; padding: 10px 12px; color: #444; line-height: 1.6;
+  }
+  .review-item.active .ri-detail { display: block; }
+
+  /* 深堀りボタン */
+  .dig-deeper {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0;
+    text-align: center;
+  }
+  .dig-btn {
+    padding: 10px 24px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: 2px solid; transition: all 0.2s;
+    background: #fff;
+  }
+  .dig-btn:hover { opacity: 0.85; }
+  .dig-btn.to-l2 { border-color: #2563eb; color: #2563eb; }
+  .dig-btn.to-l3 { border-color: #7c3aed; color: #7c3aed; }
+
+  /* スコア */
+  .score-bar {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; background: #fafafa;
+  }
+  .score-row { display: flex; gap: 8px; }
+  .score-item { flex: 1; }
+  .score-item .sl {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #888; margin-bottom: 4px;
+  }
+  .score-item .sv { font-weight: 700; color: #1d1d1f; }
+  .bar-track { height: 4px; background: #e8e8e8; border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; }
+
+  .panel-actions {
+    padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px;
+  }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; text-align: center; border: none;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: #059669; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #555; }
+
+  .concept-footer {
+    background: #1d1d1f; color: #aaa; padding: 32px 24px; text-align: center;
+  }
+  .concept-footer h3 { color: #059669; font-size: 14px; margin-bottom: 8px; }
+  .concept-footer p { font-size: 13px; line-height: 1.8; max-width: 520px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">Proto Review <span>/ 赤ペンレビュー</span></div>
+  <div class="badge">コア体験 3</div>
+</div>
+
+<div class="main">
+  <div class="preview-area">
+    <div class="phone-frame">
+      <div class="sample-proto">
+        <h2>ログイン</h2>
+        <div class="fg"><input type="text" value="メールアドレス" readonly></div>
+        <div class="fg"><input type="text" value="パスワード" readonly></div>
+        <button class="lbtn">ログイン</button>
+        <div class="forgot">パスワードをお忘れですか？</div>
+      </div>
+
+      <!-- Level 1 マーカー（赤） -->
+      <div class="marker l1 visible" data-r="1a" data-level="1" style="top:340px;left:252px">1</div>
+      <div class="marker l1 visible" data-r="1b" data-level="1" style="top:268px;left:252px">2</div>
+
+      <!-- Level 2 マーカー（青） -->
+      <div class="marker l2" data-r="2a" data-level="2" style="top:340px;left:28px">1</div>
+      <div class="marker l2" data-r="2b" data-level="2" style="top:268px;left:28px">2</div>
+
+      <!-- Level 3 マーカー（紫） -->
+      <div class="marker l3" data-r="3a" data-level="3" style="top:195px;left:28px">1</div>
+      <div class="marker l3" data-r="3b" data-level="3" style="top:380px;left:252px">2</div>
+
+      <!-- ハイライト -->
+      <div class="hl-overlay l1" data-hl="1a" style="top:320px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay l1" data-hl="1b" style="top:252px;left:36px;width:248px;height:80px"></div>
+      <div class="hl-overlay l2" data-hl="2a" style="top:320px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay l2" data-hl="2b" style="top:252px;left:36px;width:248px;height:40px"></div>
+      <div class="hl-overlay l3" data-hl="3a" style="top:165px;left:36px;width:248px;height:42px"></div>
+      <div class="hl-overlay l3" data-hl="3b" style="top:370px;left:36px;width:248px;height:24px"></div>
+    </div>
+  </div>
+
+  <div class="review-panel">
+    <!-- レベルタブ -->
+    <div class="level-nav">
+      <div class="level-tab l1 active" onclick="switchLevel(1)">
+        <div class="lvl-num">LEVEL 1</div>
+        <div class="lvl-name">見た目</div>
+        <div class="lvl-count">2件</div>
+      </div>
+      <div class="level-tab l2 locked" id="tab-l2" onclick="switchLevel(2)">
+        <div class="lvl-num">LEVEL 2</div>
+        <div class="lvl-name">使いやすさ</div>
+        <div class="lvl-count"><span class="lock-icon">🔒</span></div>
+      </div>
+      <div class="level-tab l3 locked" id="tab-l3" onclick="switchLevel(3)">
+        <div class="lvl-num">LEVEL 3</div>
+        <div class="lvl-name">体験の質</div>
+        <div class="lvl-count"><span class="lock-icon">🔒</span></div>
+      </div>
+    </div>
+
+    <!-- レベル説明 -->
+    <div class="level-desc active" data-ldesc="1">
+      <strong>Level 1: 見た目</strong> — 色、余白、サイズなど目に見える問題。デザインの基本。
+    </div>
+    <div class="level-desc" data-ldesc="2">
+      <strong>Level 2: 使いやすさ</strong> — 操作感、エラー時の動き、フィードバック。ユーザビリティの核心。
+    </div>
+    <div class="level-desc" data-ldesc="3">
+      <strong>Level 3: 体験の質</strong> — コピーの意味、ユーザーの目的との整合、信頼感。UXの深層。
+    </div>
+
+    <!-- Level 1 レビュー -->
+    <div class="review-group active" data-group="1">
+      <div class="review-item l1-item" data-r="1a">
+        <div class="ri-header">
+          <div class="ri-num l1">1</div>
+          <div class="ri-title">ボタンのコントラスト比が基準以下</div>
+          <span class="ri-tag critical">重大</span>
+        </div>
+        <div class="ri-desc">#ccc背景 + #fff文字のコントラスト比は1.4:1。WCAG AA基準の4.5:1に対して31%しか達成していない。</div>
+        <div class="ri-detail">
+          背景色を #1a73e8（青）に → コントラスト比 4.6:1。さらにフォントウェイトを700にすると読みやすさが向上。
+        </div>
+      </div>
+      <div class="review-item l1-item" data-r="1b">
+        <div class="ri-header">
+          <div class="ri-num l1">2</div>
+          <div class="ri-title">フォーム要素間の余白が不統一</div>
+          <span class="ri-tag warning">改善</span>
+        </div>
+        <div class="ri-desc">入力欄の間隔が12px、ボタンまでの間隔が8px。垂直リズムが崩れていて窮屈な印象。16〜20pxで統一を推奨。</div>
+        <div class="ri-detail">
+          .form-group の margin-bottom を 20px に統一。ボタンの margin-top も 20px に。フォーム全体がゆったりとした印象に変わる。
+        </div>
+      </div>
+
+      <div class="dig-deeper">
+        <button class="dig-btn to-l2" onclick="unlockLevel(2)">
+          もっと深く見る → Level 2: 使いやすさ
+        </button>
+      </div>
+    </div>
+
+    <!-- Level 2 レビュー -->
+    <div class="review-group" data-group="2">
+      <div class="review-item l2-item" data-r="2a">
+        <div class="ri-header">
+          <div class="ri-num l2">1</div>
+          <div class="ri-title">ボタン押下後のフィードバックがない</div>
+          <span class="ri-tag info">ユーザビリティ</span>
+        </div>
+        <div class="ri-desc">ログインボタンを押した後、何が起きるか不明。ローディング表示も、ボタンの状態変化もない。ユーザーは「押せたのか？」がわからない。</div>
+        <div class="ri-detail">
+          ボタン押下→テキストを「ログイン中...」に変更＋スピナー表示→disable化。成功時は遷移、失敗時はボタンを元に戻してエラーメッセージ表示。<strong>操作→フィードバック→結果</strong>の3ステップが必要。
+        </div>
+      </div>
+      <div class="review-item l2-item" data-r="2b">
+        <div class="ri-header">
+          <div class="ri-num l2">2</div>
+          <div class="ri-title">エラー時の回復導線が弱い</div>
+          <span class="ri-tag info">ユーザビリティ</span>
+        </div>
+        <div class="ri-desc">パスワードを間違えたときの体験が未設計。エラーメッセージの場所、文言、再入力の促し方が定義されていない。</div>
+        <div class="ri-detail">
+          入力欄の直下にエラーメッセージを表示（赤 #d32f2f、13px）。文言は「メールアドレスまたはパスワードが正しくありません」。パスワード欄にフォーカスを移して再入力を促す。<strong>ニールセンのヒューリスティクス #9「エラーからの回復を助ける」</strong>。
+        </div>
+      </div>
+
+      <div class="dig-deeper">
+        <button class="dig-btn to-l3" onclick="unlockLevel(3)">
+          さらに深く → Level 3: 体験の質
+        </button>
+      </div>
+    </div>
+
+    <!-- Level 3 レビュー -->
+    <div class="review-group" data-group="3">
+      <div class="review-item l3-item" data-r="3a">
+        <div class="ri-header">
+          <div class="ri-num l3">1</div>
+          <div class="ri-title">画面のメッセージがユーザーの目的と乖離</div>
+          <span class="ri-tag deep">UX</span>
+        </div>
+        <div class="ri-desc">「ログイン」はシステムの都合。ユーザーは「案件を確認したい」「日報を出したい」からこの画面に来ている。目的への共感がない冷たい印象を与える。</div>
+        <div class="ri-detail">
+          タイトルを「おかえりなさい」やユーザーの名前にパーソナライズ。サブテキストで「今日の案件をチェックしましょう」のようにゴールに触れる。<strong>ユーザーの「やりたいこと」を画面の言葉に反映する</strong>と、ログインが"障壁"ではなく"入口"に変わる。
+        </div>
+      </div>
+      <div class="review-item l3-item" data-r="3b">
+        <div class="ri-header">
+          <div class="ri-num l3">2</div>
+          <div class="ri-title">「パスワードをお忘れですか？」の位置と文脈</div>
+          <span class="ri-tag deep">UX</span>
+        </div>
+        <div class="ri-desc">ヘルプリンクが最下部にあるが、ユーザーが「困った」と感じるのはパスワード入力後〜ログイン失敗後。困った瞬間に目に入る場所にあるか？</div>
+        <div class="ri-detail">
+          エラー発生時にこのリンクを強調表示する（色を変える、エラーメッセージ内にリンクを含める）。ユーザーの<strong>感情のタイミング</strong>に合わせて情報を出すのがUXの本質。常に同じ場所に静的に置くだけでは不十分。
+        </div>
+      </div>
+    </div>
+
+    <!-- スコア -->
+    <div class="score-bar">
+      <div class="score-row">
+        <div class="score-item">
+          <div class="sl"><span>Lv1 見た目</span><span class="sv">48</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:48%;background:#e63946"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="sl"><span>Lv2 使いやすさ</span><span class="sv" id="score-l2">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="fill-l2" style="width:0%;background:#2563eb"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="sl"><span>Lv3 体験の質</span><span class="sv" id="score-l3">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="fill-l3" style="width:0%;background:#7c3aed"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button class="btn btn-secondary">別のプロトを見る</button>
+      <button class="btn btn-primary">改善して再レビュー</button>
+    </div>
+  </div>
+</div>
+
+<div class="concept-footer">
+  <h3>コア体験 Pattern 3: 段階深堀り型</h3>
+  <p>
+    Level 1（見た目）→ Level 2（使いやすさ）→ Level 3（体験の質）と段階的に深く。<br>
+    最初はわかりやすい表層の問題から始めて、「もっと深く見る」で自分のペースで進む。<br>
+    レベルが上がるほど、UIからUXへ。デザインの原則からユーザー体験の本質へ。
+  </p>
+</div>
+
+<script>
+  let currentLevel = 1;
+  let unlockedLevel = 1;
+
+  function switchLevel(n) {
+    if (n > unlockedLevel) return;
+    currentLevel = n;
+    // タブ
+    document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.level-tab.l${n}`).classList.add('active');
+    // 説明
+    document.querySelectorAll('.level-desc').forEach(d => d.classList.remove('active'));
+    document.querySelector(`[data-ldesc="${n}"]`).classList.add('active');
+    // レビューグループ
+    document.querySelectorAll('.review-group').forEach(g => g.classList.remove('active'));
+    document.querySelector(`[data-group="${n}"]`).classList.add('active');
+    // マーカー表示
+    document.querySelectorAll('.marker').forEach(m => {
+      m.classList.toggle('visible', m.dataset.level == n);
+      m.classList.remove('active');
+    });
+    document.querySelectorAll('.hl-overlay').forEach(h => h.classList.remove('active'));
+    document.querySelectorAll('.review-item').forEach(r => r.classList.remove('active'));
+  }
+
+  function unlockLevel(n) {
+    unlockedLevel = n;
+    const tab = document.getElementById('tab-l' + n);
+    tab.classList.remove('locked');
+    tab.querySelector('.lvl-count').textContent = '2件';
+    // スコア表示
+    if (n === 2) {
+      document.getElementById('score-l2').textContent = '35';
+      document.getElementById('fill-l2').style.width = '35%';
+    }
+    if (n === 3) {
+      document.getElementById('score-l3').textContent = '28';
+      document.getElementById('fill-l3').style.width = '28%';
+    }
+    switchLevel(n);
+  }
+
+  function activate(id) {
+    document.querySelectorAll('.marker').forEach(m => m.classList.toggle('active', m.dataset.r === id));
+    document.querySelectorAll('.review-item').forEach(r => r.classList.toggle('active', r.dataset.r === id));
+    document.querySelectorAll('.hl-overlay').forEach(h => h.classList.toggle('active', h.dataset.hl === id));
+    const t = document.querySelector(`.review-item[data-r="${id}"]`);
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.querySelectorAll('.marker').forEach(m => m.addEventListener('click', () => activate(m.dataset.r)));
+  document.querySelectorAll('.review-item').forEach(r => r.addEventListener('click', () => activate(r.dataset.r)));
+</script>
+</body>
+</html>
