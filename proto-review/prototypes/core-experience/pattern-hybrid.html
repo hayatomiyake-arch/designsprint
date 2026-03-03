@@ -413,7 +413,7 @@
 <div class="screen active" data-screen="1">
   <div class="upload-screen">
     <h1>プロトタイプを評価する</h1>
-    <p class="sub">ユーザビリティ原則に基づき、ペルソナの視点で認知的ウォークスルーを行います</p>
+    <p class="sub">8つの評価指標に基づき、ペルソナの視点で認知的ウォークスルーを行います</p>
 
     <div class="upload-area" onclick="goStep(2)">
       <div class="upload-icon">📄</div>
@@ -431,6 +431,15 @@
           <label>何のための画面？</label>
           <input type="text" placeholder="例: 日報を提出する" value="社内ツールにログインする">
         </div>
+        <div class="context-field">
+          <label>デバイス</label>
+          <select>
+            <option>スマホ</option>
+            <option>PC</option>
+          </select>
+        </div>
+      </div>
+      <div class="context-row">
         <div class="context-field">
           <label>重点観点</label>
           <select>
@@ -515,14 +524,14 @@
 
     <div class="review-list">
 
-      <!-- === 指摘1: 原則#2 システムと現実世界の一致 === -->
+      <!-- === 指摘1: 5.期待通りの返答 — 5.1.1 === -->
       <div class="review-item" data-r="1">
         <div class="ri-header">
           <div class="ri-num">1</div>
           <div class="ri-title">画面タイトルがユーザーの目的と不一致</div>
           <span class="ri-severity major">重要</span>
         </div>
-        <div class="ri-principle"><span class="p-num">2</span> システムと現実世界の一致</div>
+        <div class="ri-principle"><span class="p-num">5</span> 期待通りの返答 — 5.1.1 適切なラベリング</div>
 
         <!-- 認知的ウォークスルー -->
         <div class="ri-walkthrough">
@@ -550,14 +559,14 @@
         </div>
       </div>
 
-      <!-- === 指摘2: 原則#7 柔軟性と効率性 === -->
+      <!-- === 指摘2: 8.文脈への配慮 — 8.1.1 === -->
       <div class="review-item" data-r="2">
         <div class="ri-header">
           <div class="ri-num">2</div>
           <div class="ri-title">入力欄のタップ領域が狭い</div>
           <span class="ri-severity major">重要</span>
         </div>
-        <div class="ri-principle"><span class="p-num">7</span> 柔軟性と効率性</div>
+        <div class="ri-principle"><span class="p-num">8</span> 文脈への配慮 — 8.1.1 利用シーンに適したUI</div>
 
         <div class="ri-walkthrough">
           <div class="wt-avatar">👩</div>
@@ -583,14 +592,14 @@
         </div>
       </div>
 
-      <!-- === 指摘3: 原則#4 一貫性と標準 === -->
+      <!-- === 指摘3: 4.可視性 — 4.2.1 === -->
       <div class="review-item" data-r="3">
         <div class="ri-header">
           <div class="ri-num">3</div>
           <div class="ri-title">ボタンが「無効状態」に見える</div>
           <span class="ri-severity critical">重大</span>
         </div>
-        <div class="ri-principle"><span class="p-num">4</span> 一貫性と標準</div>
+        <div class="ri-principle"><span class="p-num">4</span> 可視性 — 4.2.1 適切なコントラスト比</div>
 
         <div class="ri-walkthrough">
           <div class="wt-avatar">👩</div>
@@ -616,14 +625,14 @@
         </div>
       </div>
 
-      <!-- === 指摘4: 原則#1 システム状態の視認性 === -->
+      <!-- === 指摘4: 1.応答性 — 1.1.1 === -->
       <div class="review-item" data-r="4">
         <div class="ri-header">
           <div class="ri-num">4</div>
           <div class="ri-title">操作後のフィードバックが存在しない</div>
           <span class="ri-severity critical">重大</span>
         </div>
-        <div class="ri-principle"><span class="p-num">1</span> システム状態の視認性</div>
+        <div class="ri-principle"><span class="p-num">1</span> 応答性 — 1.1.1 操作受付の表示</div>
 
         <div class="ri-walkthrough">
           <div class="wt-avatar">👩</div>
@@ -649,14 +658,14 @@
         </div>
       </div>
 
-      <!-- === 指摘5: 原則#9 エラーの認識・診断・回復 === -->
+      <!-- === 指摘5: 3.エラーへの配慮 — 3.2.2 === -->
       <div class="review-item" data-r="5">
         <div class="ri-header">
           <div class="ri-num">5</div>
           <div class="ri-title">エラー時の回復導線が未設計</div>
           <span class="ri-severity major">重要</span>
         </div>
-        <div class="ri-principle"><span class="p-num">9</span> エラーの認識・診断・回復の支援</div>
+        <div class="ri-principle"><span class="p-num">3</span> エラーへの配慮 — 3.2.2 理解できるエラー内容</div>
 
         <div class="ri-walkthrough">
           <div class="wt-avatar">👩</div>
@@ -684,34 +693,34 @@
 
     </div>
 
-    <!-- ヒューリスティック評価スコア -->
+    <!-- 評価指標スコア -->
     <div class="score-section">
-      <h4>ヒューリスティック評価スコア</h4>
+      <h4>評価指標スコア（8カテゴリ）</h4>
       <div class="score-grid">
         <div class="score-chip">
-          <div class="sc-label">#1 システム状態の視認性</div>
+          <div class="sc-label">1. 応答性</div>
           <div class="sc-bar"><div class="sc-fill" style="width:20%;background:#e63946"></div></div>
           <div class="sc-val" style="color:#e63946">20</div>
         </div>
         <div class="score-chip">
-          <div class="sc-label">#2 現実世界との一致</div>
-          <div class="sc-bar"><div class="sc-fill" style="width:35%;background:#f57c00"></div></div>
-          <div class="sc-val" style="color:#f57c00">35</div>
+          <div class="sc-label">3. エラーへの配慮</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:30%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">30</div>
         </div>
         <div class="score-chip">
-          <div class="sc-label">#4 一貫性と標準</div>
+          <div class="sc-label">4. 可視性</div>
           <div class="sc-bar"><div class="sc-fill" style="width:25%;background:#e63946"></div></div>
           <div class="sc-val" style="color:#e63946">25</div>
         </div>
         <div class="score-chip">
-          <div class="sc-label">#7 柔軟性と効率性</div>
-          <div class="sc-bar"><div class="sc-fill" style="width:40%;background:#f57c00"></div></div>
-          <div class="sc-val" style="color:#f57c00">40</div>
+          <div class="sc-label">5. 期待通りの返答</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:35%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">35</div>
         </div>
         <div class="score-chip">
-          <div class="sc-label">#9 エラー回復の支援</div>
-          <div class="sc-bar"><div class="sc-fill" style="width:30%;background:#f57c00"></div></div>
-          <div class="sc-val" style="color:#f57c00">30</div>
+          <div class="sc-label">8. 文脈への配慮</div>
+          <div class="sc-bar"><div class="sc-fill" style="width:40%;background:#f57c00"></div></div>
+          <div class="sc-val" style="color:#f57c00">40</div>
         </div>
         <div class="score-chip">
           <div class="sc-label">総合</div>
@@ -746,38 +755,38 @@
     <h1>評価レポート</h1>
     <p class="report-sub">認知的ウォークスルー × ヒューリスティック評価の結果</p>
 
-    <!-- ヒューリスティック評価サマリー -->
+    <!-- 評価指標サマリー -->
     <div class="report-card">
-      <h3>ヒューリスティック評価サマリー</h3>
+      <h3>評価指標サマリー（8カテゴリ）</h3>
       <div class="heuristic-row">
         <div class="h-num">1</div>
-        <div class="h-name">システム状態の視認性</div>
+        <div class="h-name">応答性（Feedback）</div>
         <div class="h-score-bar"><div class="h-fill" style="width:20%;background:#e63946"></div></div>
         <div class="h-val" style="color:#e63946">20</div>
       </div>
       <div class="heuristic-row">
-        <div class="h-num">2</div>
-        <div class="h-name">システムと現実世界の一致</div>
-        <div class="h-score-bar"><div class="h-fill" style="width:35%;background:#f57c00"></div></div>
-        <div class="h-val" style="color:#f57c00">35</div>
+        <div class="h-num">3</div>
+        <div class="h-name">エラーへの配慮（Tolerance）</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:30%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">30</div>
       </div>
       <div class="heuristic-row">
         <div class="h-num">4</div>
-        <div class="h-name">一貫性と標準</div>
+        <div class="h-name">可視性（Visibility）</div>
         <div class="h-score-bar"><div class="h-fill" style="width:25%;background:#e63946"></div></div>
         <div class="h-val" style="color:#e63946">25</div>
       </div>
       <div class="heuristic-row">
-        <div class="h-num">7</div>
-        <div class="h-name">柔軟性と効率性</div>
-        <div class="h-score-bar"><div class="h-fill" style="width:40%;background:#f57c00"></div></div>
-        <div class="h-val" style="color:#f57c00">40</div>
+        <div class="h-num">5</div>
+        <div class="h-name">期待通りの返答（Mental Model）</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:35%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">35</div>
       </div>
       <div class="heuristic-row">
-        <div class="h-num">9</div>
-        <div class="h-name">エラーの認識・診断・回復の支援</div>
-        <div class="h-score-bar"><div class="h-fill" style="width:30%;background:#f57c00"></div></div>
-        <div class="h-val" style="color:#f57c00">30</div>
+        <div class="h-num">8</div>
+        <div class="h-name">文脈への配慮（Context）</div>
+        <div class="h-score-bar"><div class="h-fill" style="width:40%;background:#f57c00"></div></div>
+        <div class="h-val" style="color:#f57c00">40</div>
       </div>
     </div>
 
@@ -821,35 +830,35 @@
         <span class="action-priority high">P1</span>
         <div>
           <strong>ログインボタンの視認性を確保する</strong><br>
-          コントラスト比4.5:1以上、高さ48px、影・角丸でアフォーダンスを強化。原則#4違反の解消。
+          コントラスト比4.5:1以上、高さ48px、影・角丸でアフォーダンスを強化。4.可視性 — 4.2.1 の解消。
         </div>
       </div>
       <div class="action-item">
         <span class="action-priority high">P1</span>
         <div>
           <strong>操作後のフィードバックを設計する</strong><br>
-          ボタン押下→ローディング→成功/失敗の状態遷移。原則#1違反の解消。
+          ボタン押下→ローディング→成功/失敗の状態遷移。1.応答性 — 1.1.1 の解消。
         </div>
       </div>
       <div class="action-item">
         <span class="action-priority medium">P2</span>
         <div>
           <strong>エラー時の回復導線を設計する</strong><br>
-          入力欄直下にエラーメッセージ、入力内容保持、パスワード欄のみクリア。原則#9違反の解消。
+          入力欄直下にエラーメッセージ、入力内容保持、パスワード欄のみクリア。3.エラーへの配慮 — 3.2.2 の解消。
         </div>
       </div>
       <div class="action-item">
         <span class="action-priority medium">P2</span>
         <div>
           <strong>画面タイトルをユーザー目線に変更する</strong><br>
-          「ログイン」→「おかえりなさい — 今日の案件をチェック」。原則#2違反の解消。
+          「ログイン」→「おかえりなさい — 今日の案件をチェック」。5.期待通りの返答 — 5.1.1 の解消。
         </div>
       </div>
       <div class="action-item">
         <span class="action-priority medium">P2</span>
         <div>
           <strong>タップ領域を拡大する</strong><br>
-          入力欄・ボタンのタップ領域を48px以上に。片手操作での利用を前提とした設計。原則#7違反の解消。
+          入力欄・ボタンのタップ領域を48px以上に。片手操作での利用を前提とした設計。8.文脈への配慮 — 8.1.1 の解消。
         </div>
       </div>
     </div>
@@ -865,10 +874,10 @@
 <div class="concept-footer">
   <h3>Proto Review — 認知的ウォークスルー × ヒューリスティック評価</h3>
   <p>
-    ニールセンのユーザビリティ10原則を評価基準として明示。<br>
+    8つの評価指標（応答性・一貫性・エラー配慮・可視性・期待通りの返答・効率性・美観・文脈配慮）を基準として明示。<br>
     ペルソナの認知的ウォークスルー（思考発話・行動・課題）で「なぜ問題なのか」を体感。<br>
     ヒューリスティック評価で「何を直すべきか」を構造化。<br>
-    原則 × ペルソナ体験 × 改善提案 — 3層で品質を磨く。
+    評価指標 × ペルソナ体験 × 改善提案 — 3層で品質を磨く。
   </p>
 </div>
 
