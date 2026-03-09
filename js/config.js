@@ -16,7 +16,7 @@ export const CONFIG = {
   // デプロイ後に設定 → Free モードが有効化
   // 例: 'https://designsprint-proxy.YOUR_SUBDOMAIN.workers.dev'
   // 空文字 → BYOK のみ動作（ローカル開発用）
-  WORKER_URL: 'https://designsprint-proxy.hayato-miyake.workers.dev',
+  WORKER_URL: '',  // ビルド時に環境変数 WORKER_URL から自動注入（build.sh）
 
   // ===========================
   // Gemini API（BYOK用）

@@ -102,17 +102,9 @@ Published designsprint-proxy (1.00 sec)
 
 ---
 
-## Step 3: フロントに Worker URL を設定
+## Step 3: Cloudflare Pages にデプロイ
 
-`js/config.js` の `WORKER_URL` を更新:
-
-```javascript
-WORKER_URL: 'https://designsprint-proxy.YOUR_SUBDOMAIN.workers.dev',
-```
-
----
-
-## Step 4: Cloudflare Pages にデプロイ
+> **注意**: Worker URL はコードに直書きせず、環境変数で注入します（`build.sh` が自動処理）
 
 ### 方法A: GitHub連携（推奨）
 
@@ -121,14 +113,17 @@ WORKER_URL: 'https://designsprint-proxy.YOUR_SUBDOMAIN.workers.dev',
 3. GitHubリポジトリを選択
 4. ビルド設定:
    - **Framework**: None
-   - **Build command**: （空欄）
+   - **Build command**: `sh build.sh`
    - **Build output directory**: `/`（ルート）
-5. 「Save and Deploy」
+5. **環境変数を設定**（Settings → Environment variables）:
+   - `WORKER_URL` = `https://designsprint-proxy.YOUR_SUBDOMAIN.workers.dev`
+6. 「Save and Deploy」
 
 ### 方法B: 直接アップロード
 
 ```bash
-# プロジェクトルートで実行
+# 環境変数を設定してビルド → デプロイ
+WORKER_URL='https://designsprint-proxy.YOUR_SUBDOMAIN.workers.dev' sh build.sh
 wrangler pages deploy . --project-name designsprint
 ```
 
